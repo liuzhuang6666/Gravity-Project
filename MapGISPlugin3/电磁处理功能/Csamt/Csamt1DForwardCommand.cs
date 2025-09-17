@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace MapGISPlugin3.电磁处理功能.Csamt
 {
-    internal class Csamt1DForwardCommand
+    internal class Csamt1DForwardCommandtest
     {
     }
 }
