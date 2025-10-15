@@ -207,10 +207,11 @@ namespace MapGISPlugin3
                     closeItem.OnCreate(workSpace);
                     ime.AddItem(closeItem);
                     appendMenuItems.Add(closeItem);
-                    addCommand addItem = new addCommand();
-                    addItem.OnCreate(workSpace);
-                    ime.AddItem(addItem);
-                    appendMenuItems.Add(addItem);
+                    //addCommand addItem = new addCommand();
+                   // addItem.OnCreate(workSpace);
+                   // ime.AddItem(addItem);
+                    //appendMenuItems.Add(addItem);
+
 
 
                 }

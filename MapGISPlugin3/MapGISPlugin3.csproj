@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>MapGISPlugin3</RootNamespace>
     <AssemblyName>MapGISPlugin3</AssemblyName>
-    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <TargetFrameworkProfile>Client</TargetFrameworkProfile>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile>
@@ -85,20 +85,25 @@
   <ItemGroup>
     <Reference Include="DevExpress.Data.v17.2, Version=17.2.7.0, Culture=neutral, PublicKeyToken=58eb2150d286b637">
       <HintPath>..\..\..\..\地球物理处理软件配置\DevExpress17.2\DevExpress.DLL\DevExpress.Data.v17.2.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="DevExpress.Utils.v17.2, Version=17.2.7.0, Culture=neutral, PublicKeyToken=58eb2150d286b637, processorArchitecture=MSIL">
       <HintPath>..\..\..\..\地球物理处理软件配置\DevExpress17.2\DevExpress.DLL\DevExpress.Utils.v17.2.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="DevExpress.XtraBars.v17.2, Version=17.2.7.0, Culture=neutral, PublicKeyToken=58eb2150d286b637, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\地球物理处理软件配置\DevExpress17.2\DevExpress.DLL\DevExpress.XtraBars.v17.2.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="DevExpress.XtraEditors.v17.2, Version=17.2.7.0, Culture=neutral, PublicKeyToken=58eb2150d286b637, processorArchitecture=MSIL">
       <HintPath>..\..\..\..\地球物理处理软件配置\DevExpress17.2\DevExpress.DLL\DevExpress.XtraEditors.v17.2.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="DevExpress.XtraTreeList.v17.2, Version=17.2.7.0, Culture=neutral, PublicKeyToken=58eb2150d286b637, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\地球物理处理软件配置\DevExpress17.2\DevExpress.DLL\DevExpress.XtraTreeList.v17.2.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="MapGIS.DemAnalysis.Plugin">
       <HintPath>..\..\..\..\..\..\MapGIS 10\Program\plugin\MapGIS.DemAnalysis.Plugin.dll</HintPath>
@@ -146,6 +151,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\MapGIS 10\Program\MapGIS.UI.Controls.dll</HintPath>
     </Reference>
+    <Reference Include="MapGIS.WorkSpace.Plugin">
+      <HintPath>..\..\..\..\..\..\MapGIS 10\Program\plugin\MapGIS.WorkSpace.Plugin.dll</HintPath>
+    </Reference>
     <Reference Include="MapGIS.WorkSpace.Style, Version=1.0.0.0, Culture=neutral, PublicKeyToken=3c41f9a6f834b774, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\MapGIS 10\Program\MapGIS.WorkSpace.Style.dll</HintPath>
@@ -170,6 +178,18 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Form_AddData.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Form_AddData.Designer.cs">
+      <DependentUpon>Form_AddData.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Form_MagCorrelationImaging.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Form_MagCorrelationImaging.Designer.cs">
+      <DependentUpon>Form_MagCorrelationImaging.cs</DependentUpon>
+    </Compile>
     <Compile Include="工程相关\ProjectTreeControl.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -207,6 +227,7 @@
     <Compile Include="重磁处理功能\Command2.cs" />
     <Compile Include="重磁处理功能\Command3.cs" />
     <Compile Include="数据类浮窗\DockWindow1.cs" />
+    <Compile Include="重磁处理功能\Command4.cs" />
     <Compile Include="重磁处理功能\Form1.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -243,8 +264,21 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <Compile Include="重磁处理功能\Form_GravityMagnetic.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="重磁处理功能\Form_GravityMagnetic.Designer.cs">
+      <DependentUpon>Form_GravityMagnetic.cs</DependentUpon>
+    </Compile>
+    <Compile Include="重磁处理功能\ShowMyProcessorCommand.cs" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Form_AddData.resx">
+      <DependentUpon>Form_AddData.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Form_MagCorrelationImaging.resx">
+      <DependentUpon>Form_MagCorrelationImaging.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="工程相关\ProjectTreeControl.resx">
       <DependentUpon>ProjectTreeControl.cs</DependentUpon>
     </EmbeddedResource>
@@ -274,12 +308,41 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
+    <EmbeddedResource Include="重磁处理功能\Form_GravityMagnetic.resx">
+      <DependentUpon>Form_GravityMagnetic.cs</DependentUpon>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="Processor\" />
     <Folder Include="电磁处理功能\Mt\" />
     <Folder Include="电磁处理功能\Sip\" />
     <Folder Include="电磁处理功能\Tdip\" />
     <Folder Include="电磁处理功能\Tem\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Algorithm\MagCorrelationImaging\a.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Algorithm\MagCorrelationImaging\libgcc_s_seh-1.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Algorithm\MagCorrelationImaging\libstdc++-6.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Algorithm\MagCorrelationImaging\libwinpthread-1.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Algorithm\MagCorrelationImaging\yCorrelationImaging.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Algorithm\MagCorrelationImaging\Makefile.EXEED">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Algorithm\MagCorrelationImaging\yCorrelationImaging.lib">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

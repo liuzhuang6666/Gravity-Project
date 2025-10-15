@@ -39,25 +39,25 @@ namespace MapGISPlugin3
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate void AddAnsi([MarshalAs(UnmanagedType.R8)] double res);
 
-        [DllImport(@"C:\Users\江流儿\Desktop\廊坊\地球物理数据处理软件升级\test\test\test\bin\x64\Release\magdpless.dll", EntryPoint = "test3")]
+        [DllImport(@"D:\APrj\地球物理数据处理\magdpless.dll", EntryPoint = "test3")]
         public static extern void test3(AddAnsi add);
 
-        [DllImport(@"C:\Users\江流儿\Desktop\廊坊\地球物理数据处理软件升级\test\test\test\bin\x64\Release\magdpless.dll", EntryPoint = "polar")]
+        [DllImport(@"D:\APrj\地球物理数据处理\magdpless.dll", EntryPoint = "polar")]
         public static extern void polar(int nx, int ny, double dx, double dy, double[] values, double od, double oi, AddAnsi add);
 
-        [DllImport(@"C:\Users\江流儿\Desktop\廊坊\地球物理数据处理软件升级\test\test\test\bin\x64\Release\magdpless.dll", EntryPoint = "contin")]
+        [DllImport(@"D:\APrj\地球物理数据处理\magdpless.dll", EntryPoint = "contin")]
         public static extern void contin(int nx, int ny, double dx, double dy, double[] values, double od, double oi, double elev, AddAnsi add);
 
-        [DllImport(@"C:\Users\江流儿\Desktop\廊坊\地球物理数据处理软件升级\test\test\test\bin\x64\Release\magdpless.dll", EntryPoint = "dircomp")]
+        [DllImport(@"D:\APrj\地球物理数据处理\magdpless.dll", EntryPoint = "dircomp")]
         public static extern void dircomp(int nx, int ny, double dx, double dy, double[] values, double od, double oi, double nd, double ni, AddAnsi add);
 
-        [DllImport(@"C:\Users\江流儿\Desktop\廊坊\地球物理数据处理软件升级\test\test\test\bin\x64\Release\magdpless.dll", EntryPoint = "deriv")]
+        [DllImport(@"D:\APrj\地球物理数据处理\magdpless.dll", EntryPoint = "deriv")]
         public static extern void deriv(int nx, int ny, double dx, double dy, double[] values, double od, double oi, double nd, double ni, AddAnsi add);
 
-        [DllImport(@"C:\Users\江流儿\Desktop\廊坊\地球物理数据处理软件升级\test\test\test\bin\x64\Release\magdpless.dll", EntryPoint = "second")]
+        [DllImport(@"D:\APrj\地球物理数据处理\magdpless.dll", EntryPoint = "second")]
         public static extern void second(int nx, int ny, double dx, double dy, double[] values, double od, double oi, int direction, AddAnsi add);
 
-        [DllImport(@"C:\Users\江流儿\Desktop\廊坊\地球物理数据处理软件升级\test\test\test\bin\x64\Release\magdpless.dll", EntryPoint = "compon")]
+        [DllImport(@"D:\APrj\地球物理数据处理\magdpless.dll", EntryPoint = "compon")]
         public static extern void compon(int nx, int ny, double dx, double dy, double[] values, double od, double oi, int direction, AddAnsi add);
 
 
@@ -67,6 +67,7 @@ namespace MapGISPlugin3
         private Map m_Map2 = new Map();//地图
         private Map activeMap = new Map();//地图
         private Document m_Maindoc;//主框上的地图文档
+        private IApplication m_Hook; // <--- 【新增】添加这个成员变量来保存整个应用程序钩子
         private bool m_ShowRasOrTin = true;//是否显示底图栅格
         private MapControl m_mtr = null;//视图控件
         private MapControl m_mtr2 = null;//视图控件2
@@ -113,7 +114,13 @@ namespace MapGISPlugin3
         {
 
             InitializeComponent();
-            m_Maindoc = hook.Document;
+            m_Hook = hook; // <--- 【修改】将传入的 hook 保存到成员变量中
+            // 构造函数中可以尝试获取一次 Document，但这不是关键
+            if (m_Hook != null)
+            {
+                m_Maindoc = m_Hook.Document;
+            }
+            //m_Maindoc = hook.Document;
             //IMapContentsView mainContentsView = hook.ActiveContentsView as IMapContentsView;
             
             //MapControl mp = mainContentsView.MapControl;
@@ -279,31 +286,54 @@ namespace MapGISPlugin3
 
         private void 数据导入ToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            AddDataForm adddataform = new AddDataForm(m_Maindoc);      
+            // --- 【全新、更正后的健壮性检查逻辑】 ---
+
+            // 步骤 1: 检查插件初始化时是否成功接收到了 hook。如果 hook 本身是 null，说明插件加载有问题。
+            if (m_Hook == null)
+            {
+                MessageBox.Show("严重错误：插件未能正确初始化，无法与主程序通信。", "初始化失败", MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                return;
+            }
+
+            // 步骤 2: 在用户点击的这一刻，通过保存的 hook 来获取当前的 Document。
+            // 这是最可靠的方式，因为它反映了程序当前的状态。
+            Document docToUse = m_Hook.Document;
+
+            // 步骤 3: 检查当前是否真的有打开的地图文档。
+            if (docToUse == null)
+            {
+                MessageBox.Show("操作失败：无法获取当前的地图文档。请确保您已在数据中心打开一个地图工程。", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // --- 【检查结束】 ---
+
+
+            // 只有在确认 docToUse 有效后，才继续执行后续代码
+            AddDataForm adddataform = new AddDataForm(docToUse);
+
+            // --- 以下是你原来的代码，保持不变 ---
             if (adddataform.ShowDialog() == DialogResult.OK)
             {
                 string url = adddataform.Url;
-              
-                if (url == null || url == "")
+
+                if (string.IsNullOrEmpty(url))
                 {
                     adddataform.Dispose();
                     return;
                 }
 
                 m_BandNum = 1;
-                m_Map.RemoveAll();//清空上一个map中的图层
+                m_Map.RemoveAll(); //清空上一个map中的图层
                 if (url.Contains("/sfcls/"))
                 {
                     VectorLayer vectorlayer = new VectorLayer(VectorLayerType.SFclsLayer);
                     vectorlayer.URL = url;
                     if (vectorlayer.ConnectData())
                     {
-                        // 修改说明：默认行为调整为如下方式，引导终端客户关注配图。解决bug12544
-                        // 修改人：张凯俊 2019-07-8
                         vectorlayer.SymbolShow = true;
                         vectorlayer.FollowZoom = false;
                         m_Map.Append(vectorlayer);
-                        
                     }
                 }
                 else
@@ -319,17 +349,13 @@ namespace MapGISPlugin3
                     {
                         raslayer.Name = "原始数据";
                         m_Map.Append(raslayer);
-                        
-
                     }
-
                 }
-               
+
                 if (this.m_mtr.ActiveMap.LayerCount != 0)
                     this.m_mtr.ActiveMap.get_Layer(0).State = m_ShowRasOrTin ? LayerState.Visible : LayerState.UnVisible;
-               
+
                 this.m_mtr.Restore();
-                
 
                 //初始化
                 m_Tempsfclslin = null;

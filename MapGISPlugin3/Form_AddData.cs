@@ -1,0 +1,182 @@
+﻿using System;
+using System.IO;
+using System.Windows.Forms;
+using MapGIS.GeoDataBase.GeoRaster;
+using MapGIS.GeoMap;
+using MapGIS.PluginEngine;
+using MapGIS.RasCommonObj;
+using System;
+using System.Windows.Forms;
+using MapGIS.PluginEngine;
+using MapGIS.GeoMap;
+using MapGIS.GeoDataBase.GeoRaster;
+
+namespace MapGISPlugin3
+{
+    public partial class Form_AddData : Form
+    {
+        // 保存从命令传递过来的主程序引用
+        private IApplication _hook = null;
+
+        // 构造函数，接收 IApplication 实例
+        public Form_AddData(IApplication hook)
+        {
+            InitializeComponent();
+            _hook = hook;
+
+            // 在窗体加载时，执行初始化操作
+            this.Load += new EventHandler(Form_AddData_Load);
+        }
+
+        /// <summary>
+        /// 窗体加载事件
+        /// </summary>
+        private void Form_AddData_Load(object sender, EventArgs e)
+        {
+            // 1. 填充数据类型下拉框
+            comboBoxDataType.Items.Clear();
+            comboBoxDataType.Items.Add("重力");
+            comboBoxDataType.Items.Add("磁法");
+            comboBoxDataType.Items.Add("电法");
+            // 默认选中第一项
+            if (comboBoxDataType.Items.Count > 0)
+            {
+                comboBoxDataType.SelectedIndex = 0;
+            }
+
+            // 2. 绑定按钮的点击事件 (确保设计器中的事件也已关联)
+            //this.btnBrowse.Click += new System.EventHandler(this.btnBrowse_Click);
+            //this.btnOK.Click += new System.EventHandler(this.btnOK_Click);
+            //this.btnCancel.Click += new System.EventHandler(this.btnCancel_Click);
+        }
+
+        /// <summary>
+        /// “...”浏览按钮的点击事件
+        /// </summary>
+        private void btnBrowse_Click(object sender, EventArgs e)
+        {
+            using (OpenFileDialog openFileDialog = new OpenFileDialog())
+            {
+                openFileDialog.Title = "请选择数据文件";
+                openFileDialog.Filter = "GRD 栅格文件|*.grd|所有文件|*.*";
+                openFileDialog.RestoreDirectory = true;
+
+                if (openFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    // 将用户选择的文件路径显示在文本框中
+                    textBoxDataPath.Text = openFileDialog.FileName;
+                }
+            }
+        }
+
+        /// <summary>
+        /// “确定”按钮的点击事件
+        /// </summary>
+        private void btnOK_Click(object sender, EventArgs e)
+        {
+            // --- 输入验证 ---
+            if (comboBoxDataType.SelectedItem == null)
+            {
+                MessageBox.Show("请选择一个数据类型。", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            string dataPath = textBoxDataPath.Text.Trim();
+            if (string.IsNullOrEmpty(dataPath) || !File.Exists(dataPath))
+            {
+                MessageBox.Show("请选择一个有效的数据文件路径。", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // --- 核心逻辑 ---
+            try
+            {
+                // 1. 根据下拉框选择，确定目标地图的名称
+                string selectedType = comboBoxDataType.SelectedItem.ToString();
+                string targetMapName = selectedType + "数据"; // 例如 "重力" -> "重力数据"
+
+                // 2. 在当前文档中查找这个地图
+                Map targetMap = FindMapByName(targetMapName);
+
+                if (targetMap == null)
+                {
+                    MessageBox.Show($"在当前项目中未找到名为 '{targetMapName}' 的地图。", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                // 3. 加载GRD数据并添加到找到的地图中
+                LoadGrdToMap(targetMap, dataPath);
+
+                // 4. 成功后关闭窗体
+                this.DialogResult = DialogResult.OK;
+                this.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("添加数据时发生未知错误: \n" + ex.Message, "异常", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        /// <summary>
+        /// “取消”按钮的点击事件
+        /// </summary>
+        private void btnCancel_Click(object sender, EventArgs e)
+        {
+            this.DialogResult = DialogResult.Cancel;
+            this.Close();
+        }
+
+        /// <summary>
+        /// 根据名称查找地图对象
+        /// </summary>
+        private Map FindMapByName(string mapName)
+        {
+            if (_hook == null || _hook.Document == null) return null;
+
+            Maps maps = _hook.Document.GetMaps();
+            for (int i = 0; i < maps.Count; i++)
+            {
+                Map currentMap = maps.GetMap(i);
+                if (currentMap != null && currentMap.Name == mapName)
+                {
+                    return currentMap; // 找到了，返回它
+                }
+            }
+            return null; // 循环结束都没找到
+        }
+
+        /// <summary>
+        /// 将指定的GRD文件作为图层加载到目标地图中
+        /// </summary>
+        private void LoadGrdToMap(Map targetMap, string filePath)
+        {
+            RasterDataSet rstDataSet = null;
+            try
+            {
+                rstDataSet = new RasterDataSet();
+                if (rstDataSet.Open(filePath, RasAccessType.RasAccessType_ReadOnly))
+                {
+                    RasterLayer rstLayer = new RasterLayer();
+                    rstLayer.AttachData(rstDataSet);
+                    // 使用文件名作为默认图层名
+                    rstLayer.Name = Path.GetFileNameWithoutExtension(filePath);
+
+                    // 将图层添加到目标地图
+                    targetMap.Append(rstLayer);
+
+                    MessageBox.Show($"数据 '{rstLayer.Name}' 已成功添加到地图 '{targetMap.Name}' 中！", "成功", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                else
+                {
+                    throw new Exception("打开GRD文件失败。请检查文件是否有效或被占用。");
+                }
+            }
+            catch (Exception ex)
+            {
+                // 如果发生异常，确保关闭数据集
+                if (rstDataSet != null) rstDataSet.Close();
+                // 重新抛出异常，让上层调用者（btnOK_Click）知道出错了
+                throw ex;
+            }
+        }
+    }
+}

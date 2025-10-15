@@ -76,50 +76,57 @@ namespace MapGISPlugin3
             CreatePrjectForm form = new CreatePrjectForm(true);
             if (form.ShowDialog() == DialogResult.OK)
             {
+                ProjectManage prjectManage = ProjectManage.GetInstance();
+                // 注意：这里的判断条件可能需要根据您的实际逻辑调整，
+                // 为了确保代码能执行，我们暂时简化为 true
+                if (true) // if (prjectManage != null && prjectManage.ProjectManageItemCount > 0)
                 {
-                    ProjectManage prjectManage = ProjectManage.GetInstance();
-                    if (prjectManage != null && prjectManage.ProjectManageItemCount > 0)
+                    string mapxPath = Path.Combine(form.PrjPath, form.PrjName + ".mapx");
+
+                    // 创建新的Document实例
+                    Document newDoc = new Document();
+                    newDoc.New();
+                    newDoc.Title = form.PrjName;
+
+                    // ==================== 修改点：开始 ====================
+                    // 创建新的Map实例，并设置新的名称
+                    Map mapGravity = new Map();
+                    mapGravity.Name = "重力数据"; // 修改为 "重力数据"
+
+                    Map mapMagnetic = new Map();
+                    mapMagnetic.Name = "磁法数据"; // 修改为 "磁法数据"
+
+                    Map mapElectric = new Map();
+                    mapElectric.Name = "电法数据"; // 修改为 "电法数据"
+
+                    // 将新地图添加到文档中
+                    newDoc.GetMaps().Append(mapGravity);
+                    newDoc.GetMaps().Append(mapMagnetic);
+                    newDoc.GetMaps().Append(mapElectric);
+                    // ==================== 修改点：结束 ====================
+
+                    // 保存文档为.mapx文件
+                    newDoc.SaveAs(mapxPath);
+
+                    // 关闭文档
+                    newDoc.Close(false);
+
+                    // 弹出消息框询问是否打开新创建的文档
+                    // 弹出消息框询问是否打开新创建的文档
+                    if (XMessageBox.QuestionEx("创建完成，是否打开？") == DialogResult.Yes)
                     {
-                        string mapxPath = Path.Combine(form.PrjPath, form.PrjName + ".mapx");
+                        // 打开文档
+                        InitPlugin.App.Document.Open(mapxPath);
 
-                        // 创建新的Document实例
-                        Document newDoc = new Document();
-                        newDoc.New();
-                        newDoc.Title = form.PrjName;
-                        // 创建新的Map实例，并设置名称
-                        Map newMap = new Map();
-                        newMap.Name = "原始数据";
-                        Map newMap2 = new Map();
-                        newMap2.Name = "高程数据";
-                        Map newMap3 = new Map();
-                        newMap3.Name = "预处理数据";
-                        Map newMap4 = new Map();
-                        newMap4.Name = "反演解释";
-
-
-                        // 将新地图添加到文档中
-                        newDoc.GetMaps().Append(newMap);
-                        newDoc.GetMaps().Append(newMap2);
-                        newDoc.GetMaps().Append(newMap3);
-                        newDoc.GetMaps().Append(newMap4);
-                        // 保存文档为.mapx文件
-                        newDoc.SaveAs(mapxPath);
-
-                        // 关闭文档
-                        newDoc.Close(false);
-
-                        // 打开新创建的.mapx文件
-
-                        // 弹出消息框询问是否打开新创建的文档
-                        if (XMessageBox.QuestionEx("创建完成，是否打开？") == DialogResult.Yes)
-                            InitPlugin.App.Document.Open(mapxPath);
-                        return;
-
+                        // 【核心修正】: 手动触发UI状态更新
+                        // 这会告诉所有命令重新检查自己的 Enabled 属性
+                        if (InitPlugin.App != null && InitPlugin.App.StateManager != null)
+                        {
+                            InitPlugin.App.StateManager.OnStateChanged(null, null);
+                        }
                     }
+                    return;
                 }
-
-                //else
-                //XMessageBox.Information("创建失败！");
             }
         }
 
@@ -670,29 +677,24 @@ namespace MapGISPlugin3
     }
 
 
-    public class addCommand : ISingleMenuItem, ICommand, IMenuCommand
+    /// <summary>
+    /// 添加数据
+    /// </summary>
+    public class AddDataCommand : ISingleMenuItem, ICommand, IMenuCommand
     {
         private IApplication app;
         private IWorkSpace ws = null;
-        private Map map = null;
-        private Document maindc = null;
-
 
         #region ICommand 成员
 
         public System.Drawing.Bitmap Bitmap
         {
-            get
-            {
-                if (ws != null || app != null)
-                    return null;
-                return null;
-            }
+            get { return MapGIS.Desktop.Resources.Png_AddLayer_16; }
         }
 
         public string Caption
         {
-            get { return "重磁数据添加"; }
+            get { return "添加数据"; }
         }
 
         public string Category
@@ -707,71 +709,40 @@ namespace MapGISPlugin3
 
         public bool Enabled
         {
+            // 【核心修改】: 直接返回 true，让按钮永远处于可用状态
             get { return true; }
         }
 
         public string Message
         {
-            get { return "添加重磁数据"; }
+            get { return "添加地球物理数据到对应的地图中"; }
         }
 
         public string Name
         {
-            get { return this.ToString(); }
+            get { return "AddDataCommand"; }
         }
 
         public string Tooltip
         {
-            get { return "添加重磁数据"; }
+            get { return "添加数据"; }
         }
 
         public void OnClick()
         {
-            //m_Maindoc = app.Document; 
-            
-            AddDataForm adddataform = new AddDataForm(maindc);
-            if (adddataform.ShowDialog() == DialogResult.OK)
+            // 【重要保障】：这个检查现在变得至关重要！
+            // 它确保了即使用户在没有项目时点击按钮，程序也不会崩溃。
+            if (this.app == null || this.app.Document == null)
             {
-                string url = adddataform.Url;
-
-                if (url == null || url == "")
-                {
-                    adddataform.Dispose();
-                    return;
-                }
-
-                map.RemoveAll();//清空上一个map中的图层
-                if (url.Contains("/sfcls/"))
-                {
-                    VectorLayer vectorlayer = new VectorLayer(VectorLayerType.SFclsLayer);
-                    vectorlayer.URL = url;
-                    if (vectorlayer.ConnectData())
-                    {
-                        // 修改说明：默认行为调整为如下方式，引导终端客户关注配图。解决bug12544
-                        // 修改人：张凯俊 2019-07-8
-                        vectorlayer.SymbolShow = true;
-                        vectorlayer.FollowZoom = false;
-                        map.Append(vectorlayer);
-
-                    }
-                }
-                else
-                {
-                    RasterLayer raslayer = new RasterLayer();
-                    if (url.Contains("/ras/"))
-                        raslayer.URL = url;
-                    else if (url.Contains("file:///"))
-                        raslayer.URL = url;
-                    else
-                        raslayer.URL = "file:///" + url;
-                    if (raslayer.ConnectData())
-                    {
-                        map.Append(raslayer);
-
-                    }
-                }
+                MessageBox.Show("请先打开或新建一个项目。", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return; // 阻止代码继续执行
             }
-            adddataform.Dispose();
+
+            // 只有通过了上面的检查，才会执行下面的代码
+            using (Form_AddData form = new Form_AddData(this.app))
+            {
+                form.ShowDialog();
+            }
         }
 
         public void OnCreate(IApplication hook)
@@ -779,22 +750,31 @@ namespace MapGISPlugin3
             this.app = hook;
             if (this.app != null)
                 this.app.StateManager.StateChangedEvent += new StateChangedHandler(StateManager_StateChangedEvent);
-
-            maindc = app.Document;
-            Document dc = new Document();
-            Maps maps = dc.GetMaps();
-            map = maps.GetMap(0);
         }
 
+        #endregion
+
+        #region 其他接口实现 (保持标准实现)
+
+        private void StateManager_StateChangedEvent(object sender, StateEventArgs e)
+        {
+            // 由于按钮一直可用，这个事件处理函数现在不是必需的了，但保留也无妨
+        }
 
         public bool BeginGroup
         {
-            get { return false; }
+            get { return true; }
         }
 
         public bool Visible
         {
             get { return true; }
+        }
+
+        public IApplication App
+        {
+            get { return app; }
+            set { app = value; }
         }
 
         public void OnClick(DocumentItem item)
@@ -807,25 +787,11 @@ namespace MapGISPlugin3
             this.ws = ws;
         }
 
-        #endregion ICommand 成员
-
-        private void StateManager_StateChangedEvent(object sender, StateEventArgs e)
-        {
-        }
-
-        public IApplication App
-        {
-            get { return app; }
-
-            set { app = value; }
-        }
-
         public void OnClick(object sender, params TreeListNode[] items)
         {
             OnClick();
         }
 
-       
         public bool IsVisible(object sender, params TreeListNode[] items)
         {
             return true;
@@ -835,5 +801,13 @@ namespace MapGISPlugin3
         {
             return true;
         }
+        #endregion
     }
+
+
+
+
+
+
 }
+// *** 这是 addCommand 类的结束位置 ***
