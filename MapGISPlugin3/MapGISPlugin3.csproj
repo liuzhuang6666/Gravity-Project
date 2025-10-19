@@ -47,6 +47,7 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <Prefer32Bit>false</Prefer32Bit>
     <UseVSHostingProcess>false</UseVSHostingProcess>
+    <WarningLevel>3</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
     <OutputPath>bin\x64\Release\</OutputPath>
@@ -84,87 +85,100 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="DevExpress.Data.v17.2, Version=17.2.7.0, Culture=neutral, PublicKeyToken=58eb2150d286b637">
-      <HintPath>..\..\..\..\地球物理处理软件配置\DevExpress17.2\DevExpress.DLL\DevExpress.Data.v17.2.dll</HintPath>
+      <HintPath>D:\Code\DevExpress17.2\DevExpress.DLL\DevExpress.Data.v17.2.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="DevExpress.Utils.v17.2, Version=17.2.7.0, Culture=neutral, PublicKeyToken=58eb2150d286b637, processorArchitecture=MSIL">
-      <HintPath>..\..\..\..\地球物理处理软件配置\DevExpress17.2\DevExpress.DLL\DevExpress.Utils.v17.2.dll</HintPath>
+      <HintPath>D:\Code\DevExpress17.2\DevExpress.DLL\DevExpress.Utils.v17.2.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="DevExpress.XtraBars.v17.2, Version=17.2.7.0, Culture=neutral, PublicKeyToken=58eb2150d286b637, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\地球物理处理软件配置\DevExpress17.2\DevExpress.DLL\DevExpress.XtraBars.v17.2.dll</HintPath>
+      <HintPath>D:\Code\DevExpress17.2\DevExpress.DLL\DevExpress.XtraBars.v17.2.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="DevExpress.XtraEditors.v17.2, Version=17.2.7.0, Culture=neutral, PublicKeyToken=58eb2150d286b637, processorArchitecture=MSIL">
-      <HintPath>..\..\..\..\地球物理处理软件配置\DevExpress17.2\DevExpress.DLL\DevExpress.XtraEditors.v17.2.dll</HintPath>
+      <HintPath>D:\Code\DevExpress17.2\DevExpress.DLL\DevExpress.XtraEditors.v17.2.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="DevExpress.XtraTreeList.v17.2, Version=17.2.7.0, Culture=neutral, PublicKeyToken=58eb2150d286b637, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\地球物理处理软件配置\DevExpress17.2\DevExpress.DLL\DevExpress.XtraTreeList.v17.2.dll</HintPath>
+      <HintPath>D:\Code\DevExpress17.2\DevExpress.DLL\DevExpress.XtraTreeList.v17.2.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="MapGIS.DemAnalysis.Plugin">
-      <HintPath>..\..\..\..\..\..\MapGIS 10\Program\plugin\MapGIS.DemAnalysis.Plugin.dll</HintPath>
+      <HintPath>D:\Program Files\MapGIS 10\Program\MapGIS.DemAnalysis.Plugin.dll</HintPath>
     </Reference>
     <Reference Include="MapGIS.Desktop.Resources, Version=1.0.0.0, Culture=neutral, PublicKeyToken=3c41f9a6f834b774, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\MapGIS 10\Program\MapGIS.Desktop.Resources.dll</HintPath>
+      <HintPath>D:\Program Files\MapGIS 10\Program\MapGIS.Desktop.Resources.dll</HintPath>
     </Reference>
     <Reference Include="MapGIS.Desktop.UI.Controls, Version=1.0.0.0, Culture=neutral, PublicKeyToken=3c41f9a6f834b774, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\MapGIS 10\Program\MapGIS.Desktop.UI.Controls.dll</HintPath>
+      <HintPath>D:\Program Files\MapGIS 10\Program\MapGIS.Desktop.UI.Controls.dll</HintPath>
+    </Reference>
+    <Reference Include="MapGIS.G3DAttModeling.Plugin">
+      <HintPath>D:\Program Files\MapGIS 10\Program\plugin\MapGIS.G3DAttModeling.Plugin.dll</HintPath>
+    </Reference>
+    <Reference Include="MapGIS.G3DWorkSpace.Plugin, Version=10.6.0.10, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>D:\Program Files\MapGIS 10\Program\MapGIS.G3DWorkSpace.Plugin.dll</HintPath>
     </Reference>
     <Reference Include="MapGIS.GDBManager.Plugin">
-      <HintPath>..\..\..\..\..\..\MapGIS 10\Program\plugin\MapGIS.GDBManager.Plugin.dll</HintPath>
+      <HintPath>D:\Program Files\MapGIS 10\Program\MapGIS.GDBManager.Plugin.dll</HintPath>
     </Reference>
     <Reference Include="MapGIS.GeoDataBase, Version=7.6.0.0, Culture=neutral, PublicKeyToken=1ffc64e70f4d38c4, processorArchitecture=AMD64">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\MapGIS 10\Program\MapGIS.GeoDataBase.dll</HintPath>
+      <HintPath>D:\Program Files\MapGIS 10\Program\MapGIS.GeoDataBase.dll</HintPath>
+    </Reference>
+    <Reference Include="MapGIS.Geologic.Model">
+      <HintPath>D:\Program Files\MapGIS 10\Program\MapGIS.Geologic.Model.dll</HintPath>
     </Reference>
     <Reference Include="MapGIS.GeoMap, Version=7.6.0.0, Culture=neutral, PublicKeyToken=1ffc64e70f4d38c4, processorArchitecture=AMD64">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\MapGIS 10\Program\MapGIS.GeoMap.dll</HintPath>
+      <HintPath>D:\Program Files\MapGIS 10\Program\MapGIS.GeoMap.dll</HintPath>
     </Reference>
     <Reference Include="MapGIS.GeoObjects, Version=7.6.0.0, Culture=neutral, PublicKeyToken=1ffc64e70f4d38c4, processorArchitecture=AMD64">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\MapGIS 10\Program\MapGIS.GeoObjects.dll</HintPath>
+      <HintPath>D:\Program Files\MapGIS 10\Program\MapGIS.GeoObjects.dll</HintPath>
     </Reference>
     <Reference Include="MapGIS.GISControl, Version=7.6.0.0, Culture=neutral, PublicKeyToken=1ffc64e70f4d38c4, processorArchitecture=AMD64">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\MapGIS 10\Program\MapGIS.GISControl.dll</HintPath>
+      <HintPath>D:\Program Files\MapGIS 10\Program\MapGIS.GISControl.dll</HintPath>
     </Reference>
     <Reference Include="MapGIS.PluginEngine, Version=1.0.0.0, Culture=neutral, PublicKeyToken=3c41f9a6f834b774, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\MapGIS 10\Program\MapGIS.PluginEngine.dll</HintPath>
+      <HintPath>D:\Program Files\MapGIS 10\Program\MapGIS.PluginEngine.dll</HintPath>
     </Reference>
     <Reference Include="MapGIS.PlugUtility, Version=1.0.0.0, Culture=neutral, PublicKeyToken=3c41f9a6f834b774, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\MapGIS 10\Program\MapGIS.PlugUtility.dll</HintPath>
+      <HintPath>D:\Program Files\MapGIS 10\Program\MapGIS.PlugUtility.dll</HintPath>
     </Reference>
     <Reference Include="MapGIS.RasAnalysis, Version=7.6.0.0, Culture=neutral, PublicKeyToken=1ffc64e70f4d38c4, processorArchitecture=AMD64">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\MapGIS 10\Program\MapGIS.RasAnalysis.dll</HintPath>
+      <HintPath>D:\Program Files\MapGIS 10\Program\MapGIS.RasAnalysis.dll</HintPath>
+    </Reference>
+    <Reference Include="MapGIS.SceneControl">
+      <HintPath>D:\Program Files\MapGIS 10\Program\MapGIS.SceneControl.dll</HintPath>
     </Reference>
     <Reference Include="MapGIS.UI.Controls, Version=1.0.0.0, Culture=neutral, PublicKeyToken=3c41f9a6f834b774, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\MapGIS 10\Program\MapGIS.UI.Controls.dll</HintPath>
+      <HintPath>D:\Program Files\MapGIS 10\Program\MapGIS.UI.Controls.dll</HintPath>
     </Reference>
     <Reference Include="MapGIS.WorkSpace.Plugin">
-      <HintPath>..\..\..\..\..\..\MapGIS 10\Program\plugin\MapGIS.WorkSpace.Plugin.dll</HintPath>
+      <HintPath>D:\Program Files\MapGIS 10\Program\plugin\MapGIS.WorkSpace.Plugin.dll</HintPath>
     </Reference>
     <Reference Include="MapGIS.WorkSpace.Style, Version=1.0.0.0, Culture=neutral, PublicKeyToken=3c41f9a6f834b774, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\MapGIS 10\Program\MapGIS.WorkSpace.Style.dll</HintPath>
+      <HintPath>D:\Program Files\MapGIS 10\Program\MapGIS.WorkSpace.Style.dll</HintPath>
     </Reference>
     <Reference Include="MapGIS.WorkSpaceEngine, Version=1.0.0.0, Culture=neutral, PublicKeyToken=3c41f9a6f834b774, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\MapGIS 10\Program\MapGIS.WorkSpaceEngine.dll</HintPath>
+      <HintPath>D:\Program Files\MapGIS 10\Program\MapGIS.WorkSpaceEngine.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>C:\Program Files\IIS\Microsoft Web Deploy V3\Newtonsoft.Json.dll</HintPath>
+      <HintPath>D:\Program Files\MapGIS 10\Program\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -183,12 +197,6 @@
     </Compile>
     <Compile Include="Form_AddData.Designer.cs">
       <DependentUpon>Form_AddData.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Form_MagCorrelationImaging.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Form_MagCorrelationImaging.Designer.cs">
-      <DependentUpon>Form_MagCorrelationImaging.cs</DependentUpon>
     </Compile>
     <Compile Include="工程相关\ProjectTreeControl.cs">
       <SubType>UserControl</SubType>
@@ -224,6 +232,7 @@
       <DependentUpon>AddDataForm.cs</DependentUpon>
     </Compile>
     <Compile Include="电磁处理功能\Command1.cs" />
+    <Compile Include="重磁处理功能\MagCorrelationImagingCommand.cs" />
     <Compile Include="重磁处理功能\Command2.cs" />
     <Compile Include="重磁处理功能\Command3.cs" />
     <Compile Include="数据类浮窗\DockWindow1.cs" />
@@ -245,6 +254,12 @@
     </Compile>
     <Compile Include="电磁处理功能\Form3.Designer.cs">
       <DependentUpon>Form3.cs</DependentUpon>
+    </Compile>
+    <Compile Include="重磁处理功能\Form_MagCorrelationImaging.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="重磁处理功能\Form_MagCorrelationImaging.Designer.cs">
+      <DependentUpon>Form_MagCorrelationImaging.cs</DependentUpon>
     </Compile>
     <Compile Include="重磁处理功能\Form4.cs">
       <SubType>Form</SubType>
@@ -276,9 +291,6 @@
     <EmbeddedResource Include="Form_AddData.resx">
       <DependentUpon>Form_AddData.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Form_MagCorrelationImaging.resx">
-      <DependentUpon>Form_MagCorrelationImaging.cs</DependentUpon>
-    </EmbeddedResource>
     <EmbeddedResource Include="工程相关\ProjectTreeControl.resx">
       <DependentUpon>ProjectTreeControl.cs</DependentUpon>
     </EmbeddedResource>
@@ -296,6 +308,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="电磁处理功能\Form3.resx">
       <DependentUpon>Form3.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="重磁处理功能\Form_MagCorrelationImaging.resx">
+      <DependentUpon>Form_MagCorrelationImaging.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="重磁处理功能\Form4.resx">
       <DependentUpon>Form4.cs</DependentUpon>
