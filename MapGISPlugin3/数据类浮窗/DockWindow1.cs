@@ -17,9 +17,9 @@ namespace MapGISPlugin3
 {
     public class DockWindow1 : IDockWindow
     {
-       
+
         private Control control;
-        private TreeView treeView1;     
+        private TreeView treeView1;
         private DataBase gdb = null;
 
         private ContextMenuStrip xclsMenuStrip;
@@ -29,7 +29,7 @@ namespace MapGISPlugin3
         private ToolStripMenuItem 导出ToolStripMenuItem;
         private ToolStripMenuItem 重命名ToolStripMenuItem;
 
-        
+
         IApplication hook = null;
         //地图视图控件
 
@@ -118,11 +118,11 @@ namespace MapGISPlugin3
             this.treeView1.ShowPlusMinus = true;
             this.control.Controls.Add(this.treeView1);
 
-            
+
             InitializeContextMenu();
             // xclsMenuStrip
             // 
-            
+
         }
         //this.移动到数据集ToolStripMenuItem,
         //this.查看元数据信息ToolStripMenuItem});
@@ -135,7 +135,7 @@ namespace MapGISPlugin3
             xclsMenuStrip.Items.Add(预览ToolStripMenuItem);
             xclsMenuStrip.Items.Add(调阅ToolStripMenuItem);
 
-            
+
             // 设置TreeView的ContextMenuStrip属性
             treeView1.ContextMenuStrip = xclsMenuStrip;
         }
@@ -160,8 +160,10 @@ namespace MapGISPlugin3
 
         public DockingStyle DefaultDock
         {
-            get { return DockingStyle.Left;
-              
+            get
+            {
+                return DockingStyle.Left;
+
             }
         }
 
@@ -197,7 +199,7 @@ namespace MapGISPlugin3
             treeView1.ShowPlusMinus = true;
 
             //初始化
-            
+
             Init();
             //treeView1.SelectedNode.Expand();
             //treeView1.TopNode.ImageIndex = 0;
@@ -224,169 +226,108 @@ namespace MapGISPlugin3
             return id;
         }
         public void Init()
-
         {
+            // 清空 TreeView，防止重复加载
+            this.treeView1.Nodes.Clear();
 
             string dsName = "MapGISLocal";
-            //TopNode = this.treeView1.Nodes.Add(dsName);
-            //treeView1.SelectedNode = TopNode;
-            //TreeNode CurrentNode1 = TopNode;
-            //实例化数据源
+            // 实例化数据源并连接
             Svr = new Server();
-            //连接数据源
-
-            Svr.Connect(dsName, " ", "");
-            //获取当前数据源包含数据库的ID列表 
-            List<int> ListStr = new List<int>();
-            ListStr = Svr.GDBIDs;
-            int count = ListStr.Count;
-            if (count == 0)
+            if (!Svr.Connect(dsName, " ", ""))
             {
+                MessageBox.Show($"连接本地数据源 '{dsName}' 失败!", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
-            for (int i = 0; i < count; i++)
+            // 获取当前数据源包含数据库的ID列表 
+            List<int> gdbIdList = Svr.GDBIDs;
+            if (gdbIdList == null || gdbIdList.Count == 0)
             {
-                int id = ListStr[i];
-                //根据数据库ID获取数据库名
-                gdbName = Svr.GetDBName(id);
-                //添加GDBcatalog节点
-                //gdbNode = TopNode.Nodes.Add(gdbName); //添加数据库名到MapGISLocal下
-                //gdbNode.ImageIndex = 1;
-                //gdbNode.SelectedImageIndex = 1;
-                sfclsNode = treeView1.Nodes.Add("sfcls", "MapGIS要素");//简单要素类
-                                                                     //sfclsNode.ImageIndex = 2;
-                                                                     //sfclsNode.SelectedImageIndex= 2;
-                                                                     //annNode = gdbNode.Nodes.Add("ann", "注记类");
-                                                                     //annNode.ImageIndex = 2;
-                                                                     //annNode.SelectedImageIndex = 2;
-                                                                     //objNode = gdbNode.Nodes.Add("obj", "对象类");
-                                                                     //objNode.ImageIndex = 2;
-                                                                     //objNode.SelectedImageIndex = 2;
-                                                                     //relationNode = gdbNode.Nodes.Add("relacls","关系类");
-                                                                     //relationNode.ImageIndex = 2;
-                                                                     //relationNode.SelectedImageIndex = 2;
+                return; // 没有数据库则直接返回
+            }
 
-                //mapsetNode = gdbNode.Nodes.Add("mapset", "地图集");
-                //mapsetNode.ImageIndex = 2;
-                //mapsetNode.SelectedImageIndex = 2;
+            // 开始更新UI，提高性能
+            this.treeView1.BeginUpdate();
 
-                //rascatNode = gdbNode.Nodes.Add("rascat", "栅格目录");
-                //rascatNode.ImageIndex = 2;
-                //rascatNode.SelectedImageIndex = 2;
-                rasdstNode = treeView1.Nodes.Add("rasdst", "栅格数据");
-                //rasdstNode.ImageIndex = 2;
-                //rasdstNode.SelectedImageIndex = 2;
-
-                //fdsNode0 = treeView1.Nodes.Add("fds", "要素数据集");
-                //fdsNode0.ImageIndex = 2;
-                //fdsNode0.SelectedImageIndex = 2;
-
-                databaseNode = treeView1.Nodes.Add("database", "表格数据");
-                // databaseNode.ImageIndex = 2;
-                //databaseNode.SelectedImageIndex = 2;
-
-                //根据数据库名打开数据库
-                GDB = Svr.OpenGDB(gdbName);
-
-                #region 读取栅格数据集和栅格目录
-                List<int> rascatIDs = null;
-                rascatIDs = GDB.GetXclses(XClsType.Rcat, 0);
-                if (rascatIDs != null)
+            try
+            {
+                // 遍历数据源中的每一个数据库
+                foreach (int gdbId in gdbIdList)
                 {
-                    for (int j = 0; j < rascatIDs.Count; j++)
+                    // 根据数据库ID获取数据库名
+                    gdbName = Svr.GetDBName(gdbId);
+                    if (string.IsNullOrEmpty(gdbName)) continue;
+
+                    // 【关键修正】创建代表数据库的父节点
+                    gdbNode = this.treeView1.Nodes.Add(gdbName, gdbName); // 添加数据库节点到根
+
+                    // 【关键修正】在数据库节点下，创建各类数据的“文件夹”节点
+                    sfclsNode = gdbNode.Nodes.Add("sfcls", "MapGIS要素");
+                    rasdstNode = gdbNode.Nodes.Add("rasdst", "栅格数据");
+                    databaseNode = gdbNode.Nodes.Add("database", "表格数据");
+                    fdsNode0 = gdbNode.Nodes.Add("fds", "要素数据集");
+                    rascatNode = gdbNode.Nodes.Add("rascat", "栅格目录");
+                    // 您可以取消注释其他需要的文件夹节点
+                    // annNode = gdbNode.Nodes.Add("ann", "注记类");
+                    // objNode = gdbNode.Nodes.Add("obj", "对象类");
+                    // relationNode = gdbNode.Nodes.Add("relacls","关系类");
+                    // mapsetNode = gdbNode.Nodes.Add("mapset", "地图集");
+
+                    // 根据数据库名打开数据库
+                    GDB = Svr.OpenGDB(gdbName);
+                    if (GDB == null) continue;
+
+                    #region 读取栅格目录 (现在 rascatNode 已被正确创建)
+                    List<int> rascatIDs = GDB.GetXclses(XClsType.Rcat, 0);
+                    if (rascatIDs != null)
                     {
-                        rascatName0 = GDB.GetXclsName(XClsType.Rcat, rascatIDs[j]);
-                        rascatNode0 = rascatNode.Nodes.Add(rascatName0);
-                        rascat = new RasterCatalog(GDB);
-                        rascat.Open(rascatName0);
-                        int rasCount = rascat.GetItemNum();
-                        string rasName = null;
-                        for (int k = 1; k <= rasCount; k++)
+                        for (int j = 0; j < rascatIDs.Count; j++)
                         {
-                            rasName = rascat.GetItemName(k);
-                            rascatNode0_ras = rascatNode0.Nodes.Add(rasName);
-                            rascatNode0_ras.ImageIndex = 13;
-                            rascatNode0_ras.SelectedImageIndex = 13;
-
+                            rascatName0 = GDB.GetXclsName(XClsType.Rcat, rascatIDs[j]);
+                            // 【现在这行可以安全执行了】
+                            rascatNode0 = rascatNode.Nodes.Add(rascatName0);
+                            rascat = new RasterCatalog(GDB);
+                            rascat.Open(rascatName0);
+                            int rasCount = rascat.GetItemNum();
+                            string rasName = null;
+                            for (int k = 1; k <= rasCount; k++)
+                            {
+                                rasName = rascat.GetItemName(k);
+                                rascatNode0_ras = rascatNode0.Nodes.Add(rasName);
+                            }
                         }
-                        rascatNode0.ImageIndex = 12;
-                        rascatNode0.SelectedImageIndex = 12;
-
                     }
+                    #endregion
 
-                }
-
-                #endregion
-
-                //                    #region  读取关系类
-                //                    List<int> reclsIDs = null;
-                //reclsIDs = GDB.GetXclses(XClsType.RCls, 0);
-                //                    if(reclsIDs!=null)
-                //                    {
-                //                        for (int j = 0; j<reclsIDs.Count; j++)
-                //                        {
-                //                            relaclsName0 = GDB.GetXclsName(XClsType.RCls, reclsIDs[j]);
-                //                            relationNode0 = relationNode.Nodes.Add(relaclsName0);
-                //                            relationNode0.ImageIndex = 14;
-                //                            relationNode0.SelectedImageIndex = 14;
-
-                //                        }
-                //                    }
-
-                //                    #endregion
-
-                //                    #region 读取地图集
-                //                    List<int> mapsetIDs = null;
-                //mapsetIDs = GDB.GetXclses(XClsType.MapSet, 0);
-                //                    if (mapsetIDs != null)
-                //                    {
-                //                        for (int j = 0; j<mapsetIDs.Count; j++)
-                //                        {
-                //                            mapsetName0 = GDB.GetXclsName(XClsType.MapSet, mapsetIDs[j]);
-                //                            mapsetNode0 = mapsetNode.Nodes.Add(mapsetName0);
-                //                            mapsetNode0.ImageIndex = 15;
-                //                            mapsetNode0.SelectedImageIndex = 15;
-
-                //                        }
-                //                    }
-
-                //                    #endregion
-
-                //获取ID列表
-                List<int> dsIDs = null;
-                FDsInfo fds = new FDsInfo();
-                dsIDs = GDB.GetXclses(XClsType.Fds, 0);
-                if (dsIDs != null)
-                {
-                    //获取要素数据集中简单要素类的个数
-                    int cou = dsIDs.Count;
-                    for (int j = 0; j < cou; j++)
+                    #region 读取要素数据集 (现在 fdsNode0 已被正确创建)
+                    List<int> dsIDs = GDB.GetXclses(XClsType.Fds, 0);
+                    if (dsIDs != null)
                     {
-                        //根据要素数据集ID取要素数据集信息
-                        fdsName = GDB.GetXclsInfo(XClsType.Fds, dsIDs[j]).Name;
-                        //取要素数据集名称
-                        fdsNode = fdsNode0.Nodes.Add(fdsName);
-                        fdsNode.ImageIndex = 3;
-                        fdsNode.SelectedImageIndex = 3;
-                        //取要素数据集内的简单要素类、注记类、对象类
-                        xsfcls(XClsType.SFCls, dsIDs[j]);
-                        xsfcls(XClsType.ACls, dsIDs[j]);
-                        xsfcls(XClsType.OCls, dsIDs[j]);
+                        foreach (int dsID in dsIDs)
+                        {
+                            fdsName = GDB.GetXclsInfo(XClsType.Fds, dsID).Name;
+                            // 【现在这行可以安全执行了】
+                            fdsNode = fdsNode0.Nodes.Add(fdsName);
+
+                            // 读取数据集内部的要素类
+                            xsfcls(XClsType.SFCls, dsID);
+                            xsfcls(XClsType.ACls, dsID);
+                            xsfcls(XClsType.OCls, dsID);
+                        }
                     }
+                    #endregion
+
+                    // 读取不属于任何数据集的要素类
+                    xsfcls(XClsType.SFCls, 0);
+                    xsfcls(XClsType.ACls, 0);
+                    xsfcls(XClsType.OCls, 0);
+                    xsfcls(XClsType.Rds, 0);
                 }
-                //取要素数据集外的简单要素类、注记类、对象类 、栅格数据集
-                xsfcls(XClsType.SFCls, 0);
-                xsfcls(XClsType.ACls, 0);
-                xsfcls(XClsType.OCls, 0);
-                xsfcls(XClsType.Rds, 0);
-
-
-                /*if (Svr.HasConnect)
-                    连接数据源ToolStripMenuItem.Enabled = false;
-                else
-                    连接数据源ToolStripMenuItem.Enabled = true;  */
-
+            }
+            finally
+            {
+                // 结束更新UI，一次性刷新界面
+                this.treeView1.EndUpdate();
             }
         }
         public void xsfcls(XClsType type, int dsID)
@@ -484,18 +425,18 @@ namespace MapGISPlugin3
                             //    CurrentNode.SelectedImageIndex = 9;
                             //}
                             break;
-                        //case XClsType.ACls:
-                        //    xclsName = GDB.GetXclsName(XClsType.ACls, xclsIDs[i]);
-                        //    CurrentNode = fdsNode.Nodes.Add(xclsName);
-                        //    //CurrentNode.ImageIndex = 7;
-                        //    //CurrentNode.SelectedImageIndex = 7;
-                        //    break;
-                        //case XClsType.OCls:
-                        //    xclsName = GDB.GetXclsName(XClsType.OCls, xclsIDs[i]);
-                        //    CurrentNode = fdsNode.Nodes.Add(xclsName);
-                        //    //CurrentNode.ImageIndex = 8;
-                        //    //CurrentNode.SelectedImageIndex = 8;
-                        //    break;
+                            //case XClsType.ACls:
+                            //    xclsName = GDB.GetXclsName(XClsType.ACls, xclsIDs[i]);
+                            //    CurrentNode = fdsNode.Nodes.Add(xclsName);
+                            //    //CurrentNode.ImageIndex = 7;
+                            //    //CurrentNode.SelectedImageIndex = 7;
+                            //    break;
+                            //case XClsType.OCls:
+                            //    xclsName = GDB.GetXclsName(XClsType.OCls, xclsIDs[i]);
+                            //    CurrentNode = fdsNode.Nodes.Add(xclsName);
+                            //    //CurrentNode.ImageIndex = 8;
+                            //    //CurrentNode.SelectedImageIndex = 8;
+                            //    break;
                     }
 
 
@@ -618,10 +559,10 @@ namespace MapGISPlugin3
 
         private void 预览ToolStripMenuItem_Click(object sender, EventArgs e)
         {
-           
+
             VectorLayer layer = openXcls(CurrentNode.Tag.ToString());
             //显示要素类
-            
+
             map.Append(layer);
             mapCtrl.ActiveMap = map;
             mapCtrl.Restore();

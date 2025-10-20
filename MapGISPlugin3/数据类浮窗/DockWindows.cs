@@ -17,7 +17,7 @@ namespace MapGISPlugin3
 
         public Bitmap Bitmap
         {
-            get { return null ; }
+            get { return null; }
         }
 
         public string Caption
