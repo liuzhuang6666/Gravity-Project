@@ -131,8 +131,11 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>D:\Program Files\MapGIS 10\Program\MapGIS.GeoDataBase.dll</HintPath>
     </Reference>
+    <Reference Include="MapGIS.Geologic.Map">
+      <HintPath>..\..\..\..\..\..\MapGIS 10\Program\MapGIS.Geologic.Map.dll</HintPath>
+    </Reference>
     <Reference Include="MapGIS.Geologic.Model">
-      <HintPath>D:\Program Files\MapGIS 10\Program\MapGIS.Geologic.Model.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\MapGIS 10\Program\MapGIS.Geologic.Model.dll</HintPath>
     </Reference>
     <Reference Include="MapGIS.GeoMap, Version=7.6.0.0, Culture=neutral, PublicKeyToken=1ffc64e70f4d38c4, processorArchitecture=AMD64">
       <SpecificVersion>False</SpecificVersion>
@@ -192,10 +195,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Form_AddData.cs">
+    <Compile Include="添加数据\Form_AddData.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Form_AddData.Designer.cs">
+    <Compile Include="添加数据\Form_AddData.Designer.cs">
       <DependentUpon>Form_AddData.cs</DependentUpon>
     </Compile>
     <Compile Include="工程相关\ProjectTreeControl.cs">
@@ -288,7 +291,7 @@
     <Compile Include="重磁处理功能\ShowMyProcessorCommand.cs" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Form_AddData.resx">
+    <EmbeddedResource Include="添加数据\Form_AddData.resx">
       <DependentUpon>Form_AddData.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="工程相关\ProjectTreeControl.resx">

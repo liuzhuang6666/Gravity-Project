@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Windows.Forms;
 using MapGIS.GISControl;
+using MapGIS.Scene3D; // <--- 添加这一行
 
 namespace MapGISPlugin3
 {
@@ -77,9 +78,7 @@ namespace MapGISPlugin3
             if (form.ShowDialog() == DialogResult.OK)
             {
                 ProjectManage prjectManage = ProjectManage.GetInstance();
-                // 注意：这里的判断条件可能需要根据您的实际逻辑调整，
-                // 为了确保代码能执行，我们暂时简化为 true
-                if (true) // if (prjectManage != null && prjectManage.ProjectManageItemCount > 0)
+                if (true)
                 {
                     string mapxPath = Path.Combine(form.PrjPath, form.PrjName + ".mapx");
 
@@ -88,22 +87,43 @@ namespace MapGISPlugin3
                     newDoc.New();
                     newDoc.Title = form.PrjName;
 
-                    // ==================== 修改点：开始 ====================
-                    // 创建新的Map实例，并设置新的名称
+                    // ==================== 1. 创建二维地图 (您的原始代码) ====================
                     Map mapGravity = new Map();
-                    mapGravity.Name = "重力数据"; // 修改为 "重力数据"
+                    mapGravity.Name = "重力数据";
 
                     Map mapMagnetic = new Map();
-                    mapMagnetic.Name = "磁法数据"; // 修改为 "磁法数据"
+                    mapMagnetic.Name = "磁法数据";
 
                     Map mapElectric = new Map();
-                    mapElectric.Name = "电法数据"; // 修改为 "电法数据"
+                    mapElectric.Name = "电法数据";
 
-                    // 将新地图添加到文档中
                     newDoc.GetMaps().Append(mapGravity);
                     newDoc.GetMaps().Append(mapMagnetic);
                     newDoc.GetMaps().Append(mapElectric);
-                    // ==================== 修改点：结束 ====================
+
+                    // =======================================================================
+                    //
+                    // ==================== 2. 新增：创建对应的三维场景 ====================
+
+                    // 为"重力数据"创建场景
+                    Scene sceneGravity = new Scene();
+                    sceneGravity.Name = "重力数据_三维场景"; // 建议使用清晰的命名
+                    sceneGravity.SetPropertyEx("InitOpenView", "true"); // 设置为工程打开时自动显示此场景
+                    newDoc.GetScenes().Append(sceneGravity);
+
+                    // 为"磁法数据"创建场景
+                    Scene sceneMagnetic = new Scene();
+                    sceneMagnetic.Name = "磁法数据_三维场景";
+                    sceneMagnetic.SetPropertyEx("InitOpenView", "true");
+                    newDoc.GetScenes().Append(sceneMagnetic);
+
+                    // 为"电法数据"创建场景
+                    Scene sceneElectric = new Scene();
+                    sceneElectric.Name = "电法数据_三维场景";
+                    sceneElectric.SetPropertyEx("InitOpenView", "true");
+                    newDoc.GetScenes().Append(sceneElectric);
+
+                    // =======================================================================
 
                     // 保存文档为.mapx文件
                     newDoc.SaveAs(mapxPath);
@@ -112,14 +132,10 @@ namespace MapGISPlugin3
                     newDoc.Close(false);
 
                     // 弹出消息框询问是否打开新创建的文档
-                    // 弹出消息框询问是否打开新创建的文档
                     if (XMessageBox.QuestionEx("创建完成，是否打开？") == DialogResult.Yes)
                     {
-                        // 打开文档
                         InitPlugin.App.Document.Open(mapxPath);
 
-                        // 【核心修正】: 手动触发UI状态更新
-                        // 这会告诉所有命令重新检查自己的 Enabled 属性
                         if (InitPlugin.App != null && InitPlugin.App.StateManager != null)
                         {
                             InitPlugin.App.StateManager.OnStateChanged(null, null);

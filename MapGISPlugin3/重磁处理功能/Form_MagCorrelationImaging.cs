@@ -516,9 +516,23 @@ namespace MapGISPlugin3
                 saveDlg.Title = "设置在GDB中输出的类名";
                 saveDlg.Filter = "MapGIS Simple Feature Class (*.sfcls)|*.sfcls";
                 saveDlg.DefaultExt = "sfcls";
-                string defaultName = (savePathBox != null && !string.IsNullOrWhiteSpace(savePathBox.Text)) ? savePathBox.Text : "CorrelationImaging_Result";
+
+                // --- 主要修改在这里 ---
+                // 检查文本框中是否已有内容，如果没有，则生成一个带UID的默认名
+                string defaultName;
+                if (savePathBox != null && !string.IsNullOrWhiteSpace(savePathBox.Text))
+                {
+                    defaultName = savePathBox.Text; // 如果用户已经输入了名字，则使用用户的输入
+                }
+                else
+                {
+                    // 否则，生成一个带唯一ID的默认名称
+                    string uniqueId = Guid.NewGuid().ToString("N").Substring(0, 8);
+                    defaultName = $"CorrelationImaging_Result_{uniqueId}";
+                }
+                // --- 修改结束 ---
+
                 saveDlg.FileName = defaultName;
-                // saveDlg.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
 
                 if (saveDlg.ShowDialog(this) == DialogResult.OK)
                 {
@@ -528,7 +542,10 @@ namespace MapGISPlugin3
                         savePathBox.Text = className;
                         Console.WriteLine($"[btnBrowse_Click] 用户设置类名: '{className}'");
                     }
-                    else { Console.WriteLine("[btnBrowse_Click] 警告: 未找到 textBoxSavePath 控件。"); }
+                    else
+                    {
+                        Console.WriteLine("[btnBrowse_Click] 警告: 未找到 textBoxSavePath 控件。");
+                    }
                 }
             }
         }
@@ -1040,6 +1057,10 @@ namespace MapGISPlugin3
 
         #endregion
 
+        private void label4_Click(object sender, EventArgs e)
+        {
+
+        }
     } // End Class
 }
 #endregion
