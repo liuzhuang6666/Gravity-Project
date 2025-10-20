@@ -21,9 +21,7 @@ using MapGIS.G3DAttModeling; // 建模引擎
 using MapGIS.Geologic.Model.VolumeModel; // GeoVolModelingParam
 using MapGIS.GeoObjects.Geometry3D; // Dot3D, Rect3D
 using MapGIS.G3DWorkSpace;
-
 #endregion
-
 namespace MapGISPlugin3
 {
     public partial class Form_MagCorrelationImaging : Form
@@ -81,13 +79,13 @@ namespace MapGISPlugin3
         }
         #endregion
 
-        #region 4. TreeView 填充逻辑 (增强了空检查和 COM 释放)
+        #region 4. TreeView 填充逻辑 (已修正 COM 释放错误)
         private void PopulateTreeView()
         {
             treeViewLayers.Nodes.Clear();
             Document doc = m_Hook.Document;
-            Maps maps = null; // 移到外部以便释放
-            Map map = null;   // 移到外部以便释放
+            Maps maps = null; // 移到外部以便 finally 访问
+            Map map = null;   // 移到外部以便 finally 访问
 
             if (doc == null) { ShowError("Document 对象为空，无法填充图层列表。", "环境错误"); return; }
             try
@@ -104,7 +102,9 @@ namespace MapGISPlugin3
                     treeViewLayers.Nodes.Add(mapNode);
                     Console.WriteLine($"[PopulateTreeView] 添加地图节点: {map.Name}");
                     AddLayersToNode(mapNode, map);
-                    Marshal.ReleaseComObject(map); // 释放当前 map
+
+                    // *** 修正: 移除 Marshal.ReleaseComObject(map) ***
+                    // 该对象由 Document 管理，且图层被 Tag 引用
                     map = null;
                 }
                 if (treeViewLayers.Nodes.Count > 0)
@@ -120,9 +120,9 @@ namespace MapGISPlugin3
             }
             finally
             {
-                // 确保释放 COM 对象
-                if (map != null) try { Marshal.ReleaseComObject(map); } catch { }
-                if (maps != null) try { Marshal.ReleaseComObject(maps); } catch { }
+                // *** 修正: 移除这里的 Marshal.ReleaseComObject ***
+                // 这些对象由 Document 管理，且图层被 Tag 引用，不能在此释放
+                Console.WriteLine("[PopulateTreeView] finally 块执行完毕。");
             }
         }
 
@@ -130,26 +130,27 @@ namespace MapGISPlugin3
         {
             if (map == null || parentNode == null) return;
             Console.WriteLine($"[AddLayersToNode] 遍历地图 '{map.Name}' 下的 {map.LayerCount} 个图层...");
-            MapLayer layer = null; // 移到外部以便释放
+            MapLayer layer = null;
             try
             {
                 for (int i = 0; i < map.LayerCount; i++)
                 {
-                    // 释放上一次循环的 layer
-                    if (layer != null) { try { Marshal.ReleaseComObject(layer); } catch { } layer = null; }
-
+                    // *** 修正: 移除循环内的 Marshal.ReleaseComObject ***
                     layer = map.get_Layer(i);
                     if (layer != null)
                     {
                         ProcessLayer(parentNode, layer);
                     }
                     else { Console.WriteLine($"[AddLayersToNode] 地图 '{map.Name}' 第 {i} 层为 null。"); }
+
+                    // *** 修正: 不释放 layer，它可能已存入 Tag ***
+                    layer = null;
                 }
             }
             catch (Exception ex) { Console.WriteLine($"[AddLayersToNode] 遍历地图 '{map.Name}' 图层时出错: {ex.Message}"); }
             finally
             {
-                if (layer != null) try { Marshal.ReleaseComObject(layer); } catch { }
+                // *** 修正: 移除这里的 Marshal.ReleaseComObject ***
             }
         }
 
@@ -157,42 +158,42 @@ namespace MapGISPlugin3
         {
             if (groupLayer == null || parentNode == null) return;
             Console.WriteLine($"[AddLayersToNode] 遍历组 '{groupLayer.Name}' 下 {groupLayer.Count} 层...");
-            MapLayer layer = null; // 移到外部以便释放
+            MapLayer layer = null;
             try
             {
                 for (int i = 0; i < groupLayer.Count; i++)
                 {
-                    // 释放上一次循环的 layer
-                    if (layer != null) { try { Marshal.ReleaseComObject(layer); } catch { } layer = null; }
-
+                    // *** 修正: 移除循环内的 Marshal.ReleaseComObject ***
                     layer = groupLayer.get_Item(i);
                     if (layer != null) { ProcessLayer(parentNode, layer); }
                     else { Console.WriteLine($"[AddLayersToNode] 组 '{groupLayer.Name}' 第 {i} 子层为 null。"); }
+
+                    // *** 修正: 不释放 layer，它可能已存入 Tag ***
+                    layer = null;
                 }
             }
             catch (Exception ex) { Console.WriteLine($"[AddLayersToNode] 遍历组 '{groupLayer.Name}' 图层时出错: {ex.Message}"); }
             finally
             {
-                if (layer != null) try { Marshal.ReleaseComObject(layer); } catch { }
+                // *** 修正: 移除这里的 Marshal.ReleaseComObject ***
             }
         }
 
         private void ProcessLayer(TreeNode parentNode, MapLayer layer)
         {
             if (layer == null || parentNode == null) return;
-            GroupLayer currentGroup = null; // 用于释放
             try
             {
                 if (layer is GroupLayer)
                 {
-                    currentGroup = layer as GroupLayer;
+                    GroupLayer currentGroup = layer as GroupLayer;
                     Console.WriteLine($"[ProcessLayer] 处理组: {currentGroup.Name}");
                     if (!IsRecursiveGroup(parentNode, currentGroup))
-                    { // 添加递归检查
+                    {
                         TreeNode groupNode = new TreeNode(currentGroup.Name);
-                        groupNode.Tag = currentGroup; // Tag group layer too
+                        groupNode.Tag = currentGroup; // Tag group layer
                         parentNode.Nodes.Add(groupNode);
-                        AddLayersToNode(groupNode, currentGroup); // 递归
+                        AddLayersToNode(groupNode, currentGroup);
                     }
                     else { Console.WriteLine($"[ProcessLayer] 检测到递归组 '{currentGroup.Name}'。"); }
                 }
@@ -200,10 +201,9 @@ namespace MapGISPlugin3
                 {
                     Console.WriteLine($"[ProcessLayer] 添加栅格节点: {layer.Name}");
                     TreeNode layerNode = new TreeNode(layer.Name);
-                    layerNode.Tag = layer; // 将图层对象存入 Tag
+                    layerNode.Tag = layer; // Tag raster layer
                     parentNode.Nodes.Add(layerNode);
                 }
-                else { /* Console.WriteLine($"[ProcessLayer] 跳过: {layer.Name} ..."); */ }
             }
             catch (Exception ex)
             {
@@ -211,8 +211,7 @@ namespace MapGISPlugin3
             }
             finally
             {
-                // 注意：存储在 Tag 中的 Layer 对象需要在 TreeNode 移除或窗体关闭时考虑释放
-                // GroupLayer 对象也应在合适时机释放，但 ProcessLayer 本身不适合做这个操作
+                // (layer 对象不在此处释放，它被 Tag 引用)
             }
         }
 
@@ -222,8 +221,8 @@ namespace MapGISPlugin3
         private bool IsRecursiveGroup(TreeNode parentNode, GroupLayer currentGroup)
         {
             TreeNode current = parentNode;
-            int depth = 0; // 防止无限循环
-            while (current != null && depth < 20) // 限制检查深度
+            int depth = 0;
+            while (current != null && depth < 20)
             {
                 if (object.ReferenceEquals(current.Tag, currentGroup)) return true;
                 current = current.Parent;
@@ -238,6 +237,8 @@ namespace MapGISPlugin3
         {
             this.Cursor = Cursors.WaitCursor;
             // ================== 步骤 1: 执行前预检查 ==================
+            ShowInfo("调试点 1: 开始执行 btnOK_Click 事件。", "流程追踪");
+
             TreeNode selectedNode = treeViewLayers.SelectedNode;
             RasterLayer selectedRasterLayer = selectedNode?.Tag as RasterLayer;
             if (selectedRasterLayer == null)
@@ -297,10 +298,12 @@ namespace MapGISPlugin3
             try
             {
                 // ================== 步骤 2: 导出中间文件并执行算法 ==================
+                ShowInfo("调试点 2: 预检查通过，准备导出栅格到 GRD 文件。", "流程追踪");
                 tempGrdPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName() + ".grd");
                 Console.WriteLine($"[btnOK_Click] 导出栅格到: {tempGrdPath}");
                 if (!ExportRasterToGrd(this.SelectedRasterLayer, tempGrdPath)) { return; }
                 Console.WriteLine($"[btnOK_Click] 导出 GRD 成功。");
+                ShowInfo("调试点 3: GRD 文件导出成功，准备执行外部算法 a.exe。", "流程追踪");
 
                 string pluginPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
                 string algorithmDir = Path.Combine(pluginPath, "Algorithm", "MagCorrelationImaging");
@@ -312,6 +315,8 @@ namespace MapGISPlugin3
                 Console.WriteLine($"[btnOK_Click] 执行算法...");
                 ExecuteAlgorithm(exePath, tempGrdPath, this.Inclination, this.Declination);
                 Console.WriteLine($"[btnOK_Click] 算法执行完毕。");
+                ShowInfo("调试点 4: 外部算法执行完毕，准备转换 result.dat 文件。", "流程追踪");
+
 
                 // ================== 步骤 3: 强制转换DAT到SFCLS ==================
                 resultDatPath = Path.Combine(Path.GetDirectoryName(exePath), "result.dat");
@@ -326,16 +331,23 @@ namespace MapGISPlugin3
 
                 if (string.IsNullOrEmpty(actualGdbPath)) { Console.WriteLine("[btnOK_Click] ConvertDatToSfclsInGdb 失败。"); return; }
                 Console.WriteLine($"[btnOK_Click] ConvertDatToSfclsInGdb 成功，GDB 路径: {actualGdbPath}");
+                ShowInfo("调试点 5: result.dat 成功转换为 GDB 中的 SFCLS。\nGDB路径: " + actualGdbPath, "流程追踪");
+
 
                 // ================== 步骤 4: 加载图层 ==================
                 Console.WriteLine($"[btnOK_Click] 加载图层: {actualGdbPath}");
+                ShowInfo("调试点 6: 准备调用 AddLayerToView 加载 SFCLS 点图层。", "流程追踪");
                 AddLayerToView(actualGdbPath);
                 Console.WriteLine($"[btnOK_Click] 加载图层完成。");
+                ShowInfo("调试点 7: SFCLS 点图层加载函数执行完毕。", "流程追踪");
+
                 // ================== 步骤 4.5: 执行自动属性建模 ==================
                 Console.WriteLine($"[btnOK_Click] 开始自动属性建模...");
+                ShowInfo("调试点 8: 准备执行属性建模...", "流程追踪");
                 string dbName = gdbDirectory.Trim('/');
                 string modelName = GetNameFromGdbPath(actualGdbPath);
                 PerformAttributeModeling(actualGdbPath, dbName, modelName);
+                ShowInfo("调试点 9: 属性建模函数执行完毕。", "流程追踪");
                 // ===============================================================
                 // ================== 步骤 5: 成功提示 ==================
                 ShowInfo($"操作成功！\n点要素类已在 GDB 中创建并加载。\nGDB 路径: {actualGdbPath}", "操作完成");
@@ -350,6 +362,8 @@ namespace MapGISPlugin3
                 // 清理临时文件
                 if (!string.IsNullOrEmpty(tempGrdPath) && File.Exists(tempGrdPath)) { try { File.Delete(tempGrdPath); } catch (Exception ex) { Console.WriteLine($"[btnOK_Click] 清理 GRD 文件失败: {ex.Message}"); } }
                 this.Cursor = Cursors.Default;
+                ShowInfo("调试点 10: btnOK_Click 事件所有流程执行完毕，进入 finally 块。", "流程追踪");
+
 
                 // 自动关闭处理
                 if (this.Modal)
@@ -455,7 +469,7 @@ namespace MapGISPlugin3
                 RedirectStandardOutput = true,
                 RedirectStandardError = true
             };
-            ShowInfo("即将开始执行外部关联反演算法...", "提示");
+            // ShowInfo("即将开始执行外部关联反演算法...", "提示"); // 这个弹窗比较频繁，暂时注释
             Console.WriteLine($"[ExecuteAlgorithm] 执行: {exePath} {startInfo.Arguments}");
             Stopwatch stopwatch = Stopwatch.StartNew(); Process process = null;
             try
@@ -578,8 +592,13 @@ namespace MapGISPlugin3
         /// <param name="sfcGdbPath">输入的点要素类 GDBP 路径</param>
         /// <param name="dbName">GDB 数据库名称 (例如 "Temporary")</param>
         /// <param name="modelName">希望输出的模型名称</param>
+        /// <summary>
+        /// 执行自动属性建模 (增强调试版)
+        /// </summary>
         private void PerformAttributeModeling(string sfcGdbPath, string dbName, string modelName)
         {
+            ShowInfo("[调试][建模] 1. 进入 PerformAttributeModeling 函数。", "建模追踪");
+
             // 1. 准备建模引擎
             GeoGisVolDataModel dataModel = new GeoGisVolDataModel();
 
@@ -592,52 +611,42 @@ namespace MapGISPlugin3
             int pWidth = 0, pHeight = 0;
             List<int> pImage = new List<int>();
 
+            // 【关键修改点 1】：将 finally 块移到最外层，确保最后的弹窗一定会出现
             try
             {
                 // === 3. 从 SFeatureCls 读取数据到内存 ===
                 using (SFeatureCls sfc = new SFeatureCls())
                 {
+                    ShowInfo("[调试][建模] 2. 准备从 SFCLS 读取点数据...", "建模追踪");
                     if (!sfc.Open(sfcGdbPath))
                     {
                         ShowError($"[建模] 无法打开刚创建的 SFeatureCls: {sfcGdbPath}", "建模失败");
                         return;
                     }
 
-                    Console.WriteLine($"[建模] 正在从 {sfc.ClsName} 读取点数据...");
-
-                    // 调用引擎的读取方法
-                    int readResult = dataModel.GeoGisGetVolDataByPntSfcls(
-                        sfc,         // 打开的 SFeatureCls
-                        "Value",     // 我们硬编码的属性字段
-                        ref dotList, // [ref] 输出的点列表
-                        ref valueList, // [ref] 输出的值列表
-                        ref dataRange, // [ref] 输出的数据范围
-                        ref pWidth,    // [out] 虚拟参数 (我们不需要)
-                        ref pHeight,   // [out] 虚拟参数 (我们不需要)
-                        ref pImage     // [out] 虚拟参数 (我们不需要)
-                    );
+                    int readResult = dataModel.GeoGisGetVolDataByPntSfcls(sfc, "Value", ref dotList, ref valueList, ref dataRange, ref pWidth, ref pHeight, ref pImage);
 
                     if (readResult <= 0 || dotList.Count == 0)
                     {
                         ShowError($"[建模] 从 SFeatureCls 读取数据失败。引擎返回代码: {readResult}", "建模失败");
                         return;
                     }
-                    Console.WriteLine($"[建模] 数据读取完毕: {dotList.Count} 个点。");
+                    ShowInfo($"[调试][建模] 3. SFCLS 数据读取完成，共 {dotList.Count} 个点。", "建模追踪");
                 }
 
                 // === 4. 准备建模参数 ===
                 GeoVolModelingParam modelParams = new GeoVolModelingParam();
                 modelParams.ModelName = modelName;
                 modelParams.InterType = (GeoVolInterType)3; // 3 = InvDist (反距离加权)
-                modelParams.SearchParam = new SearchRangeParam(); // 使用默认搜索参数
-                modelParams.WorkArea = dataRange; // 使用刚读取到的真实范围
+                modelParams.SearchParam = new SearchRangeParam();
+                modelParams.WorkArea = dataRange;
                 modelParams.OrientDot = new Dot3D(dataRange.XMin, dataRange.YMin, dataRange.ZMin);
-
-                // 【关键】设置时间戳，因为 API 需要它
                 modelParams.CurrentTime = GetCurrentTimestamp();
 
-                // 设置分辨率 (硬编码为 X/Y/Z 各 100 个单元格)
-                int resolution = 3;
+                // 【关键修改点 2】：修改分辨率为一个更合理的值
+                // int resolution = 3; // 原来的值太小，非常可疑
+                int resolution = 2; // 修改为一个更常规的值，例如100x100x100的网格
+
                 double stepX = (dataRange.XMax - dataRange.XMin) / resolution;
                 double stepY = (dataRange.YMax - dataRange.YMin) / resolution;
                 double stepZ = (dataRange.ZMax - dataRange.ZMin) / resolution;
@@ -648,38 +657,55 @@ namespace MapGISPlugin3
 
                 // === 5. 准备输出数据库路径 ===
                 string outputDbUrl = $"gdbp://MapGisLocalPlus/{dbName}";
-                Console.WriteLine($"[建模] 建模参数准备完毕。输出到: {outputDbUrl}, 模型名: {modelName}");
+
+                // 【关键修改点 3】：在调用前，弹窗显示所有重要参数
+                StringBuilder sb = new StringBuilder();
+                sb.AppendLine("[调试][建模] 4. 建模参数准备完毕，即将调用核心引擎。");
+                sb.AppendLine("------------------------------------");
+                sb.AppendLine($"点数量: {dotList.Count}");
+                sb.AppendLine($"输出数据库: {outputDbUrl}");
+                sb.AppendLine($"模型名称: {modelName}");
+                sb.AppendLine($"数据范围 X: {dataRange.XMin} -> {dataRange.XMax}");
+                sb.AppendLine($"数据范围 Y: {dataRange.YMin} -> {dataRange.YMax}");
+                sb.AppendLine($"数据范围 Z: {dataRange.ZMin} -> {dataRange.ZMax}");
+                sb.AppendLine($"网格步长 (StepX, StepY, StepZ):");
+                sb.AppendLine($"  ({modelParams.GridStep.X}, {modelParams.GridStep.Y}, {modelParams.GridStep.Z})");
+                sb.AppendLine("------------------------------------");
+                sb.AppendLine("点击“确定”后将调用建模函数。如果程序卡住，请检查以上参数是否合理。");
+                ShowInfo(sb.ToString(), "调用前参数检查");
 
                 // === 6. 执行建模 ===
-                string newLayerUrl = ""; // 接收新图层的 GDBP 路径
-                Console.WriteLine("[建模] 调用 GeoGisVolDataToVoxelDataSet...");
+                string newLayerUrl = "";
+                int modelResult = -1; // 初始化为失败
 
-                int modelResult = dataModel.GeoGisVolDataToVoxelDataSet(
-                    dotList,       // 1. 点列表
-                    valueList,     // 2. 值列表
-                    outputDbUrl,   // 3. 数据库 URL
-                    ref newLayerUrl, // 4. [ref] 新图层 URL
-                    modelParams    // 5. 建模参数
+                modelResult = dataModel.GeoGisVolDataToVoxelDataSet(
+                    dotList, valueList, outputDbUrl, ref newLayerUrl, modelParams
                 );
+
+                ShowInfo($"[调试][建模] 5. 核心建模引擎调用返回，结果代码: {modelResult}", "建模追踪");
 
                 // === 7. 处理结果 ===
                 if (modelResult > 0 && !string.IsNullOrEmpty(newLayerUrl))
                 {
                     Console.WriteLine($"[建模] 属性建模成功！新图层: {newLayerUrl}");
-                    ShowInfo($"属性建模成功！\n已自动加载栅格元数据。", "建模完成");
-                    // 自动加载新图层
+                    ShowInfo($"[调试][建模] 6. 建模成功！准备调用 AddLayerToView 加载新模型图层...", "建模追踪");
                     AddLayerToView(newLayerUrl);
+                    ShowInfo($"[调试][建模] 7. 模型图层加载函数执行完毕。", "建模追踪");
                 }
                 else
                 {
                     ShowError($"属性建模失败！引擎返回代码: {modelResult}", "建模失败");
-                    Console.WriteLine($"[建模] 属性建模失败！引擎返回代码: {modelResult}");
                 }
             }
             catch (Exception ex)
             {
                 ShowError($"执行属性建模时发生严重错误: {ex.Message}", "建模异常");
                 Console.WriteLine($"[建模] 严重错误: {ex.ToString()}");
+            }
+            finally
+            {
+                // 【关键修改点 4】：添加一个 finally 块确保这个弹窗总是出现
+                ShowInfo("[调试][建模] 8. 退出 PerformAttributeModeling 函数（无论成功或失败）。", "建模追踪");
             }
         }
 
@@ -852,7 +878,8 @@ namespace MapGISPlugin3
         {
             // 检查 MapGIS 环境是否有效
             if (m_Hook == null || m_Hook.Document == null) { ShowError("MapGIS 环境无效，无法加载图层。"); return; }
-            Console.WriteLine($"[AddLayerToView] 使用 GMRunTime 添加图层到三维场景: {layerGdbPath}");
+            ShowInfo($"[调试][加载] 1. 进入 AddLayerToView 函数。\n待加载图层: {layerGdbPath}", "加载追踪");
+
             // 检查传入的 GDB 路径是否为空
             if (string.IsNullOrEmpty(layerGdbPath)) { ShowWarning("传入的 GDB 路径为空，无法加载图层。"); return; }
 
@@ -863,6 +890,7 @@ namespace MapGISPlugin3
             try
             {
                 // 获取文档中的所有三维场景
+                ShowInfo("[调试][加载] 2. 准备获取三维场景列表...", "加载追踪");
                 scenes = m_Hook.Document.GetScenes();
                 // 检查是否至少有一个场景存在
                 if (scenes == null || scenes.Count == 0)
@@ -880,6 +908,8 @@ namespace MapGISPlugin3
                     Console.WriteLine("[AddLayerToView] 错误: GetScene(0) 返回 null。");
                     return;
                 }
+                ShowInfo($"[调试][加载] 3. 成功获取到三维场景 '{scene.Name}'。", "加载追踪");
+
 
                 Console.WriteLine($"[AddLayerToView] 找到三维场景 '{scene.Name}'。正在调用 GMRunTime.AddLayer...");
 
@@ -889,6 +919,7 @@ namespace MapGISPlugin3
                 // 如果编译器找不到 GMRunTime，请添加对应的 using MapGIS.PlugUtility;
                 try
                 {
+                    ShowInfo("[调试][加载] 4. 即将调用 GMRunTime.AddLayer...", "加载追踪");
                     // 使用从示例代码中看到的神秘数字
                     GMRunTime.AddLayer(
                         (DocumentItem)(object)scene, // 将 Scene 对象作为父对象传递
@@ -898,13 +929,16 @@ namespace MapGISPlugin3
                         isVisible: true); // 设置图层可见
 
                     Console.WriteLine("[AddLayerToView] GMRunTime.AddLayer 调用成功。");
+                    ShowInfo("[调试][加载] 5. GMRunTime.AddLayer 调用成功。", "加载追踪");
 
                     // 可选：刷新工作空间树 (这个操作通常比较安全)
                     try
                     {
+                        ShowInfo("[调试][加载] 6. 准备刷新工作空间树...", "加载追踪");
                         m_Hook.WorkSpaceEngine.BeginUpdateTree();
                         m_Hook.WorkSpaceEngine.EndUpdateTree();
                         Console.WriteLine("[AddLayerToView] 工作空间树已刷新。");
+                        ShowInfo("[调试][加载] 7. 工作空间树刷新完毕。", "加载追踪");
                     }
                     catch (Exception treeEx) { Console.WriteLine($"[AddLayerToView] 刷新工作空间树时出错: {treeEx.Message}"); }
 
@@ -912,12 +946,15 @@ namespace MapGISPlugin3
                     SceneControl sceneCtrl = null;
                     try
                     {
+                        ShowInfo("[调试][加载] 8. 准备获取 SceneControl 并刷新视图...", "加载追踪");
                         sceneCtrl = m_Hook.WorkSpaceEngine.GetSceneControl(scene);
                         if (sceneCtrl != null)
                         {
                             Console.WriteLine("[AddLayerToView] 尝试刷新场景视图...");
                             // sceneCtrl.Reset();   // 缩放到全图范围 (可能会触发大量渲染，导致卡顿)
+                            ShowWarning("关键调试点：下一步将调用 sceneCtrl.Refresh()。\n\n如果程序在此之后卡死，则问题就出在视图刷新这一步。\n这通常是因为数据量过大，UI线程被长时间阻塞。", "高危操作警告");
                             sceneCtrl.Refresh(); // 强制重绘 (也可能导致卡顿)
+                            ShowInfo("[调试][加载] 9. sceneCtrl.Refresh() 调用已返回（程序未卡死）。", "加载追踪");
                             Console.WriteLine("[AddLayerToView] 场景视图刷新指令已发送。");
                         }
                         else
@@ -964,7 +1001,7 @@ namespace MapGISPlugin3
                 // 确保释放场景列表和场景 COM 对象
                 if (scene != null) try { Marshal.ReleaseComObject(scene); Console.WriteLine("[AddLayerToView] Released scene."); } catch { }
                 if (scenes != null) try { Marshal.ReleaseComObject(scenes); Console.WriteLine("[AddLayerToView] Released scenes."); } catch { }
-                Console.WriteLine("[AddLayerToView] finally 块执行完毕。");
+                ShowInfo("[调试][加载] 10. 退出 AddLayerToView 函数。", "加载追踪");
             }
         }
         /// <summary>
