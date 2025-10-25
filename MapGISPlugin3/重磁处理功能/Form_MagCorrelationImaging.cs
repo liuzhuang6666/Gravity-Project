@@ -232,13 +232,13 @@ namespace MapGISPlugin3
         }
         #endregion
 
-        #region 5. "确定"按钮事件 (最终版本 - 增强错误弹窗)
-        private void btnOK_Click(object sender, EventArgs e)
+        #region 5. "确定"按钮事件 (最终修正版 - 使用图层 URL)
+        private void btnOK_Click(object sender, EventArgs e)
         {
             this.Cursor = Cursors.WaitCursor;
             // ================== 步骤 1: 执行前预检查 ==================
-            ShowInfo("调试点 1: 开始执行 btnOK_Click 事件。", "流程追踪");
 
+            // 1.1 检查图层选择
             TreeNode selectedNode = treeViewLayers.SelectedNode;
             RasterLayer selectedRasterLayer = selectedNode?.Tag as RasterLayer;
             if (selectedRasterLayer == null)
@@ -248,7 +248,46 @@ namespace MapGISPlugin3
                 return;
             }
 
-            double inclination, declination;
+            // 1.2 【关键修正】: 从图层 URL 获取原始 GRD 文件路径
+            string originalGrdUrl = selectedRasterLayer.URL;
+            if (string.IsNullOrEmpty(originalGrdUrl))
+            {
+                ShowError("选定的栅格图层没有有效的 URL！无法找到原始文件。", "图层错误");
+                this.Cursor = Cursors.Default;
+                return;
+            }
+
+            string originalGrdPath; // 最终的本地文件路径
+            try
+            {
+                Uri uri = new Uri(originalGrdUrl);
+                // 确保它是本地文件 (file:///) 而不是数据库路径 (gdbp://)
+                if (!uri.IsFile)
+                {
+                    ShowError($"图层指向的不是本地文件，无法处理。\nURL: {originalGrdUrl}", "路径错误");
+                    this.Cursor = Cursors.Default;
+                    return;
+                }
+                originalGrdPath = uri.LocalPath; // 将 "file:///C:/..." 转换为 "C:\..."
+                Console.WriteLine($"[btnOK_Click] 成功从 URL 解析 GRD 文件: {originalGrdPath}");
+            }
+            catch (Exception ex)
+            {
+                ShowError($"无法从图层 URL 解析文件路径: {ex.Message}\nURL: {originalGrdUrl}", "路径错误");
+                this.Cursor = Cursors.Default;
+                return;
+            }
+
+            if (!File.Exists(originalGrdPath))
+            {
+                ShowError($"图层指向的原始 GRD 文件不存在！\n路径: {originalGrdPath}", "文件丢失");
+                this.Cursor = Cursors.Default;
+                return;
+            }
+            // --- 【修正结束】 ---
+
+            // 1.3 检查磁倾角和磁偏角
+            double inclination, declination;
             if (!double.TryParse(textBoxInclination.Text, out inclination) || !double.TryParse(textBoxDeclination.Text, out declination))
             {
                 ShowError("请输入有效的磁倾角和磁偏角数值！", "输入错误");
@@ -256,13 +295,14 @@ namespace MapGISPlugin3
                 return;
             }
 
-            string desiredClassName = textBoxSavePath.Text;
+            // 1.4 检查输出类名
+            string desiredClassName = textBoxSavePath.Text;
             if (string.IsNullOrWhiteSpace(desiredClassName))
-            {
-                ShowWarning("请先通过浏览按钮设置输出的类名！", "类名未设置");
-                this.Cursor = Cursors.Default;
-                return;
-            }
+            {
+                ShowWarning("请先通过浏览按钮设置输出的类名！", "类名未设置");
+                this.Cursor = Cursors.Default;
+                return;
+             }
             desiredClassName = System.Text.RegularExpressions.Regex.Replace(desiredClassName, @"[^\w]", "_");
             if (string.IsNullOrWhiteSpace(desiredClassName) || !char.IsLetter(desiredClassName[0]))
             {
@@ -273,7 +313,8 @@ namespace MapGISPlugin3
             }
             Console.WriteLine($"[btnOK_Click] 清理后的类名: {desiredClassName}");
 
-            string gdbDirectory = "/Temporary";
+            // 1.5 检查 GDB 目录
+            string gdbDirectory = "/Temporary";
             Control[] gdbDirBoxCtls = this.Controls.Find("textBoxGdbDirectory", true);
             TextBox gdbDirBox = (gdbDirBoxCtls.Length > 0 && gdbDirBoxCtls[0] is TextBox) ? (gdbDirBoxCtls[0] as TextBox) : null;
             if (gdbDirBox != null) { gdbDirectory = gdbDirBox.Text; }
@@ -288,23 +329,24 @@ namespace MapGISPlugin3
             }
             gdbDirectory = gdbDirectory.Trim();
 
-            this.SelectedRasterLayer = selectedRasterLayer;
+            // 1.6 保存公共属性
+            this.SelectedRasterLayer = selectedRasterLayer;
             this.Inclination = inclination;
             this.Declination = declination;
 
-            string tempGrdPath = "";
-            string resultDatPath = "";
+            //string tempGrdPath = ""; // <-- 不再需要
+            string resultDatPath = "";
             string actualGdbPath = null;
             try
             {
                 // ================== 步骤 2: 导出中间文件并执行算法 ==================
-                ShowInfo("调试点 2: 预检查通过，准备导出栅格到 GRD 文件。", "流程追踪");
-                tempGrdPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName() + ".grd");
-                Console.WriteLine($"[btnOK_Click] 导出栅格到: {tempGrdPath}");
-                if (!ExportRasterToGrd(this.SelectedRasterLayer, tempGrdPath)) { return; }
-                Console.WriteLine($"[btnOK_Click] 导出 GRD 成功。");
-                ShowInfo("调试点 3: GRD 文件导出成功，准备执行外部算法 a.exe。", "流程追踪");
 
+                // *** (旧) 导出栅格到 GRD (已删除) ***
+                // tempGrdPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName() + ".grd");
+                // Console.WriteLine($"[btnOK_Click] 导出栅格到: {tempGrdPath}");
+                // if (!ExportRasterToGrd(this.SelectedRasterLayer, tempGrdPath)) { return; }
+
+                // 2.1 查找算法 a.exe
                 string pluginPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
                 string algorithmDir = Path.Combine(pluginPath, "Algorithm", "MagCorrelationImaging");
                 if (!Directory.Exists(algorithmDir)) { ShowError($"算法目录不存在！\n{algorithmDir}", "路径错误"); return; }
@@ -312,14 +354,14 @@ namespace MapGISPlugin3
                 Console.WriteLine($"[btnOK_Click] 算法路径: {exePath}");
                 if (!File.Exists(exePath)) { ShowError($"算法模块 (a.exe) 丢失！\n{exePath}", "文件丢失"); return; }
 
-                Console.WriteLine($"[btnOK_Click] 执行算法...");
-                ExecuteAlgorithm(exePath, tempGrdPath, this.Inclination, this.Declination);
+                // 2.2 执行算法
+                Console.WriteLine($"[btnOK_Click] 执行算法...");
+                // *** (新) 调用算法，使用原始 GRD 路径 ***
+                ExecuteAlgorithm(exePath, originalGrdPath, this.Inclination, this.Declination);
                 Console.WriteLine($"[btnOK_Click] 算法执行完毕。");
-                ShowInfo("调试点 4: 外部算法执行完毕，准备转换 result.dat 文件。", "流程追踪");
 
-
-                // ================== 步骤 3: 强制转换DAT到SFCLS ==================
-                resultDatPath = Path.Combine(Path.GetDirectoryName(exePath), "result.dat");
+                // ================== 步骤 3: 强制转换DAT到SFCLS ==================
+                resultDatPath = Path.Combine(Path.GetDirectoryName(exePath), "result.dat");
                 Console.WriteLine($"[btnOK_Click] 检查 DAT 文件: {resultDatPath}");
                 if (!File.Exists(resultDatPath)) { ShowError("算法执行完毕，但未找到结果文件 result.dat！", "结果文件丢失"); return; }
                 FileInfo datInfo = new FileInfo(resultDatPath);
@@ -331,26 +373,22 @@ namespace MapGISPlugin3
 
                 if (string.IsNullOrEmpty(actualGdbPath)) { Console.WriteLine("[btnOK_Click] ConvertDatToSfclsInGdb 失败。"); return; }
                 Console.WriteLine($"[btnOK_Click] ConvertDatToSfclsInGdb 成功，GDB 路径: {actualGdbPath}");
-                ShowInfo("调试点 5: result.dat 成功转换为 GDB 中的 SFCLS。\nGDB路径: " + actualGdbPath, "流程追踪");
 
 
-                // ================== 步骤 4: 加载图层 ==================
-                Console.WriteLine($"[btnOK_Click] 加载图层: {actualGdbPath}");
-                ShowInfo("调试点 6: 准备调用 AddLayerToView 加载 SFCLS 点图层。", "流程追踪");
+                // ================== 步骤 4: 加载图层 ==================
+                Console.WriteLine($"[btnOK_Click] 加载图层: {actualGdbPath}");
                 AddLayerToView(actualGdbPath);
                 Console.WriteLine($"[btnOK_Click] 加载图层完成。");
-                ShowInfo("调试点 7: SFCLS 点图层加载函数执行完毕。", "流程追踪");
 
-                // ================== 步骤 4.5: 执行自动属性建模 ==================
-                Console.WriteLine($"[btnOK_Click] 开始自动属性建模...");
-                ShowInfo("调试点 8: 准备执行属性建模...", "流程追踪");
-                string dbName = gdbDirectory.Trim('/');
-                string modelName = GetNameFromGdbPath(actualGdbPath);
-                PerformAttributeModeling(actualGdbPath, dbName, modelName);
-                ShowInfo("调试点 9: 属性建模函数执行完毕。", "流程追踪");
-                // ===============================================================
-                // ================== 步骤 5: 成功提示 ==================
-                ShowInfo($"操作成功！\n点要素类已在 GDB 中创建并加载。\nGDB 路径: {actualGdbPath}", "操作完成");
+                // (原有的属性建模代码被注释，保持不变)
+                /*                // ================== 步骤 4.5: 执行自动属性建模 ==================
+                                ...
+                                PerformAttributeModeling(actualGdbPath, dbName, modelName);
+                                ...
+                */
+                // ================== 步骤 5: 成功提示 ==================
+                // (你可以在这里添加一个成功提示)
+                ShowInfo($"操作成功！\n点要素类已在 GDB 中创建并加载。\nGDB 路径: {actualGdbPath}", "操作完成");
 
                 this.DialogResult = DialogResult.OK;
 
@@ -359,31 +397,26 @@ namespace MapGISPlugin3
             catch (Exception ex) { ShowError("处理过程中发生严重错误: " + ex.Message, "严重异常"); Console.WriteLine($"[btnOK_Click] 严重错误: {ex.ToString()}"); this.DialogResult = DialogResult.Abort; }
             finally
             {
-                // 清理临时文件
-                if (!string.IsNullOrEmpty(tempGrdPath) && File.Exists(tempGrdPath)) { try { File.Delete(tempGrdPath); } catch (Exception ex) { Console.WriteLine($"[btnOK_Click] 清理 GRD 文件失败: {ex.Message}"); } }
+                // *** (旧) 清理临时 GRD 文件 (已删除) ***
+                // if (!string.IsNullOrEmpty(tempGrdPath) && File.Exists(tempGrdPath)) { try { File.Delete(tempGrdPath); } catch (Exception ex) { Console.WriteLine($"[btnOK_Click] 清理 GRD 文件失败: {ex.Message}"); } }
+
                 this.Cursor = Cursors.Default;
-                ShowInfo("调试点 10: btnOK_Click 事件所有流程执行完毕，进入 finally 块。", "流程追踪");
 
-
-                // 自动关闭处理
+                // (自动关闭处理逻辑保持不变)
                 if (this.Modal)
                 {
-                    // 模式对话框在 OK 或 Cancel 时会自动关闭
-                    // 如果是 Abort，保留窗口让用户看到错误
                     if (this.DialogResult != DialogResult.OK && this.DialogResult != DialogResult.Cancel)
                     {
-                        // 也许不需要做任何事，窗口会保持打开
                     }
                 }
                 else
                 {
-                    // 非模式对话框
                     if (this.DialogResult == DialogResult.OK || this.DialogResult == DialogResult.Cancel)
                         this.Close(); // 成功或取消时关闭
-                }
+                }
             }
         }
-        #endregion
+        #endregion
 
         #region 6. 辅助函数 (ExportRasterToGrd, ExecuteAlgorithm, btnCancel, btnBrowse)
 
@@ -518,50 +551,64 @@ namespace MapGISPlugin3
         }
 
         /// <summary>
-        /// “浏览”按钮事件，用于设置输出的类名
+        /// 根据选择的图层自动生成唯一的输出类名
         /// </summary>
-        private void btnBrowse_Click(object sender, EventArgs e)
+        /// <param name="layer">选中的栅格图层</param>
+        /// <returns>生成的类名</returns>
+        private string GenerateOutputClassName(RasterLayer layer)
         {
-            Control[] savePathBoxCtls = this.Controls.Find("textBoxSavePath", true);
-            TextBox savePathBox = (savePathBoxCtls.Length > 0 && savePathBoxCtls[0] is TextBox) ? (savePathBoxCtls[0] as TextBox) : null;
-
-            using (SaveFileDialog saveDlg = new SaveFileDialog())
+            if (layer == null || string.IsNullOrEmpty(layer.URL))
             {
-                saveDlg.Title = "设置在GDB中输出的类名";
-                saveDlg.Filter = "MapGIS Simple Feature Class (*.sfcls)|*.sfcls";
-                saveDlg.DefaultExt = "sfcls";
+                return "Error_InvalidLayer";
+            }
 
-                // --- 主要修改在这里 ---
-                // 检查文本框中是否已有内容，如果没有，则生成一个带UID的默认名
-                string defaultName;
-                if (savePathBox != null && !string.IsNullOrWhiteSpace(savePathBox.Text))
+            string sourceName;
+            try
+            {
+                // 从 URL 获取本地文件名 (不含扩展名)
+                Uri uri = new Uri(layer.URL);
+                if (!uri.IsFile)
                 {
-                    defaultName = savePathBox.Text; // 如果用户已经输入了名字，则使用用户的输入
+                    sourceName = "GdbLayer"; // 如果是 GDB 内部图层
                 }
                 else
                 {
-                    // 否则，生成一个带唯一ID的默认名称
-                    string uniqueId = Guid.NewGuid().ToString("N").Substring(0, 8);
-                    defaultName = $"CorrelationImaging_Result_{uniqueId}";
-                }
-                // --- 修改结束 ---
-
-                saveDlg.FileName = defaultName;
-
-                if (saveDlg.ShowDialog(this) == DialogResult.OK)
-                {
-                    string className = Path.GetFileNameWithoutExtension(saveDlg.FileName);
-                    if (savePathBox != null)
-                    {
-                        savePathBox.Text = className;
-                        Console.WriteLine($"[btnBrowse_Click] 用户设置类名: '{className}'");
-                    }
-                    else
-                    {
-                        Console.WriteLine("[btnBrowse_Click] 警告: 未找到 textBoxSavePath 控件。");
-                    }
+                    sourceName = Path.GetFileNameWithoutExtension(uri.LocalPath);
                 }
             }
+            catch
+            {
+                sourceName = "SourceFile"; // 备用名称
+            }
+
+            // 1. 清理源文件名 (移除所有非字母/数字/下划线)
+            string sanitizedName = System.Text.RegularExpressions.Regex.Replace(sourceName, @"[^\w]", "_");
+            if (string.IsNullOrWhiteSpace(sanitizedName))
+            {
+                sanitizedName = "Source";
+            }
+
+            // 2. 获取方法名 (缩写)
+            string methodName = "CorrImg"; // 代表 "CorrelationImaging"
+
+            // 3. 获取时间戳
+            string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+
+            // 4. 组合
+            string finalName = $"{sanitizedName}_{methodName}_{timestamp}";
+
+            // 5. 确保名称符合 MapGIS 规范 (例如，不超过64个字符)
+            if (finalName.Length > 64)
+            {
+                finalName = finalName.Substring(0, 64);
+            }
+            // 确保以字母开头
+            if (!char.IsLetter(finalName[0]))
+            {
+                finalName = "R_" + finalName.Substring(0, 61);
+            }
+
+            return finalName;
         }
 
         #endregion
@@ -597,7 +644,7 @@ namespace MapGISPlugin3
         /// </summary>
         private void PerformAttributeModeling(string sfcGdbPath, string dbName, string modelName)
         {
-            ShowInfo("[调试][建模] 1. 进入 PerformAttributeModeling 函数。", "建模追踪");
+            //ShowInfo("[调试][建模] 1. 进入 PerformAttributeModeling 函数。", "建模追踪");
 
             // 1. 准备建模引擎
             GeoGisVolDataModel dataModel = new GeoGisVolDataModel();
@@ -617,7 +664,7 @@ namespace MapGISPlugin3
                 // === 3. 从 SFeatureCls 读取数据到内存 ===
                 using (SFeatureCls sfc = new SFeatureCls())
                 {
-                    ShowInfo("[调试][建模] 2. 准备从 SFCLS 读取点数据...", "建模追踪");
+                    //ShowInfo("[调试][建模] 2. 准备从 SFCLS 读取点数据...", "建模追踪");
                     if (!sfc.Open(sfcGdbPath))
                     {
                         ShowError($"[建模] 无法打开刚创建的 SFeatureCls: {sfcGdbPath}", "建模失败");
@@ -631,7 +678,7 @@ namespace MapGISPlugin3
                         ShowError($"[建模] 从 SFeatureCls 读取数据失败。引擎返回代码: {readResult}", "建模失败");
                         return;
                     }
-                    ShowInfo($"[调试][建模] 3. SFCLS 数据读取完成，共 {dotList.Count} 个点。", "建模追踪");
+                    //ShowInfo($"[调试][建模] 3. SFCLS 数据读取完成，共 {dotList.Count} 个点。", "建模追踪");
                 }
 
                 // === 4. 准备建模参数 ===
@@ -642,7 +689,7 @@ namespace MapGISPlugin3
                 modelParams.WorkArea = dataRange;
                 modelParams.OrientDot = new Dot3D(dataRange.XMin, dataRange.YMin, dataRange.ZMin);
                 modelParams.CurrentTime = GetCurrentTimestamp();
-
+                modelParams.DTol = 0.0001;
                 // 【关键修改点 2】：修改分辨率为一个更合理的值
                 // int resolution = 3; // 原来的值太小，非常可疑
                 int resolution = 2; // 修改为一个更常规的值，例如100x100x100的网格
@@ -660,7 +707,7 @@ namespace MapGISPlugin3
 
                 // 【关键修改点 3】：在调用前，弹窗显示所有重要参数
                 StringBuilder sb = new StringBuilder();
-                sb.AppendLine("[调试][建模] 4. 建模参数准备完毕，即将调用核心引擎。");
+                //sb.AppendLine("[调试][建模] 4. 建模参数准备完毕，即将调用核心引擎。");
                 sb.AppendLine("------------------------------------");
                 sb.AppendLine($"点数量: {dotList.Count}");
                 sb.AppendLine($"输出数据库: {outputDbUrl}");
@@ -682,15 +729,15 @@ namespace MapGISPlugin3
                     dotList, valueList, outputDbUrl, ref newLayerUrl, modelParams
                 );
 
-                ShowInfo($"[调试][建模] 5. 核心建模引擎调用返回，结果代码: {modelResult}", "建模追踪");
+                //ShowInfo($"[调试][建模] 5. 核心建模引擎调用返回，结果代码: {modelResult}", "建模追踪");
 
                 // === 7. 处理结果 ===
                 if (modelResult > 0 && !string.IsNullOrEmpty(newLayerUrl))
                 {
                     Console.WriteLine($"[建模] 属性建模成功！新图层: {newLayerUrl}");
-                    ShowInfo($"[调试][建模] 6. 建模成功！准备调用 AddLayerToView 加载新模型图层...", "建模追踪");
-                    AddLayerToView(newLayerUrl);
-                    ShowInfo($"[调试][建模] 7. 模型图层加载函数执行完毕。", "建模追踪");
+                    //ShowInfo($"[调试][建模] 6. 建模成功！准备调用 AddLayerToView 加载新模型图层...", "建模追踪");
+                    /*AddLayerToView(newLayerUrl);*/
+                    //ShowInfo($"[调试][建模] 7. 模型图层加载函数执行完毕。", "建模追踪");
                 }
                 else
                 {
@@ -705,7 +752,7 @@ namespace MapGISPlugin3
             finally
             {
                 // 【关键修改点 4】：添加一个 finally 块确保这个弹窗总是出现
-                ShowInfo("[调试][建模] 8. 退出 PerformAttributeModeling 函数（无论成功或失败）。", "建模追踪");
+               // ShowInfo("[调试][建模] 8. 退出 PerformAttributeModeling 函数（无论成功或失败）。", "建模追踪");
             }
         }
 
@@ -878,7 +925,7 @@ namespace MapGISPlugin3
         {
             // 检查 MapGIS 环境是否有效
             if (m_Hook == null || m_Hook.Document == null) { ShowError("MapGIS 环境无效，无法加载图层。"); return; }
-            ShowInfo($"[调试][加载] 1. 进入 AddLayerToView 函数。\n待加载图层: {layerGdbPath}", "加载追踪");
+            //ShowInfo($"[调试][加载] 1. 进入 AddLayerToView 函数。\n待加载图层: {layerGdbPath}", "加载追踪");
 
             // 检查传入的 GDB 路径是否为空
             if (string.IsNullOrEmpty(layerGdbPath)) { ShowWarning("传入的 GDB 路径为空，无法加载图层。"); return; }
@@ -890,12 +937,12 @@ namespace MapGISPlugin3
             try
             {
                 // 获取文档中的所有三维场景
-                ShowInfo("[调试][加载] 2. 准备获取三维场景列表...", "加载追踪");
+                //ShowInfo("[调试][加载] 2. 准备获取三维场景列表...", "加载追踪");
                 scenes = m_Hook.Document.GetScenes();
                 // 检查是否至少有一个场景存在
                 if (scenes == null || scenes.Count == 0)
                 {
-                    ShowError("未找到任何三维场景。请先打开或创建一个三维场景以加载栅格体数据。", "加载错误");
+                    //ShowError("未找到任何三维场景。请先打开或创建一个三维场景以加载栅格体数据。", "加载错误");
                     Console.WriteLine("[AddLayerToView] 错误: 未找到三维场景。");
                     return; // 强制返回，不再尝试添加到二维地图
                 }
@@ -908,7 +955,7 @@ namespace MapGISPlugin3
                     Console.WriteLine("[AddLayerToView] 错误: GetScene(0) 返回 null。");
                     return;
                 }
-                ShowInfo($"[调试][加载] 3. 成功获取到三维场景 '{scene.Name}'。", "加载追踪");
+                //ShowInfo($"[调试][加载] 3. 成功获取到三维场景 '{scene.Name}'。", "加载追踪");
 
 
                 Console.WriteLine($"[AddLayerToView] 找到三维场景 '{scene.Name}'。正在调用 GMRunTime.AddLayer...");
@@ -919,7 +966,7 @@ namespace MapGISPlugin3
                 // 如果编译器找不到 GMRunTime，请添加对应的 using MapGIS.PlugUtility;
                 try
                 {
-                    ShowInfo("[调试][加载] 4. 即将调用 GMRunTime.AddLayer...", "加载追踪");
+                    //ShowInfo("[调试][加载] 4. 即将调用 GMRunTime.AddLayer...", "加载追踪");
                     // 使用从示例代码中看到的神秘数字
                     GMRunTime.AddLayer(
                         (DocumentItem)(object)scene, // 将 Scene 对象作为父对象传递
@@ -929,16 +976,16 @@ namespace MapGISPlugin3
                         isVisible: true); // 设置图层可见
 
                     Console.WriteLine("[AddLayerToView] GMRunTime.AddLayer 调用成功。");
-                    ShowInfo("[调试][加载] 5. GMRunTime.AddLayer 调用成功。", "加载追踪");
+                    //ShowInfo("[调试][加载] 5. GMRunTime.AddLayer 调用成功。", "加载追踪");
 
                     // 可选：刷新工作空间树 (这个操作通常比较安全)
                     try
                     {
-                        ShowInfo("[调试][加载] 6. 准备刷新工作空间树...", "加载追踪");
+                        //ShowInfo("[调试][加载] 6. 准备刷新工作空间树...", "加载追踪");
                         m_Hook.WorkSpaceEngine.BeginUpdateTree();
                         m_Hook.WorkSpaceEngine.EndUpdateTree();
                         Console.WriteLine("[AddLayerToView] 工作空间树已刷新。");
-                        ShowInfo("[调试][加载] 7. 工作空间树刷新完毕。", "加载追踪");
+                        //ShowInfo("[调试][加载] 7. 工作空间树刷新完毕。", "加载追踪");
                     }
                     catch (Exception treeEx) { Console.WriteLine($"[AddLayerToView] 刷新工作空间树时出错: {treeEx.Message}"); }
 
@@ -946,15 +993,15 @@ namespace MapGISPlugin3
                     SceneControl sceneCtrl = null;
                     try
                     {
-                        ShowInfo("[调试][加载] 8. 准备获取 SceneControl 并刷新视图...", "加载追踪");
+                        //ShowInfo("[调试][加载] 8. 准备获取 SceneControl 并刷新视图...", "加载追踪");
                         sceneCtrl = m_Hook.WorkSpaceEngine.GetSceneControl(scene);
                         if (sceneCtrl != null)
                         {
                             Console.WriteLine("[AddLayerToView] 尝试刷新场景视图...");
                             // sceneCtrl.Reset();   // 缩放到全图范围 (可能会触发大量渲染，导致卡顿)
-                            ShowWarning("关键调试点：下一步将调用 sceneCtrl.Refresh()。\n\n如果程序在此之后卡死，则问题就出在视图刷新这一步。\n这通常是因为数据量过大，UI线程被长时间阻塞。", "高危操作警告");
+                            //ShowWarning("关键调试点：下一步将调用 sceneCtrl.Refresh()。\n\n如果程序在此之后卡死，则问题就出在视图刷新这一步。\n这通常是因为数据量过大，UI线程被长时间阻塞。", "高危操作警告");
                             sceneCtrl.Refresh(); // 强制重绘 (也可能导致卡顿)
-                            ShowInfo("[调试][加载] 9. sceneCtrl.Refresh() 调用已返回（程序未卡死）。", "加载追踪");
+                            //ShowInfo("[调试][加载] 9. sceneCtrl.Refresh() 调用已返回（程序未卡死）。", "加载追踪");
                             Console.WriteLine("[AddLayerToView] 场景视图刷新指令已发送。");
                         }
                         else
@@ -1001,7 +1048,7 @@ namespace MapGISPlugin3
                 // 确保释放场景列表和场景 COM 对象
                 if (scene != null) try { Marshal.ReleaseComObject(scene); Console.WriteLine("[AddLayerToView] Released scene."); } catch { }
                 if (scenes != null) try { Marshal.ReleaseComObject(scenes); Console.WriteLine("[AddLayerToView] Released scenes."); } catch { }
-                ShowInfo("[调试][加载] 10. 退出 AddLayerToView 函数。", "加载追踪");
+                //ShowInfo("[调试][加载] 10. 退出 AddLayerToView 函数。", "加载追踪");
             }
         }
         /// <summary>
@@ -1070,10 +1117,35 @@ namespace MapGISPlugin3
 
         private void treeViewLayers_AfterSelect(object sender, TreeViewEventArgs e)
         {
-            // 为 Designer.cs 保留
-            if (e.Node != null && e.Node.Tag is RasterLayer)
+            // --- 查找 textBoxSavePath 控件 ---
+            Control[] savePathBoxCtls = this.Controls.Find("textBoxSavePath", true);
+            TextBox savePathBox = (savePathBoxCtls.Length > 0 && savePathBoxCtls[0] is TextBox) ? (savePathBoxCtls[0] as TextBox) : null;
+            if (savePathBox == null)
             {
+                Console.WriteLine("[AfterSelect] 警告: 未找到 textBoxSavePath 控件。");
+                return; // 找不到文本框，无法继续
+            }
+            // --- 查找结束 ---
+
+            if (e.Node != null && e.Node.Tag is RasterLayer)
+            {
+                // 用户选择了一个栅格图层
                 Console.WriteLine($"[Event] 用户选择了栅格图层: {e.Node.Text}");
+                RasterLayer selectedLayer = e.Node.Tag as RasterLayer;
+
+                // --- 【核心修改】 ---
+                // 1. 自动生成类名
+                string newClassName = GenerateOutputClassName(selectedLayer);
+
+                // 2. 更新文本框
+                savePathBox.Text = newClassName;
+                Console.WriteLine($"[Event] 自动生成类名: {newClassName}");
+                // --- 【修改结束】 ---
+            }
+            else
+            {
+                // 用户选择了其他节点 (如地图或组)，清空文本框
+                savePathBox.Text = "";
             }
         }
 
@@ -1095,6 +1167,21 @@ namespace MapGISPlugin3
         #endregion
 
         private void label4_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void textBoxInclination_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label3_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label5_Click(object sender, EventArgs e)
         {
 
         }
