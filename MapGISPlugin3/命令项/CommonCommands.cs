@@ -108,19 +108,19 @@ namespace MapGISPlugin3
                     // 为"重力数据"创建场景
                     Scene sceneGravity = new Scene();
                     sceneGravity.Name = "重力数据三维场景"; // 建议使用清晰的命名
-                    sceneGravity.SetPropertyEx("InitOpenView", "true"); // 设置为工程打开时自动显示此场景
+                    sceneGravity.SetPropertyEx("InitOpenView", "false"); // 设置为工程打开时自动显示此场景
                     newDoc.GetScenes().Append(sceneGravity);
 
                     // 为"磁法数据"创建场景
                     Scene sceneMagnetic = new Scene();
                     sceneMagnetic.Name = "磁法数据三维场景";
-                    sceneMagnetic.SetPropertyEx("InitOpenView", "true");
+                    sceneMagnetic.SetPropertyEx("InitOpenView", "false");
                     newDoc.GetScenes().Append(sceneMagnetic);
 
                     // 为"电法数据"创建场景
                     Scene sceneElectric = new Scene();
                     sceneElectric.Name = "电法数据三维场景";
-                    sceneElectric.SetPropertyEx("InitOpenView", "true");
+                    sceneElectric.SetPropertyEx("InitOpenView", "false");
                     newDoc.GetScenes().Append(sceneElectric);
 
                     // =======================================================================
@@ -818,12 +818,13 @@ namespace MapGISPlugin3
             return true;
         }
         #endregion
+
+
+
+
+
+
+
     }
-
-
-
-
-
-
 }
 // *** 这是 addCommand 类的结束位置 ***

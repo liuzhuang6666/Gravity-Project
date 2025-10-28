@@ -1,4 +1,5 @@
-﻿using System;
+﻿// Form1.cs (Modified)
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -22,6 +23,8 @@ using System.Runtime.InteropServices;
 using MapGIS.PlugUtility;
 using MapGIS.UI.Controls;
 using MapGIS.PluginEngine;
+using MapGIS.GeoObjects.Geometry3D; // For Dot3D if needed
+using MapGIS.GeoObjects.Att;
 
 namespace MapGISPlugin3
 {
@@ -57,7 +60,7 @@ namespace MapGISPlugin3
         [DllImport(@"D:\APrj\地球物理数据处理\magdpless.dll", EntryPoint = "second")]
         public static extern void second(int nx, int ny, double dx, double dy, double[] values, double od, double oi, int direction, AddAnsi add);
 
-        [DllImport(@"D:\APrj\地球物理数据处理\magdpless.dll", EntryPoint = "compon")]
+        [DllImport(@"D:\APrj\地球物理数据处理\magdpless.dll", EntryPoint = "second")]
         public static extern void compon(int nx, int ny, double dx, double dy, double[] values, double od, double oi, int direction, AddAnsi add);
 
 
@@ -110,7 +113,7 @@ namespace MapGISPlugin3
 
 
 
-        public Form1 (IApplication hook)
+        public Form1(IApplication hook)
         {
 
             InitializeComponent();
@@ -122,7 +125,7 @@ namespace MapGISPlugin3
             }
             //m_Maindoc = hook.Document;
             //IMapContentsView mainContentsView = hook.ActiveContentsView as IMapContentsView;
-            
+
             //MapControl mp = mainContentsView.MapControl;
             //Map activeMap = mp.ActiveMap;
 
@@ -163,8 +166,8 @@ namespace MapGISPlugin3
         {
             this.m_mtr.ActiveMap = m_Map;
             this.m_mtr2.ActiveMap = m_Map2;
-            this.m_mtr.ShowRuler =true;
-            this.m_mtr2.ShowRuler = true; 
+            this.m_mtr.ShowRuler = true;
+            this.m_mtr2.ShowRuler = true;
 
             this.comboBox1.Items.Add("化极");
             this.comboBox1.Items.Add("三角");
@@ -286,87 +289,255 @@ namespace MapGISPlugin3
 
         private void 数据导入ToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            // --- 【全新、更正后的健壮性检查逻辑】 ---
-
-            // 步骤 1: 检查插件初始化时是否成功接收到了 hook。如果 hook 本身是 null，说明插件加载有问题。
+            // --- 检查逻辑保持不变，非常棒 ---
             if (m_Hook == null)
             {
                 MessageBox.Show("严重错误：插件未能正确初始化，无法与主程序通信。", "初始化失败", MessageBoxButtons.OK, MessageBoxIcon.Stop);
                 return;
             }
-
-            // 步骤 2: 在用户点击的这一刻，通过保存的 hook 来获取当前的 Document。
-            // 这是最可靠的方式，因为它反映了程序当前的状态。
             Document docToUse = m_Hook.Document;
-
-            // 步骤 3: 检查当前是否真的有打开的地图文档。
             if (docToUse == null)
             {
                 MessageBox.Show("操作失败：无法获取当前的地图文档。请确保您已在数据中心打开一个地图工程。", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            // --- 【检查结束】 ---
-
-
-            // 只有在确认 docToUse 有效后，才继续执行后续代码
-            AddDataForm adddataform = new AddDataForm(docToUse);
-
-            // --- 以下是你原来的代码，保持不变 ---
-            if (adddataform.ShowDialog() == DialogResult.OK)
+            // --- 弹出选择对话框的逻辑保持不变 ---
+            LayerSelectDialog layerSelectDialog = new LayerSelectDialog(m_Hook);
+            if (layerSelectDialog.ShowDialog() == DialogResult.OK)
             {
-                string url = adddataform.Url;
-
-                if (string.IsNullOrEmpty(url))
+                RasterLayer selectedLayerFromMainDoc = layerSelectDialog.SelectedRasterLayer;
+                if (selectedLayerFromMainDoc != null)
                 {
-                    adddataform.Dispose();
-                    return;
-                }
+                    // 【关键修改点】
+                    // 不要直接移动 selectedLayerFromMainDoc 对象。
+                    // 而是获取它的数据源URL，然后创建一个新的图层对象。
 
-                m_BandNum = 1;
-                m_Map.RemoveAll(); //清空上一个map中的图层
-                if (url.Contains("/sfcls/"))
-                {
-                    VectorLayer vectorlayer = new VectorLayer(VectorLayerType.SFclsLayer);
-                    vectorlayer.URL = url;
-                    if (vectorlayer.ConnectData())
+                    // 1. 获取选中图层的数据源路径 (URL)
+                    string layerUrl = selectedLayerFromMainDoc.URL;
+
+                    // (调试) 可以加一个弹窗来确认URL是否正确获取
+                    // MessageBox.Show("获取到的图层URL是: " + layerUrl);
+
+                    if (string.IsNullOrEmpty(layerUrl))
                     {
-                        vectorlayer.SymbolShow = true;
-                        vectorlayer.FollowZoom = false;
-                        m_Map.Append(vectorlayer);
+                        MessageBox.Show("选中的图层没有有效的URL，无法加载。", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return;
                     }
+
+                    // 2. 创建一个全新的、属于本插件的 RasterLayer 对象
+                    RasterLayer newLayerForPlugin = new RasterLayer();
+
+                    // 3. 将新图层的URL指向同一个数据源
+                    newLayerForPlugin.URL = layerUrl;
+
+                    // 4. 连接数据，这是非常重要的一步！
+                    if (newLayerForPlugin.ConnectData())
+                    {
+                        // 5. （可选但推荐）给新图层一个名字，可以和原来的一样
+                        newLayerForPlugin.Name = selectedLayerFromMainDoc.Name;
+
+                        // 6. 现在可以安全地操作插件内部的 m_Map 了
+                        // 清空上一个map中的图层
+                        m_Map.RemoveAll();
+
+                        // 7. 将我们【新创建的】图层添加到插件的 m_Map 中
+                        m_Map.Append(newLayerForPlugin);
+
+                        // 后续逻辑保持不变，它们现在会作用于这个有效的新图层
+                        if (this.m_mtr.ActiveMap.LayerCount != 0)
+                            this.m_mtr.ActiveMap.get_Layer(0).State = m_ShowRasOrTin ? LayerState.Visible : LayerState.UnVisible;
+
+                        this.m_mtr.Restore();
+
+                        // 初始化
+                        m_Tempsfclslin = null;
+                        m_TempsfclsSlopelin = null;
+                        m_Tempsfclsreg = null;
+                        m_tempann = null;
+                        m_LfZstep = 10;
+                        Init();
+                        DengZhiXianKeShiHua(m_Map, m_mtr);
+                    }
+                    else
+                    {
+                        // 如果ConnectData失败，说明路径有问题或者文件损坏
+                        MessageBox.Show("无法连接到栅格数据源，请检查文件是否有效。\n路径: " + layerUrl, "数据连接失败", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        // 释放创建失败的对象
+                        System.Runtime.InteropServices.Marshal.ReleaseComObject(newLayerForPlugin);
+                    }
+                }
+            }
+            layerSelectDialog.Dispose();
+        }
+
+        // 新增的 LayerSelectDialog 类（作为内部类或单独文件，这里作为内部）
+        private class LayerSelectDialog : Form
+        {
+            private TreeView treeViewLayers;
+            private Button btnOK;
+            private Button btnCancel;
+            private IApplication m_Hook;
+            public RasterLayer SelectedRasterLayer { get; private set; }
+
+            public LayerSelectDialog(IApplication hook)
+            {
+                m_Hook = hook;
+                InitializeComponents();
+                PopulateTreeView();
+            }
+
+            private void InitializeComponents()
+            {
+                this.Text = "选择栅格图层";
+                this.Size = new Size(400, 600);
+                this.StartPosition = FormStartPosition.CenterParent;
+
+                treeViewLayers = new TreeView();
+                treeViewLayers.Dock = DockStyle.Fill;
+                treeViewLayers.AfterSelect += TreeViewLayers_AfterSelect;
+
+                btnOK = new Button();
+                btnOK.Text = "确定";
+                btnOK.Dock = DockStyle.Right;
+                btnOK.Click += BtnOK_Click;
+
+                btnCancel = new Button();
+                btnCancel.Text = "取消";
+                btnCancel.Dock = DockStyle.Right;
+                btnCancel.Click += BtnCancel_Click;
+
+                Panel buttonPanel = new Panel();
+                buttonPanel.Dock = DockStyle.Bottom;
+                buttonPanel.Height = 40;
+                buttonPanel.Controls.Add(btnOK);
+                buttonPanel.Controls.Add(btnCancel);
+
+                this.Controls.Add(treeViewLayers);
+                this.Controls.Add(buttonPanel);
+            }
+
+            private void PopulateTreeView()
+            {
+                treeViewLayers.Nodes.Clear();
+                Document doc = m_Hook.Document;
+                Maps maps = null;
+
+                if (doc == null) { MessageBox.Show("Document 对象为空，无法填充图层列表。", "环境错误"); return; }
+                try
+                {
+                    maps = doc.GetMaps();
+                    if (maps == null) { MessageBox.Show("未能获取地图列表 (Document.GetMaps 返回 null)。", "加载警告"); return; }
+
+                    for (int i = 0; i < maps.Count; i++)
+                    {
+                        Map map = maps.GetMap(i);
+                        if (map == null) continue;
+                        TreeNode mapNode = new TreeNode(map.Name);
+                        treeViewLayers.Nodes.Add(mapNode);
+                        AddLayersToNode(mapNode, map);
+                    }
+                    if (treeViewLayers.Nodes.Count > 0)
+                    {
+                        treeViewLayers.ExpandAll();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"填充图层列表时出错: {ex.Message}", "列表加载失败");
+                }
+                finally
+                {
+                    // Removed: if (maps != null) Marshal.ReleaseComObject(maps);
+                }
+            }
+
+            private void AddLayersToNode(TreeNode parentNode, Map map)
+            {
+                if (map == null || parentNode == null) return;
+                for (int i = 0; i < map.LayerCount; i++)
+                {
+                    MapLayer layer = map.get_Layer(i);
+                    if (layer != null)
+                    {
+                        ProcessLayer(parentNode, layer);
+                    }
+                }
+            }
+
+            private void AddLayersToNode(TreeNode parentNode, GroupLayer groupLayer)
+            {
+                if (groupLayer == null || parentNode == null) return;
+                for (int i = 0; i < groupLayer.Count; i++)
+                {
+                    MapLayer layer = groupLayer.get_Item(i);
+                    if (layer != null)
+                    {
+                        ProcessLayer(parentNode, layer);
+                    }
+                }
+            }
+
+            private void ProcessLayer(TreeNode parentNode, MapLayer layer)
+            {
+                if (layer == null || parentNode == null) return;
+                if (layer is GroupLayer)
+                {
+                    GroupLayer currentGroup = layer as GroupLayer;
+                    if (!IsRecursiveGroup(parentNode, currentGroup))
+                    {
+                        TreeNode groupNode = new TreeNode(currentGroup.Name);
+                        groupNode.Tag = currentGroup;
+                        parentNode.Nodes.Add(groupNode);
+                        AddLayersToNode(groupNode, currentGroup);
+                    }
+                }
+                else if (layer is RasterLayer)
+                {
+                    TreeNode layerNode = new TreeNode(layer.Name);
+                    layerNode.Tag = layer;
+                    parentNode.Nodes.Add(layerNode);
+                }
+            }
+
+            private bool IsRecursiveGroup(TreeNode parentNode, GroupLayer currentGroup)
+            {
+                TreeNode current = parentNode;
+                int depth = 0;
+                while (current != null && depth < 20)
+                {
+                    if (object.ReferenceEquals(current.Tag, currentGroup)) return true;
+                    current = current.Parent;
+                    depth++;
+                }
+                return false;
+            }
+
+            private void TreeViewLayers_AfterSelect(object sender, TreeViewEventArgs e)
+            {
+                if (e.Node != null && e.Node.Tag is RasterLayer)
+                {
+                    btnOK.Enabled = true;
                 }
                 else
                 {
-                    RasterLayer raslayer = new RasterLayer();
-                    if (url.Contains("/ras/"))
-                        raslayer.URL = url;
-                    else if (url.Contains("file:///"))
-                        raslayer.URL = url;
-                    else
-                        raslayer.URL = "file:///" + url;
-                    if (raslayer.ConnectData())
-                    {
-                        raslayer.Name = "原始数据";
-                        m_Map.Append(raslayer);
-                    }
+                    btnOK.Enabled = false;
                 }
-
-                if (this.m_mtr.ActiveMap.LayerCount != 0)
-                    this.m_mtr.ActiveMap.get_Layer(0).State = m_ShowRasOrTin ? LayerState.Visible : LayerState.UnVisible;
-
-                this.m_mtr.Restore();
-
-                //初始化
-                m_Tempsfclslin = null;
-                m_TempsfclsSlopelin = null;
-                m_Tempsfclsreg = null;
-                m_tempann = null;
-                m_LfZstep = 10;
-                Init();
-                DengZhiXianKeShiHua(m_Map, m_mtr);
             }
-            adddataform.Dispose();
+
+            private void BtnOK_Click(object sender, EventArgs e)
+            {
+                TreeNode selectedNode = treeViewLayers.SelectedNode;
+                SelectedRasterLayer = selectedNode?.Tag as RasterLayer;
+                this.DialogResult = DialogResult.OK;
+                this.Close();
+            }
+
+            private void BtnCancel_Click(object sender, EventArgs e)
+            {
+                this.DialogResult = DialogResult.Cancel;
+                this.Close();
+            }
         }
 
         private void AddLayerToDoc(string savePath, RasterLayer rasLayer)
@@ -516,7 +687,7 @@ namespace MapGISPlugin3
                 VectorLayer vectorlayer2 = new VectorLayer(VectorLayerType.SFclsLayer);
                 if (vectorlayer2.AttachData(m_Tempsfclslin))
                     vectorlayer2.Name = "可视化线";
-                    m_mtr.ActiveMap.Append(vectorlayer2);
+                m_mtr.ActiveMap.Append(vectorlayer2);
 
                 VectorLayer vectorlayer3 = new VectorLayer(VectorLayerType.SFclsLayer);
                 if (vectorlayer3.AttachData(m_TempsfclsSlopelin))
@@ -526,7 +697,7 @@ namespace MapGISPlugin3
                 VectorLayer vectorlayer4 = new VectorLayer(VectorLayerType.AnnLayer);
                 if (vectorlayer4.AttachData(m_tempann))
                     vectorlayer4.Name = "可视化注释";
-                    m_mtr.ActiveMap.Append(vectorlayer4);
+                m_mtr.ActiveMap.Append(vectorlayer4);
 
                 m_mtr.ActiveMap.get_Layer(1).State = m_ShowReg ? LayerState.Visible : LayerState.UnVisible;
                 m_mtr.ActiveMap.get_Layer(2).State = m_ShowLine ? LayerState.Visible : LayerState.UnVisible;
@@ -540,7 +711,7 @@ namespace MapGISPlugin3
 
 
         }
-        
+
 
         private void button1_Click(object sender, EventArgs e)
         {
@@ -619,8 +790,8 @@ namespace MapGISPlugin3
                         index++;
                     }
                 }
-           
-            int size = Marshal.SizeOf(buffer[0]) * buffer.Length;
+
+                int size = Marshal.SizeOf(buffer[0]) * buffer.Length;
                 //test0(nx, ny, intervalx, intervaly, od, oi);
                 //test2(buffer, nx * ny);
                 //var lst = new List<double>();
@@ -660,13 +831,13 @@ namespace MapGISPlugin3
 
                 }
 
-               
-                double[,] grd = ConvertListToGrd(res, nx, ny);      
+
+                double[,] grd = ConvertListToGrd(res, nx, ny);
                 // 保存到.grd文件
 
                 string newfilePath = this.buttonEdit1.Text.Trim();
 
-               
+
                 double xllcorner = 0.0;
                 double yllcorner = 0.0;
                 double cellsize = 1.0;
@@ -690,7 +861,7 @@ namespace MapGISPlugin3
 
                 {
                     RasterLayer raslayer = new RasterLayer();
-                   
+
                     if (newfilePath.Contains("/ras/"))
                         raslayer.URL = newfilePath;
                     else if (newfilePath.Contains("file:///"))
@@ -727,10 +898,20 @@ namespace MapGISPlugin3
 
         private void buttonEdit1_ButtonClick(object sender, DevExpress.XtraEditors.Controls.ButtonPressedEventArgs e)
         {
-            GDBSaveFileDialog savefile = new GDBSaveFileDialog();
-            savefile.Filter = AddDataForm.CommonFunction.SaveOutFilter();
+            // 使用标准的SaveFileDialog
+            SaveFileDialog savefile = new SaveFileDialog();
+
+            // 设置文件过滤器，让用户方便地保存为.grd文件
+            savefile.Filter = "Surfer 6 Grid File (*.grd)|*.grd|All files (*.*)|*.*";
+            savefile.FilterIndex = 1;
+            savefile.RestoreDirectory = true; // 对话框记忆上次打开的目录
+            savefile.Title = "请选择计算结果(.grd)的保存位置";
+
             if (savefile.ShowDialog() == DialogResult.OK)
+            {
+                // 获取用户选择的完整、标准的Windows文件路径
                 this.buttonEdit1.Text = savefile.FileName;
+            }
             savefile.Dispose();
         }
         public class GrdWriter
@@ -765,26 +946,26 @@ namespace MapGISPlugin3
             }
         }
         public static double[,] ConvertListToGrd(List<double> dataList, int rows, int cols)
+        {
+            // 检查数据长度是否匹配
+            if (dataList.Count != rows * cols)
             {
-                // 检查数据长度是否匹配
-                if (dataList.Count != rows * cols)
-                {
-                    throw new ArgumentException("数据长度与指定的行列数不匹配");
-                }
+                throw new ArgumentException("数据长度与指定的行列数不匹配");
+            }
 
-                // 创建二维数组
-                double[,] grd = new double[rows, cols];
+            // 创建二维数组
+            double[,] grd = new double[rows, cols];
 
-                // 填充二维数组
-                int index = 0;
-                //for (int row = 0; row < rows; row++)
-                //{
-                //    for (int col = 0; col < cols; col++)
-                //    {
-                //        grd[row, col] = dataList[index];
-                //        index++;
-                //    }
-                //}
+            // 填充二维数组
+            int index = 0;
+            //for (int row = 0; row < rows; row++)
+            //{
+            //    for (int col = 0; col < cols; col++)
+            //    {
+            //        grd[row, col] = dataList[index];
+            //        index++;
+            //    }
+            //}
             for (int row = rows - 1; row >= 0; row--)
             {
                 for (int col = 0; col < cols; col++)
@@ -795,8 +976,8 @@ namespace MapGISPlugin3
             }
 
             return grd;
-            }
-        
+        }
+
         private void button3_Click(object sender, EventArgs e)
         {
             DengZhiXianKeShiHua(m_Map2, m_mtr2);
@@ -809,26 +990,22 @@ namespace MapGISPlugin3
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
+            // 释放第一个 MapControl
             if (m_mtr != null)
             {
                 m_mtr.Dispose();
                 m_mtr = null;
             }
+
+            // 【添加】释放第二个 MapControl
+            if (m_mtr2 != null)
+            {
+                m_mtr2.Dispose();
+                m_mtr2 = null;
+            }
+
+            // （可选但推荐）在这里也可以添加对 m_Tempdaba 等其他长生命周期成员的清理
         }
 
     }
-    }
-        
-
-
-
-    
-
-       
-
-    
-
-
-
-
- 
+}
