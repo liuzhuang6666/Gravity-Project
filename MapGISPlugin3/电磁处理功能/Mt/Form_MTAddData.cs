@@ -18,15 +18,14 @@ namespace MapGISPlugin3 // 确保命名空间正确
 {
     public partial class Form_MTAddData : Form
     {
-        // private Map m_TargetMap; // <-- 【修改】
-        private IApplication _hook; // <-- 【修改】 使用 IApplication
+        private IApplication _hook;
         private string selectedDataSource = "MapGisLocalPlus";
         private string selectedGdbDirectory = "/Temporary";
 
-        public Form_MTAddData(IApplication hook) // <-- 【修改】 构造函数接收 IApplication
+        public Form_MTAddData(IApplication hook)
         {
             InitializeComponent();
-            _hook = hook; // <-- 【修改】 保存 IApplication
+            _hook = hook;
             UpdateGdbPathDisplay();
         }
 
@@ -50,7 +49,6 @@ namespace MapGISPlugin3 // 确保命名空间正确
             using (GDBSelectFolderDialog gdbDialog = new GDBSelectFolderDialog())
             {
                 gdbDialog.Title = "选择保存 GDB 位置";
-                // gdbDialog.FolderType = (FolderType)12; 
                 try { gdbDialog.SelectedPath = $"gdbp://{selectedDataSource}{selectedGdbDirectory}"; } catch { }
                 if (gdbDialog.ShowDialog(this) == DialogResult.OK)
                 {
@@ -92,6 +90,7 @@ namespace MapGISPlugin3 // 确保命名空间正确
             var allDataRows = new List<MTDataRow>(); var uniqueStations = new Dictionary<string, StationInfo>();
             try
             {
+                // ... (文件读取逻辑，和您的一样，此处省略) ...
                 using (StreamReader reader = new StreamReader(inputFile, Encoding.Default))
                 {
                     string line; int lineNumber = 0;
@@ -124,7 +123,6 @@ namespace MapGISPlugin3 // 确保命名空间正确
                         catch (Exception ex) { Console.WriteLine($"警告: 行 {lineNumber} 处理出错: {ex.Message}"); }
                     }
                 }
-
                 Console.WriteLine($"读取完成: {allDataRows.Count} 条记录, {uniqueStations.Count} 个测点。");
                 if (allDataRows.Count == 0 || uniqueStations.Count == 0)
                 {
@@ -134,25 +132,34 @@ namespace MapGISPlugin3 // 确保命名空间正确
                 }
             }
             catch (Exception ex) { MessageBox.Show($"读取文件失败: {ex.Message}", "错误"); Console.WriteLine($"文件读取异常: {ex}"); ResetFormState(); return; }
-            SFeatureCls stationSfc = null; ObjectCls soundingOcls = null; VectorLayer stationLayer = null; bool stationClassCreated = false; bool soundingClassCreated = false;
+
+            // 【!! 关键修改 1: 声明变量和布尔标志位 !!】
+            // 我们需要这些变量在 'finally' 块中可见
+            SFeatureCls stationSfc = null;
+            ObjectCls soundingOcls = null;
+            VectorLayer stationLayer = null;
+            ObjectLayer soundingObjectLayer = null; // <-- 移到这里
+            bool stationClassCreated = false;
+            bool soundingClassCreated = false;
+
+            bool attached = false; // <-- SFeatureCls 的附加状态
+            bool tableAttached = false; // <-- ObjectCls 的附加状态
 
             try
             {
-                // -- 5.1 创建 MT_Stations 点要素类 (使用 SFeatureCls) --
+                // -- 5.1 创建 MT_Stations 点要素类 (SFeatureCls) --
                 Console.WriteLine($"创建测点类: {stationClassUrl}");
                 stationSfc = new SFeatureCls();
                 if (stationSfc.Create(stationClassUrl, GeomType.Pnt) <= 0) { throw new Exception($"创建点要素类 '{stationClassName}' 失败..."); }
                 stationClassCreated = true;
 
+                // ... (省略 5.1 和 5.2 填充 SFeatureCls 字段和数据的代码, 与您的一致) ...
                 Fields stationFields = new Fields();
                 stationFields.AppendField(new Field { FieldName = "测线号", FieldType = FieldType.FldString, MskLength = 50 });
                 stationFields.AppendField(new Field { FieldName = "测点号", FieldType = FieldType.FldString, MskLength = 50 });
                 stationFields.AppendField(new Field { FieldName = "X坐标", FieldType = FieldType.FldDouble, MskLength = 20, PointLength = 8 });
                 stationFields.AppendField(new Field { FieldName = "Y坐标", FieldType = FieldType.FldDouble, MskLength = 20, PointLength = 8 });
-
                 if (stationSfc.UpdateFields(stationFields) <= 0) { throw new Exception("更新测点类字段失败。"); }
-
-                // -- 5.2 填充 MT_Stations --
                 Console.WriteLine("填充测点类...");
                 stationSfc.BeginBatch(BatchType.Append);
                 Record stationRecord = new Record { Fields = stationFields };
@@ -160,7 +167,6 @@ namespace MapGISPlugin3 // 确保命名空间正确
                 {
                     Dot3D pnt3D = new Dot3D(stationInfo.X, stationInfo.Y, 0.0);
                     stationRecord["测线号"] = stationInfo.LineName; stationRecord["测点号"] = stationInfo.StationName; stationRecord["X坐标"] = stationInfo.X; stationRecord["Y坐标"] = stationInfo.Y;
-
                     GeoPoints currentPnts = new GeoPoints();
                     currentPnts.Append(pnt3D);
                     if (stationSfc.Append(currentPnts, stationRecord, null) <= 0)
@@ -169,7 +175,9 @@ namespace MapGISPlugin3 // 确保命名空间正确
                 stationSfc.EndBatch();
                 Console.WriteLine($"填充测点类完成。");
 
-                // -- 5.3 创建 MT_Soundings 对象类 (使用 ObjectCls) --
+
+                // -- 5.3 创建 MT_Soundings 对象类 (ObjectCls) --
+                // ... (省略 5.3 和 5.4 填充 ObjectCls 字段和数据的代码, 与您的一致) ...
                 Fields soundingFields = new Fields();
                 soundingFields.AppendField(new Field { FieldName = "测线编号", FieldType = FieldType.FldString, MskLength = 50 });
                 soundingFields.AppendField(new Field { FieldName = "测点编号", FieldType = FieldType.FldString, MskLength = 50 });
@@ -180,14 +188,10 @@ namespace MapGISPlugin3 // 确保命名空间正确
                 soundingFields.AppendField(new Field { FieldName = "相位_TE", FieldType = FieldType.FldDouble, MskLength = 15, PointLength = 6 });
                 soundingFields.AppendField(new Field { FieldName = "视电阻率_TM", FieldType = FieldType.FldDouble, MskLength = 15, PointLength = 6 });
                 soundingFields.AppendField(new Field { FieldName = "相位_TM", FieldType = FieldType.FldDouble, MskLength = 15, PointLength = 6 });
-
                 soundingOcls = new ObjectCls();
                 int createResult = soundingOcls.Create(soundingClassUrl, soundingFields);
                 if (createResult <= 0) { throw new Exception($"创建对象类 '{soundingClassName}' 失败，返回: {createResult}"); }
                 soundingClassCreated = true;
-
-
-                // -- 5.4 填充 MT_Soundings --
                 Console.WriteLine("填充数据表...");
                 soundingOcls.BeginBatch(BatchType.Append);
                 Record soundingRecord = new Record { Fields = soundingFields };
@@ -209,38 +213,44 @@ namespace MapGISPlugin3 // 确保命名空间正确
                 soundingOcls.EndBatch();
                 Console.WriteLine($"填充数据表完成: {soundingAppendCount}/{allDataRows.Count} 条。");
 
-                // -- 5.5 加载图层 --
-                // 【修改】: 调用 FindMapByName 查找 "电法数据" 地图
-                Map targetMap = FindMapByName("电法数据"); // FindMapByName 现在使用 _hook
 
-                if (targetMap != null) // 找到了 "电法数据" 地图
+                // -- 5.5 加载图层 --
+                Map targetMap = FindMapByName("电法数据");
+
+                if (targetMap != null)
                 {
                     Console.WriteLine("加载图层和表到 '电法数据' 地图...");
 
-                    // 1. 加载 测点图层 (SFeatureCls)
+                    // 1. 加载 测点图层 (SFeatureCls) - 【保持对象附加，因为您说它工作正常】
                     stationLayer = new VectorLayer(VectorLayerType.SFclsLayer);
-                    bool attached = stationLayer.AttachData(stationSfc);
+                    attached = stationLayer.AttachData(stationSfc); // <-- 记录附加状态
                     if (attached)
                     {
                         stationLayer.Name = stationClassName;
-                        targetMap.Append(stationLayer); // <-- 添加到 "电法数据" 地图
+                        targetMap.Append(stationLayer);
                         Console.WriteLine("测点图层加载成功。");
                     }
                     else
                     {
                         MessageBox.Show("测点图层附加失败。", "警告");
-                        if (stationSfc != null) { try { if (stationSfc.HasOpen()) stationSfc.Close(); Marshal.ReleaseComObject(stationSfc); stationSfc = null; } catch { } }
                     }
 
                     // 2. 加载 测深表 (ObjectCls)
                     try
                     {
-                        ObjectLayer soundingObjectLayer = new ObjectLayer();
-                        bool tableAttached = soundingObjectLayer.AttachData(soundingOcls);
+                        soundingObjectLayer = new ObjectLayer();
+                        tableAttached = soundingObjectLayer.AttachData(soundingOcls); // <-- 记录附加状态
                         if (tableAttached)
                         {
                             soundingObjectLayer.Name = soundingClassName;
-                            targetMap.Append(soundingObjectLayer); // <-- 添加到 "电法数据" 地图
+
+                            // -------------------------------------------------
+                            // 【!! 关键修改 2: URL 补丁 !!】
+                            // 这会强制 MapGIS 在保存 .mapx 时记住这个持久化路径
+                            soundingObjectLayer.URL = soundingClassUrl;
+                            // -------------------------------------------------
+
+                            targetMap.Append(soundingObjectLayer);
                             Console.WriteLine("测深数据表加载成功。");
                         }
                         else
@@ -255,28 +265,55 @@ namespace MapGISPlugin3 // 确保命名空间正确
                 }
                 else
                 {
-                    // 未找到 "电法数据" 地图
                     MessageBox.Show("未在项目中找到名为 '电法数据' 的地图，图层和表未加载。\n(但数据已成功导入数据库)", "提示");
                 }
-                // 【修改结束】
-
 
                 // -- 成功 --
                 MessageBox.Show($"导入成功！\n图层: {stationClassName}\n表: {soundingClassName}\n位置: {dataSource}:{gdbDirectory}", "完成");
                 this.DialogResult = DialogResult.OK; this.Close();
             }
-            catch (COMException comEx) { MessageBox.Show($"MapGIS 操作失败: {comEx.Message}...", "GDB 错误"); Console.WriteLine($"GDB COM 异常: {comEx}"); if (stationClassCreated) TryDeleteClassWithStaticRemove(dataSource, gdbDirectory, stationClassName, XClsType.SFCls); if (soundingClassCreated) TryDeleteClassWithStaticRemove(dataSource, gdbDirectory, soundingClassName, XClsType.OCls); ResetFormState(); }
-            catch (Exception ex) { MessageBox.Show($"导入出错: {ex.Message}", "错误"); Console.WriteLine($"导入异常: {ex}"); if (stationClassCreated) TryDeleteClassWithStaticRemove(dataSource, gdbDirectory, stationClassName, XClsType.SFCls); if (soundingClassCreated) TryDeleteClassWithStaticRemove(dataSource, gdbDirectory, soundingClassName, XClsType.OCls); ResetFormState(); }
+            catch (COMException comEx) { MessageBox.Show($"MapGIS 操作失败: {comEx.Message}...", "GDB 错误"); Console.WriteLine($"GDB COM 异常: {comEx}"); if (stationClassCreated) TryDeleteClassWithStaticRemove(dataSource, gdbDirectory, stationClassName, XClsType.SFCls); if (soundingClassCreated) TryDeleteClassWithStaticRemove(dataSource, gdbDirectory, soundingClassName, XClsType.OCls); }
+            catch (Exception ex) { MessageBox.Show($"导入出错: {ex.Message}", "错误"); Console.WriteLine($"导入异常: {ex}"); if (stationClassCreated) TryDeleteClassWithStaticRemove(dataSource, gdbDirectory, stationClassName, XClsType.SFCls); if (soundingClassCreated) TryDeleteClassWithStaticRemove(dataSource, gdbDirectory, soundingClassName, XClsType.OCls); }
             finally
             {
-                /* ... (COM 释放逻辑不变) ... */
-                bool isLayerAttached = false;
-                if (stationLayer != null) { try { if (!string.IsNullOrEmpty(stationLayer.URL) && stationLayer.URL.Equals(stationClassUrl, StringComparison.OrdinalIgnoreCase)) { isLayerAttached = true; } } catch { } }
+                // 【!! 关键修改 3: 正确的 finally 释放逻辑 !!】
+                // 我们使用 'attached' 和 'tableAttached' 标志位来决定是否释放 COM 对象
 
-                if (!isLayerAttached && stationSfc != null) { try { if (stationSfc.HasOpen()) stationSfc.Close(); Marshal.ReleaseComObject(stationSfc); } catch { } }
+                // 1. 检查 SFeatureCls (stationSfc)
+                // 只有当图层附加【失败】时 (attached == false)，我们才需要释放它
+                if (!attached && stationSfc != null)
+                {
+                    try
+                    {
+                        Console.WriteLine("SFeatureCls [stationSfc] 未附加, 正在释放...");
+                        if (stationSfc.HasOpen()) stationSfc.Close();
+                        Marshal.ReleaseComObject(stationSfc);
+                    }
+                    catch (Exception ex) { Console.WriteLine($"释放 stationSfc (未附加) 出错: {ex.Message}"); }
+                }
+                else if (attached)
+                {
+                    Console.WriteLine("SFeatureCls [stationSfc] 已附加到图层, 将不释放。");
+                }
 
-                if (soundingOcls != null) { try { if (soundingOcls.HasOpen()) soundingOcls.Close(); Marshal.ReleaseComObject(soundingOcls); } catch { } }
-                Console.WriteLine("COM 对象已尝试释放。");
+                // 2. 检查 ObjectCls (soundingOcls)
+                // 只有当图层附加【失败】时 (tableAttached == false)，我们才需要释放它
+                if (!tableAttached && soundingOcls != null)
+                {
+                    try
+                    {
+                        Console.WriteLine("ObjectCls [soundingOcls] 未附加, 正在释放...");
+                        if (soundingOcls.HasOpen()) soundingOcls.Close();
+                        Marshal.ReleaseComObject(soundingOcls);
+                    }
+                    catch (Exception ex) { Console.WriteLine($"释放 soundingOcls (未附加) 出错: {ex.Message}"); }
+                }
+                else if (tableAttached)
+                {
+                    Console.WriteLine("ObjectCls [soundingOcls] 已附加到图层, 将不释放。");
+                }
+
+                Console.WriteLine("COM 对象已按需释放。");
                 ResetFormState();
             }
         }
@@ -291,17 +328,16 @@ namespace MapGISPlugin3 // 确保命名空间正确
 
         #region --- 辅助函数 ---
 
-        private void UpdateGdbPathDisplay() {/* ... (不变) ... */ txtGdbPathDisplay.Text = $"{selectedDataSource}:{selectedGdbDirectory}"; }
+        private void UpdateGdbPathDisplay() { txtGdbPathDisplay.Text = $"{selectedDataSource}:{selectedGdbDirectory}"; }
 
         private string GenerateClassName(string baseName, string typeSuffix)
         {
+            // ... (您的代码，不变) ...
             string sanitizedBase = Regex.Replace(baseName ?? "Import", @"[^\w]", "_");
             sanitizedBase = Regex.Replace(sanitizedBase, "_+", "_").Trim('_');
             if (string.IsNullOrWhiteSpace(sanitizedBase)) sanitizedBase = "Data";
             string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-
-            string finalName = $"{sanitizedBase}_{typeSuffix}_{timestamp}"; // <-- 拼写已修正
-
+            string finalName = $"{sanitizedBase}_{typeSuffix}_{timestamp}";
             if (finalName.Length > 64)
             {
                 string prefix = $"{sanitizedBase}_{typeSuffix}_".Substring(0, Math.Min($"{sanitizedBase}_{typeSuffix}_".Length, 64 - timestamp.Length - 1));
@@ -316,43 +352,38 @@ namespace MapGISPlugin3 // 确保命名空间正确
             return finalName;
         }
 
-        private bool IsValidClassName(string name) {/* ... (不变) ... */ if (string.IsNullOrWhiteSpace(name)) return false; return Regex.IsMatch(name, "^[a-zA-Z][a-zA-Z0-9_]*$"); }
+        private bool IsValidClassName(string name) { if (string.IsNullOrWhiteSpace(name)) return false; return Regex.IsMatch(name, "^[a-zA-Z][a-zA-Z0-9_]*$"); }
 
-        // TryDeleteClass 使用 SFeatureCls.Remove / ObjectCls.Remove 静态方法 (逻辑不变)
         private void TryDeleteClassWithStaticRemove(string dataSourceName, string gdbDirPath, string className, XClsType clsType)
         {
-            // (代码不变，继续使用静态 Remove 方法)
+            // ... (您的代码，不变) ...
             if (string.IsNullOrWhiteSpace(dataSourceName) || string.IsNullOrWhiteSpace(gdbDirPath) || gdbDirPath == "/" || string.IsNullOrWhiteSpace(className)) return;
             string dbName = gdbDirPath.Trim('/').Split('/')[0]; string databaseUrl = $"gdbp://{dataSourceName}/{dbName}"; Console.WriteLine($"尝试清理类 '{className}' 从数据库: {databaseUrl}"); DataBase db = null; try { db = DataBase.OpenByURL(databaseUrl); if (db == null) { Console.WriteLine("无法打开数据库"); return; } bool removeResult = false; string typeName = clsType == XClsType.SFCls ? "要素类" : "对象类"; Console.WriteLine($"尝试调用静态 Remove(db, \"{className}\") 删除 {typeName}..."); if (clsType == XClsType.SFCls) { removeResult = SFeatureCls.Remove(db, className); } else if (clsType == XClsType.OCls) { removeResult = ObjectCls.Remove(db, className); } if (removeResult) { Console.WriteLine($"成功删除类: {className}"); } else { Console.WriteLine($"删除类失败或类不存在: {className}"); } } catch (COMException comEx) { Console.WriteLine($"删除类 COM 错误 (码: {comEx.ErrorCode})"); } catch (Exception ex) { Console.WriteLine($"删除类错误: {ex.Message}"); } finally { if (db != null) { try { db.Close(); Marshal.ReleaseComObject(db); } catch { } } }
         }
 
-        private bool IsHeaderLine(string line) {/* ... (不变) ... */ if (string.IsNullOrWhiteSpace(line)) return false; string firstWord = line.Trim().Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault(); if (firstWord == null) return false; return firstWord.Any(c => !char.IsDigit(c) && c != '.' && c != '-' && c != 'e' && c != 'E'); }
-        private void ResetFormState() {/* ... (不变) ... */ if (this.InvokeRequired) { this.Invoke(new Action(ResetFormState)); } else { this.Cursor = Cursors.Default; btnOK.Enabled = true; btnCancel.Enabled = true; } }
+        private bool IsHeaderLine(string line) { if (string.IsNullOrWhiteSpace(line)) return false; string firstWord = line.Trim().Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault(); if (firstWord == null) return false; return firstWord.Any(c => !char.IsDigit(c) && c != '.' && c != '-' && c != 'e' && c != 'E'); }
 
-        // <-- 【新增】: 辅助函数，用于按名称查找地图
-        /// <summary>
-        /// 根据名称查找地图对象
-        /// </summary>
+        private void ResetFormState() { if (this.InvokeRequired) { this.Invoke(new Action(ResetFormState)); } else { this.Cursor = Cursors.Default; btnOK.Enabled = true; btnCancel.Enabled = true; } }
+
         private Map FindMapByName(string mapName)
         {
-            // 【核心修改】: 使用 _hook.Document
+            // ... (您的代码，不变) ...
             if (_hook == null || _hook.Document == null)
             {
                 Console.WriteLine("FindMapByName: _hook 或 _hook.Document 为 null。");
                 return null;
             }
-
-            Maps maps = _hook.Document.GetMaps(); // <-- 正确的做法
+            Maps maps = _hook.Document.GetMaps();
             for (int i = 0; i < maps.Count; i++)
             {
                 Map currentMap = maps.GetMap(i);
                 if (currentMap != null && currentMap.Name == mapName)
                 {
-                    return currentMap; // 找到了，返回它
+                    return currentMap;
                 }
             }
             Console.WriteLine($"FindMapByName: 未在项目中找到名为 '{mapName}' 的地图。");
-            return null; // 循环结束都没找到
+            return null;
         }
 
         #endregion
