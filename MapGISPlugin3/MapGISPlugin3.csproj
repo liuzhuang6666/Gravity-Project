@@ -339,6 +339,7 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="Algorithm\MT1di\" />
     <Folder Include="Processor\" />
     <Folder Include="电磁处理功能\Sip\" />
     <Folder Include="电磁处理功能\Tdip\" />

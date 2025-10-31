@@ -733,6 +733,21 @@ namespace MapGISPlugin3
             UpdateRightPanelCharts();
         }
 
+
+        /// <summary>
+        /// 事件: 当用户切换 右侧 的 "TE" / "TM" 图表标签页时 (tabControl2)
+        /// </summary>
+        private void tabControl2_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            // 确保数据已加载 (m_CurrentSelectedStationName 不为空)
+            // 这样在加载测线前或清空时切换标签不会出错
+            if (!string.IsNullOrEmpty(m_CurrentSelectedStationName))
+            {
+                // 调用我们刚修改好的函数，它会读取 tabControl2 的状态
+                UpdateRightPanelCharts();
+            }
+        }
+
         /// <summary>
         /// (辅助函数) 刷新右栏的两张曲线图
         /// 【V4 - 已修正为根据 tabControl2 状态刷新】
@@ -1258,19 +1273,7 @@ namespace MapGISPlugin3
             LoadLayersFromMap();
         }
 
-        /// <summary>
-        /// 事件: 当用户切换 右侧 的 "TE" / "TM" 图表标签页时 (tabControl2)
-        /// </summary>
-        private void tabControl2_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            // 确保数据已加载 (m_CurrentSelectedStationName 不为空)
-            // 这样在加载测线前或清空时切换标签不会出错
-            if (!string.IsNullOrEmpty(m_CurrentSelectedStationName))
-            {
-                // 调用我们刚修改好的函数，它会读取 tabControl2 的状态
-                UpdateRightPanelCharts();
-            }
-        }
+        
 
         
     } // End Class
