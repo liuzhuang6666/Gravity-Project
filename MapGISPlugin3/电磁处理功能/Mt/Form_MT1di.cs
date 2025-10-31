@@ -434,12 +434,37 @@ namespace MapGISPlugin3
         #region --- 2. 标签页控件事件 (左栏下方) ---
 
         /// <summary>
-        /// 事件: 当用户在 "小地图" 上点击
-        /// </summary>
-        private void chartProfileView_MouseClick(object sender, MouseEventArgs e)
+        /// 事件: 当用户在 "小地图" 上点击 (实现可视化点选)
+        /// </summary>
+        private void chartProfileView_MouseClick(object sender, MouseEventArgs e)
         {
-            // TODO: 实现可视化点选
+            // 使用 HitTest 来查找点击位置的图表元素
+            var hitTestResult = chartProfileView.HitTest(e.X, e.Y);
+
+            // 检查是否点中了数据点 (DataPoint)
+            if (hitTestResult.ChartElementType == ChartElementType.DataPoint)
+            {
+                // 从数据点中获取我们存储的测点信息
+                DataPoint dataPoint = (DataPoint)hitTestResult.Object;
+
+                // 在 UpdateProfileView 中, 我们把测点名存在了 Tag 里
+                string stationName = dataPoint.Tag?.ToString();
+
+                // (备用方案: 如果 Tag 为空, 尝试用 Label)
+                if (string.IsNullOrEmpty(stationName))
+                {
+                    stationName = dataPoint.Label;
+                }
+
+                if (!string.IsNullOrEmpty(stationName))
+                {
+                    // 找到了测点名, 调用您现有的刷新函数
+                    SelectStationAndRefreshCharts(stationName);
+                }
+            }
         }
+
+        
 
         /// <summary>
         /// 事件: 点击 "开始计算" 按钮
@@ -536,13 +561,23 @@ namespace MapGISPlugin3
                 }
 
                 int currentIndex = 0;
-                // 【修复逻辑 3】增加 !rs.IsEOF
-                while (rs.MoveNext() && !rs.IsEOF)
+                int totalRecords = rs.Count; // 【V2.5 修复】获取总数
+
+                // 【V2.5 修复】增加空记录集检查
+                if (totalRecords == 0)
                 {
+                    Console.WriteLine("FillLineComboBox: totalRecords 为 0，循环前退出。");
+                    return; // 会自动进入 finally 块，是安全的
+                }
+
+                // 【V2.5 修复】改为 do-while 循环
+                do
+                {
+                    Record currentAtt = null;
                     try
                     {
                         currentIndex++;
-                        Record currentAtt = rs.Att;
+                        currentAtt = rs.Att;
                         if (currentAtt != null)
                         {
                             object value = currentAtt[queryField];
@@ -568,7 +603,12 @@ namespace MapGISPlugin3
                     {
                         MessageBox.Show($"迭代第 {currentIndex} 条记录出错: {recEx.Message} (可能该记录损坏，跳过)");
                     }
-                }
+                    finally
+                    {
+                        // 在每次循环结束时释放 Att 对象
+                        if (currentAtt != null) { try { Marshal.ReleaseComObject(currentAtt); } catch { } }
+                    }
+                } while (rs.MoveNext() && !rs.IsEOF);
 
                 if (uniqueLines.Count > 0)
                 {
@@ -694,9 +734,10 @@ namespace MapGISPlugin3
         }
 
         /// <summary>
-        /// (辅助函数) 刷新右栏的两张曲线图
-        /// </summary>
-        private void UpdateRightPanelCharts()
+        /// (辅助函数) 刷新右栏的两张曲线图
+        /// 【V4 - 已修正为根据 tabControl2 状态刷新】
+        /// </summary>
+        private void UpdateRightPanelCharts()
         {
             chartResistivity.Series.Clear();
             chartPhase.Series.Clear();
@@ -710,28 +751,32 @@ namespace MapGISPlugin3
 
             string resField, phaseField, seriesName;
 
-            
-            if (rbInversionTE.Checked)
+            // --- 【!! 核心修改 !!】 ---
+            // 根据 Designer.cs，右侧的 TabControl 是 tabControl2
+            // "TE" 标签页是 tabPageDisplayTE
+            if (tabControl2.SelectedTab == tabPageDisplayTE)
             {
                 resField = "视电阻率_TE";
                 phaseField = "相位_TE";
                 seriesName = "TE 模式";
             }
-            else // 默认 TM (rbInversionTM.Checked)
-            {
+            else // 默认 TM (或选中了 tabPageDisplayTM)
+            {
                 resField = "视电阻率_TM";
                 phaseField = "相位_TM";
                 seriesName = "TM 模式";
             }
+            // --- 逻辑修改结束 ---
 
-            if (chartResistivity.Titles.Count > 0) chartResistivity.Titles[0].Text = $"{m_CurrentSelectedStationName} - 周期-视电阻率 ({seriesName})";
+
+            if (chartResistivity.Titles.Count > 0) chartResistivity.Titles[0].Text = $"{m_CurrentSelectedStationName} - 周期-视电阻率 ({seriesName})";
             if (chartPhase.Titles.Count > 0) chartPhase.Titles[0].Text = $"{m_CurrentSelectedStationName} - 周期-相位 ({seriesName})";
 
             DataView dvStation = new DataView(m_CurrentLineData);
             try
             {
-                // 【!! 确认字段名 '测点编号' !!】
-                dvStation.RowFilter = $"测点编号 = '{m_CurrentSelectedStationName}'";
+                // 【!! 确认字段名 '测点编号' !!】
+                dvStation.RowFilter = $"测点编号 = '{m_CurrentSelectedStationName}'";
             }
             catch (Exception ex)
             {
@@ -757,8 +802,8 @@ namespace MapGISPlugin3
             {
                 foreach (DataRowView row in dvStation)
                 {
-                    // 【!! 确认字段名 '周期' !!】
-                    if (row["周期"] == DBNull.Value || row[resField] == DBNull.Value || row[phaseField] == DBNull.Value)
+                    // 【!! 确认字段名 '周期' !!】
+                    if (row["周期"] == DBNull.Value || row[resField] == DBNull.Value || row[phaseField] == DBNull.Value)
                         continue;
 
                     double period = Convert.ToDouble(row["周期"]);
@@ -784,119 +829,235 @@ namespace MapGISPlugin3
             chartPhase.ChartAreas[0].RecalculateAxesScale();
         }
 
-        /// <summary>
-        /// (辅助函数) TODO 1: 查询指定测线的所有测点信息 (V7.6.0.0 兼容版)
-        /// 【!! 已修复 - 采用 FillLineComboBox 逻辑 !!】
-        /// </summary>
+
+
         private List<StationInfo> QueryStationsForLine(string lineName)
         {
-            List<StationInfo> stations = new List<StationInfo>();
+            var stations = new List<StationInfo>();
             if (m_SelectedStationLayer == null || !m_SelectedStationLayer.HasOpen())
             {
-                Console.WriteLine("QueryStationsForLine: m_SelectedStationLayer 为 null 或未打开。");
+                MessageBox.Show("错误：测点图层未打开！");
                 return stations;
             }
 
             RecordSet rs = null;
             try
             {
-                QueryDef query = new QueryDef
-                {
-                    // 【!! 确认字段名 !!】
-                    Filter = $"测线号 = '{lineName}'",
-                    SubFields2 = "*", // 获取所有字段，包括 "测点号"
-                    // 【!! 移除 CursorType !!】
-                };
+                // --- 1. 打印字段名，确认存在 ---
+                Fields fields = m_SelectedStationLayer.Fields;
+                MessageBox.Show($"字段总数: {fields.Count}\n字段列表:\n" +
+                    string.Join("\n", Enumerable.Range(0, fields.Count).Select(i =>
+                        $"{i}: {fields[i].FieldName} (类型: {fields[i].FieldType})"
+                    )));
 
-                // 【修复逻辑 1】Select
-                rs = m_SelectedStationLayer.Select(query);
-
-                if (rs == null)
+                // --- 2. 检查测线号字段是否存在 ---
+                string lineField = "测线号"; // 你用的字段
+                if (fields.IndexOf(lineField) < 0)
                 {
-                    MessageBox.Show("QueryStationsForLine: Select(query) 返回 null，查询失败。", "错误", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show($"严重错误：字段 '{lineField}' 不存在！\n请检查是否叫 '线号'、'LineNo'、'测线' 等");
                     return stations;
                 }
 
-                // 【修复逻辑 2】预加载
-                try
+                // --- 3. 构造查询 ---
+                QueryDef query = new QueryDef
                 {
-                    // (移除弹窗 2.1, 2.2, 2.3)
-                    rs.MoveLast();
-                    rs.MoveFirst();
+                    Filter = $"{lineField} = '{lineName}'",
+                    SubFields2 = "*"
+                };
+
+                rs = m_SelectedStationLayer.Select(query);
+
+                // --- 4. 关键：检查 rs 是否为空 ---
+                if (rs == null)
+                {
+                    MessageBox.Show($"查询失败：Select 返回 null\nFilter: {query.Filter}");
+                    return stations;
                 }
-                catch (Exception ex)
+
+                if (rs.Count == 0)
                 {
-                    MessageBox.Show($"QueryStationsForLine: 预加载 (MoveLast) 失败: {ex.Message}。继续尝试迭代...", "警告", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show($"查询无结果！\n" +
+                                   $"Filter: {query.Filter}\n" +
+                                   $"lineName = '{lineName}' (长度: {lineName.Length})\n" +
+                                   $"请检查测线号是否正确、是否有空格或大小写问题");
+                    return stations;
                 }
 
-                // (移除弹窗 2.4)
+                MessageBox.Show($"查询成功！共 {rs.Count} 条记录，开始遍历...");
 
-                string stationField = "测点号"; // 【!! 确认字段名 !!】
-                int currentIndex = 0;
+                // --- 5. 预加载 ---
+                rs.MoveLast();
+                rs.MoveFirst();
 
-                // 【修复逻辑 3】增加 !rs.IsEOF
-                while (rs.MoveNext() && !rs.IsEOF)
+                // --- 6. 遍历 (V2.4 - 恢复正确的 while 循环) ---
+                int totalRecords = rs.Count;
+                int geomFailCount = 0;
+                int attNullCount = 0;
+                int nameNullCount = 0;
+                int successCount = 0;
+                string firstGeomType = "N/A";
+                bool fieldNameError = false;
+                int currentIndex = 0; // <-- 添加安全计数器
+
+                // 【!! 关键修复 !!】 
+                // 恢复为 MoveNext 和 IsEOF 检查，这是唯一可靠的模式
+                if (totalRecords == 0)
                 {
+                    MessageBox.Show("遍历报告: totalRecords 为 0，循环前退出。");
+                    return stations; // 确保空记录集时安全退出
+                }
+
+
+                do
+                {
+                    // 【!! 安全退出 !!】 (以防万一)
+                    currentIndex++;
+                    if (currentIndex > totalRecords * 1.5 && totalRecords > 0)
+                    {
+                        MessageBox.Show($"[QueryStationsForLine] 迭代超过预期 ({currentIndex} > {totalRecords})，强制停止循环。");
+                        break;
+                    }
+
+                    IGeometry geomBase = null;
+                    Record att = null;
+                    double x = 0, y = 0;
+                    bool geomSuccess = false;
+
                     try
                     {
-                        // 【修复逻辑 4】安全退出
-                        currentIndex++;
-                        if (currentIndex > rs.Count * 1.5 && rs.Count > 0)
+                        geomBase = rs.Geometry;
+                        if (geomBase == null)
                         {
-                            MessageBox.Show($"[调试] 迭代超过预期 ({currentIndex} > {rs.Count})，强制停止循环。", "QueryStationsForLine - 安全退出");
+                            geomFailCount++;
+                            continue;
+                        }
+
+                        // --- 检查 1: Geometry ---
+                        if (geomBase is GeoPoints geomPoints)
+                        {
+                            if (geomPoints.Count > 0)
+                            {
+                                Dot3D firstDot = null;
+                                try
+                                {
+                                    firstDot = geomPoints.GetItem(0);
+                                    if (firstDot != null)
+                                    {
+                                        x = firstDot.X;
+                                        y = firstDot.Y;
+                                        geomSuccess = true;
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.WriteLine("获取 GeoPoints.GetItem(0) 出错: " + ex.Message);
+                                }
+                                finally
+                                {
+                                    if (firstDot != null) try { Marshal.ReleaseComObject(firstDot); } catch { }
+                                }
+                            }
+                        }
+
+                        if (!geomSuccess)
+                        {
+                            geomFailCount++;
+                            if (geomFailCount == 1)
+                            {
+                                firstGeomType = geomBase.GetType().Name;
+                            }
+                            continue;
+                        }
+
+                        // --- 检查 2: Attribute ---
+                        att = rs.Att;
+                        if (att == null)
+                        {
+                            attNullCount++;
+                            continue;
+                        }
+
+                        // --- 检查 3: Field Value ---
+                        object val = null;
+                        try
+                        {
+                            val = att["测点号"];
+                        }
+                        catch (Exception fieldEx)
+                        {
+                            MessageBox.Show($"字段名错误：在遍历时无法获取 '测点号' 字段！\n错误: {fieldEx.Message}\n请检查 '字段列表' 弹窗中的确切名称！", "致命错误", MessageBoxButtons.OK, MessageBoxIcon.Stop);
+                            fieldNameError = true;
                             break;
                         }
 
-                        // 1. 获取几何 (使用 .Geometry 属性)
-                        IGeometry geom = rs.Geometry;
-                        if (geom == null || !(geom is Dot pnt))
-                        {
-                            Console.WriteLine("警告: 找到一条记录，但其几何不是点(Dot)。");
-                            continue;
-                        }
-
-                        // 2. 获取属性
-                        Record att = rs.Att;
-                        if (att == null)
-                        {
-                            Console.WriteLine("警告: 找到一条记录，但其 Att 为 null。");
-                            continue;
-                        }
-
-                        object val = att[stationField]; // 【!! 确认字段名 !!】
-                        string stationName = val?.ToString();
-
+                        string stationName = val?.ToString()?.Trim();
                         if (string.IsNullOrWhiteSpace(stationName))
                         {
-                            Console.WriteLine("警告: 找到一个点，但其 '测点号' 为空。");
+                            nameNullCount++;
                             continue;
                         }
 
+                        // --- 成功 ---
                         stations.Add(new StationInfo
                         {
                             StationName = stationName,
-                            X = pnt.X,
-                            Y = pnt.Y
+                            X = x,
+                            Y = y
                         });
+                        successCount++;
                     }
-                    catch (Exception recEx)
+                    finally
                     {
-                        MessageBox.Show($"迭代第 {currentIndex} 条记录出错: {recEx.Message} (可能该记录损坏，跳过)", "QueryStationsForLine - 迭代错误");
+                        if (geomBase != null) try { Marshal.ReleaseComObject(geomBase); } catch { }
+                        if (att != null) try { Marshal.ReleaseComObject(att); } catch { }
                     }
-                } // 循环结束
+                } while (rs.MoveNext() && !rs.IsEOF);
+                // --- 循环结束 ---
+
+                // --- 显示调试报告 V2.2 ---
+                if (!fieldNameError)
+                {
+                    MessageBox.Show($"遍历报告 (QueryStationsForLine V2.2):\n\n" +
+                                    $"总记录 (rs.Count): {totalRecords}\n" +
+                                    $"-------------------------------------\n" +
+                                    $"成功添加测点: {successCount} (List.Count: {stations.Count})\n" +
+                                    $"跳过 (几何错误): {geomFailCount}\n" +
+                                    $"跳过 (属性为空): {attNullCount}\n" +
+                                    $"跳过 (测点号为空): {nameNullCount}\n\n" +
+                                    $"第一个错误几何类型: {firstGeomType}",
+                                    "调试报告", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+
+
+
+
+
+
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"[调试] QueryStationsForLine 捕获到异常: {ex.Message}", "QueryStationsForLine - 致命错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"异常：{ex.Message}\n{ex.StackTrace}");
             }
             finally
             {
-                if (rs != null) { try { Marshal.ReleaseComObject(rs); } catch { } }
+                if (rs != null)
+                {
+                    try { Marshal.ReleaseComObject(rs); }
+                    catch (Exception ex)
+                    {
+                        // 吞掉释放时的异常，防止程序崩溃
+                        Console.WriteLine($"释放 RecordSet (rs) 时出错: {ex.Message}");
+                    }
+                }
             }
 
-            // 按 X 坐标排序 (确保小地图上的点是按顺序的)
+            MessageBox.Show($"最终返回 {stations.Count} 个测点");
             return stations.OrderBy(s => s.X).ToList();
         }
+
+
+
+
 
         /// <summary>
         /// (辅助函数) TODO 2: 查询指定测线的所有测深数据到 DataTable (V7.6.0.0 兼容版)
@@ -968,14 +1129,24 @@ namespace MapGISPlugin3
                 // 填充数据
                 int currentIndex = 0;
                 // 【修复逻辑 3】增加 !rs.IsEOF
-                while (rs.MoveNext() && !rs.IsEOF)
+                int totalRecords = rs.Count; // 【!! 关键修复 !!】获取总数用于安全检查
+
+                // 【!! 关键修复 V2.5 !!】
+                // 同样, MoveFirst() 后必须用 do-while
+                if (totalRecords == 0)
+                {
+                    Console.WriteLine("QuerySoundingDataForLine: totalRecords 为 0，循环前退出。");
+                    return dataTable;
+                }
+
+                do
                 {
                     Record att = null;
                     try
                     {
                         // 【修复逻辑 4】安全退出
                         currentIndex++;
-                        if (currentIndex > rs.Count * 1.5 && rs.Count > 0)
+                        if (currentIndex > totalRecords * 1.5 && rs.Count > 0)
                         {
                             MessageBox.Show($"[调试] 迭代超过预期 ({currentIndex} > {rs.Count})，强制停止循环。", "QuerySoundingDataForLine - 安全退出");
                             break;
@@ -1009,7 +1180,8 @@ namespace MapGISPlugin3
                         // 在循环内部释放 Att，防止内存泄漏
                         if (att != null) { try { Marshal.ReleaseComObject(att); } catch { } }
                     }
-                } // 循环结束
+                } while (rs.MoveNext() && !rs.IsEOF);
+                // 循环结束
             }
             catch (Exception ex)
             {
@@ -1085,5 +1257,21 @@ namespace MapGISPlugin3
         {
             LoadLayersFromMap();
         }
+
+        /// <summary>
+        /// 事件: 当用户切换 右侧 的 "TE" / "TM" 图表标签页时 (tabControl2)
+        /// </summary>
+        private void tabControl2_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            // 确保数据已加载 (m_CurrentSelectedStationName 不为空)
+            // 这样在加载测线前或清空时切换标签不会出错
+            if (!string.IsNullOrEmpty(m_CurrentSelectedStationName))
+            {
+                // 调用我们刚修改好的函数，它会读取 tabControl2 的状态
+                UpdateRightPanelCharts();
+            }
+        }
+
+        
     } // End Class
 } // End Namespace

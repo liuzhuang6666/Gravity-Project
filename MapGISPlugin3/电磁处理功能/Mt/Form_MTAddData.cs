@@ -165,10 +165,16 @@ namespace MapGISPlugin3 // 确保命名空间正确
                 Record stationRecord = new Record { Fields = stationFields };
                 foreach (var stationInfo in uniqueStations.Values)
                 {
-                    Dot3D pnt3D = new Dot3D(stationInfo.X, stationInfo.Y, 0.0);
+                    // 【改回】: 必须使用 Dot3D 和 GeoPoints 才能满足 IGeometry 接口
+                    Dot3D pnt3D = new Dot3D(stationInfo.X, stationInfo.Y, 0.0);
+
                     stationRecord["测线号"] = stationInfo.LineName; stationRecord["测点号"] = stationInfo.StationName; stationRecord["X坐标"] = stationInfo.X; stationRecord["Y坐标"] = stationInfo.Y;
+
+                    // 【改回】: 创建 GeoPoints 对象
                     GeoPoints currentPnts = new GeoPoints();
                     currentPnts.Append(pnt3D);
+
+                    // 【改回】: 附加 GeoPoints 对象 (这能通过编译)
                     if (stationSfc.Append(currentPnts, stationRecord, null) <= 0)
                     { Console.WriteLine($"警告: 追加测点 '{stationInfo.StationName}' 失败。"); }
                 }
