@@ -14,6 +14,9 @@ using MapGIS.GeoObjects;
 using System.Windows.Forms.DataVisualization.Charting; // <-- 必须引用
 using System.Runtime.InteropServices;
 using MapGIS.GeoObjects.Geometry;
+using System.IO; // 用于文件读写 (Path, StreamWriter)
+using System.Diagnostics; // 用于执行 a.exe (Process)
+using System.Reflection; // 用于获取 a.exe 的路径 (Assembly)
 
 namespace MapGISPlugin3
 {
@@ -464,14 +467,145 @@ namespace MapGISPlugin3
             }
         }
 
-        
+
 
         /// <summary>
-        /// 事件: 点击 "开始计算" 按钮
-        /// </summary>
-        private void btnCalculate_Click(object sender, EventArgs e)
+        /// 事件: 点击 "开始计算" 按钮
+        /// 【V-Final-2: 学习 MagCorrelationImaging 的相对路径逻辑】
+        /// </summary>
+        private void btnCalculate_Click(object sender, EventArgs e)
         {
-            // TODO: 实现第三步 - 计算
+            // --- 1. 检查数据 ---
+            if (m_CurrentLineData == null || m_CurrentLineData.Rows.Count == 0)
+            {
+                MessageBox.Show("没有加载任何测线数据，无法计算。", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            this.Cursor = Cursors.WaitCursor;
+
+            // --- 2. 获取参数 (根据文档) ---
+            int its = (int)nudIterationCount.Value;
+            int iwd = rbInversionTE.Checked ? 0 : 1; // 0=TE, 1=TM
+
+            // --- 3. 定义路径 ---
+            string tempInputFile = Path.GetTempFileName(); // 临时数据文件 (argv[1])
+            string exePath;
+            string pluginDir;
+            string workspaceName;
+            string fullWorkspacePath;
+
+            try
+            {
+                // 【!! 学习 MagCorrelationImaging 的逻辑 !!】
+                // 1. 获取插件的运行目录 (例如 ...\Program\)
+                pluginDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+
+                // 2. 组合出 a.exe 所在的子目录
+                string algorithmDir = Path.Combine(pluginDir, "Algorithm", "MT1di");
+
+                // 3. 获取 a.exe 的完整绝对路径
+                exePath = Path.Combine(algorithmDir, "a.exe");
+                // --- 【!! 学习结束 !!】 ---
+
+                if (!File.Exists(exePath))
+                {
+                    // 这个错误信息现在是 100% 正确的
+                    throw new FileNotFoundException($"计算程序 'a.exe' 未找到。\n请确保它位于: {exePath}\n\n(提示: 请执行本回复中的【第 2 步】来修复此问题。)");
+                }
+
+                // 根据文档: "工作空间为字符串类型，规定为字符串长度是6"
+                workspaceName = Path.GetRandomFileName().Substring(0, 6); // (argv[2])
+                // 组合出 "KNOW" 文件的完整保存路径 (也保存在插件目录 ...\Program\ 下)
+                fullWorkspacePath = Path.Combine(pluginDir, workspaceName);
+
+                if (Directory.Exists(fullWorkspacePath))
+                {
+                    workspaceName = Path.GetRandomFileName().Substring(0, 6);
+                    fullWorkspacePath = Path.Combine(pluginDir, workspaceName);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"查找 'a.exe' 或创建工作区失败: {ex.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                this.Cursor = Cursors.Default;
+                return;
+            }
+
+            try
+            {
+                // --- 4. 数据转换 (写入临时文件) ---
+                Dictionary<string, StationInfo> stationCoords = m_CurrentLineStations.ToDictionary(s => s.StationName);
+
+                using (StreamWriter writer = new StreamWriter(tempInputFile))
+                {
+                    foreach (DataRow row in m_CurrentLineData.Rows)
+                    {
+                        string stationName = row["测点编号"].ToString();
+                        StationInfo station;
+                        if (!stationCoords.TryGetValue(stationName, out station)) { continue; }
+
+                        double z_coord = 0.0; // Z坐标占位符
+                        double period = GetDoubleFromRow(row, "周期", 1.0);
+                        if (period == 0) period = 1e-9;
+                        double freq = 1.0 / period; // C++ 需要的是频率
+
+                        double rxy = GetDoubleFromRow(row, "视电阻率_TE", 0.0);
+                        double pxy = GetDoubleFromRow(row, "相位_TE", 0.0);
+                        double ryx = GetDoubleFromRow(row, "视电阻率_TM", 0.0);
+                        double pyx = GetDoubleFromRow(row, "相位_TM", 0.0);
+
+                        // 写入9列、空格分隔的行
+                        writer.WriteLine($"{stationName} {station.X} {station.Y} {z_coord} {freq} {rxy} {pxy} {ryx} {pyx}");
+                    }
+                }
+
+                // --- 5. 执行 a.exe ---
+                ProcessStartInfo startInfo = new ProcessStartInfo();
+                startInfo.FileName = exePath;
+                startInfo.Arguments = $"\"{tempInputFile}\" \"{workspaceName}\" {iwd} {its}";
+                // 设置工作目录，a.exe 才能找到它的DLL(mt1di.dll等)并正确创建 workspaceName 文件夹
+                startInfo.WorkingDirectory = pluginDir;
+                startInfo.UseShellExecute = false;
+                startInfo.RedirectStandardOutput = true;
+                startInfo.RedirectStandardError = true;
+                startInfo.CreateNoWindow = true;
+
+                string output = "";
+                string error = "";
+
+                using (Process process = Process.Start(startInfo))
+                {
+                    output = process.StandardOutput.ReadToEnd();
+                    error = process.StandardError.ReadToEnd();
+                    process.WaitForExit();
+
+                    // --- 6. 反馈结果 ---
+                    if (process.ExitCode == 0)
+                    {
+                        MessageBox.Show($"计算成功！\n\n结果已保存到:\n{fullWorkspacePath}\n\n(提示: 结果文件为 'KNOW')\n程序输出:\n{output}",
+                              "计算完成", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    else
+                    {
+                        throw new Exception($"a.exe 运行失败 (ExitCode: {process.ExitCode})。\n\n工作目录:\n{pluginDir}\n\n命令行:\n{startInfo.Arguments}\n\n错误信息:\n{error}\n\n输出信息:\n{output}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"计算过程中发生严重错误: \n{ex.Message}", "计算失败", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                // --- 7. 清理 ---
+                if (File.Exists(tempInputFile))
+                {
+                    try { File.Delete(tempInputFile); }
+                    catch (Exception ex) { Console.WriteLine($"删除临时文件 {tempInputFile} 失败: {ex.Message}"); }
+                }
+                this.Cursor = Cursors.Default;
+            }
         }
 
         #endregion
@@ -482,6 +616,27 @@ namespace MapGISPlugin3
         #endregion
 
         #region --- 4. 核心辅助函数 (被事件调用) ---
+        /// <summary>
+        /// (辅助函数) 安全地从 DataRow 获取 double 值，处理 DBNull
+        /// </summary>
+        private double GetDoubleFromRow(DataRow row, string columnName, double defaultValue)
+        {
+            try
+            {
+                // 检查列是否存在且值不是 DBNull
+                if (row.Table.Columns.Contains(columnName) && row[columnName] != DBNull.Value)
+                {
+                    return Convert.ToDouble(row[columnName]);
+                }
+            }
+            catch (Exception ex)
+            {
+                // 仅在控制台输出错误，防止弹窗
+                Console.WriteLine($"GetDoubleFromRow 转换失败: {columnName}, 错误: {ex.Message}");
+            }
+            // 转换失败或值为 DBNull 时返回默认值
+            return defaultValue;
+        }
 
         /// <summary>
         /// (辅助函数) 查找地图

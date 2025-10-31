@@ -197,6 +197,7 @@ namespace MapGISPlugin3
             this.btnCalculate.TabIndex = 0;
             this.btnCalculate.Text = "计算";
             this.btnCalculate.UseVisualStyleBackColor = true;
+            this.btnCalculate.Click += new System.EventHandler(this.btnCalculate_Click);
             // 
             // chartProfileView
             // 
