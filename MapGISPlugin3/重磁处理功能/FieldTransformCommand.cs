@@ -6,7 +6,7 @@ using System.Windows.Forms; // 确保引用了 MessageBox
 
 namespace MapGISPlugin3
 {
-    public class Command2 : ICommand
+    public class FieldTransformCommand  : ICommand
     {
         // 成员变量，用于保存从OnCreate接收的hook
         private IApplication m_hook;
@@ -19,7 +19,7 @@ namespace MapGISPlugin3
         public bool Checked { get { return false; } }
         public bool Enabled { get { return true; } }
         public string Message { get { return "执行位场转换处理功能"; } }
-        public string Name { get { return "FieldTransformProcessCmd"; } } // 建议使用英文名
+        public string Name { get { return "FieldTransformCommand"; } } // 建议使用英文名
         public string Tooltip { get { return "位场处理转换"; } }
 
         /// <summary>
