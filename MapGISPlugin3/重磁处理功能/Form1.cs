@@ -988,7 +988,7 @@ namespace MapGISPlugin3
             DengZhiXianKeShiHua(m_Map, m_mtr);
         }
 
-/*        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
+        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
             // 释放第一个 MapControl
             if (m_mtr != null)
@@ -1005,55 +1005,7 @@ namespace MapGISPlugin3
             }
 
             // （可选但推荐）在这里也可以添加对 m_Tempdaba 等其他长生命周期成员的清理
-        }*/
-
-
-        // 这个方法现在变得不那么关键了，但留着也无害
-        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
-        {
-            // `using` 语句会处理 Dispose 的调用
         }
-        // 在 FieldTransformForm.cs 文件中，用这段完整的代码替换你粘贴过来的 Dispose 方法
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                // 首先，释放设计器管理的托管组件
-                if (components != null)
-                {
-                    components.Dispose();
-                }
 
-                // 然后，在这里添加我们自己的COM对象释放逻辑
-                // 释放临时简单要素类和注记
-                if (m_Tempsfclslin != null) { System.Runtime.InteropServices.Marshal.ReleaseComObject(m_Tempsfclslin); m_Tempsfclslin = null; }
-                if (m_TempsfclsSlopelin != null) { System.Runtime.InteropServices.Marshal.ReleaseComObject(m_TempsfclsSlopelin); m_TempsfclsSlopelin = null; }
-                if (m_Tempsfclsreg != null) { System.Runtime.InteropServices.Marshal.ReleaseComObject(m_Tempsfclsreg); m_Tempsfclsreg = null; }
-                if (m_tempann != null) { System.Runtime.InteropServices.Marshal.ReleaseComObject(m_tempann); m_tempann = null; }
-
-                // 释放临时数据库
-                if (m_Tempdaba != null) { System.Runtime.InteropServices.Marshal.ReleaseComObject(m_Tempdaba); m_Tempdaba = null; }
-
-                // MapControl 是控件，理论上会被 components.Dispose() 处理，但再次调用 Dispose() 是安全的
-                if (m_mtr != null) { m_mtr.Dispose(); m_mtr = null; }
-                if (m_mtr2 != null) { m_mtr2.Dispose(); m_mtr2 = null; }
-
-                // 释放你自己创建的 Map 和 Document 对象
-                // 注意：从主程序 hook 获取的对象通常不应由你来释放，但你自己 new() 的必须释放
-                if (m_Map != null) { System.Runtime.InteropServices.Marshal.ReleaseComObject(m_Map); m_Map = null; }
-                if (m_Map2 != null) { System.Runtime.InteropServices.Marshal.ReleaseComObject(m_Map2); m_Map2 = null; }
-                if (activeMap != null) { System.Runtime.InteropServices.Marshal.ReleaseComObject(activeMap); activeMap = null; }
-
-                // Document 实现了 IDisposable，调用 Dispose() 是最佳方式
-                if (m_doc != null) { m_doc.Dispose(); m_doc = null; }
-                if (m_doc2 != null) { m_doc2.Dispose(); m_doc2 = null; }
-
-                // 释放其他可能的COM对象
-                if (m_geodaba != null) { System.Runtime.InteropServices.Marshal.ReleaseComObject(m_geodaba); m_geodaba = null; }
-            }
-
-            // 最后，必须调用基类的 Dispose 方法
-            base.Dispose(disposing);
-        }
     }
 }

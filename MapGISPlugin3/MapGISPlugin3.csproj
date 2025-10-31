@@ -247,15 +247,15 @@
       <DependentUpon>AddDataForm.cs</DependentUpon>
     </Compile>
     <Compile Include="重磁处理功能\MagCorrelationImagingCommand.cs" />
-    <Compile Include="重磁处理功能\FieldTransformCommand.cs" />
+    <Compile Include="重磁处理功能\Command2.cs" />
     <Compile Include="重磁处理功能\Command3.cs" />
     <Compile Include="数据类浮窗\DockWindow1.cs" />
     <Compile Include="重磁处理功能\Command4.cs" />
-    <Compile Include="重磁处理功能\FieldTransformForm.cs">
+    <Compile Include="重磁处理功能\Form1.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="重磁处理功能\FieldTransformForm.Designer.cs">
-      <DependentUpon>FieldTransformForm.cs</DependentUpon>
+    <Compile Include="重磁处理功能\Form1.Designer.cs">
+      <DependentUpon>Form1.cs</DependentUpon>
     </Compile>
     <Compile Include="重磁处理功能\Form2.cs">
       <SubType>Form</SubType>
@@ -314,8 +314,8 @@
     <EmbeddedResource Include="重磁处理功能\AddDataForm.resx">
       <DependentUpon>AddDataForm.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="重磁处理功能\FieldTransformForm.resx">
-      <DependentUpon>FieldTransformForm.cs</DependentUpon>
+    <EmbeddedResource Include="重磁处理功能\Form1.resx">
+      <DependentUpon>Form1.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="重磁处理功能\Form2.resx">
       <DependentUpon>Form2.cs</DependentUpon>
