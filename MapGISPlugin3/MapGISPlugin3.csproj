@@ -131,9 +131,6 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>D:\Program Files\MapGIS 10\Program\MapGIS.GeoDataBase.dll</HintPath>
     </Reference>
-    <Reference Include="MapGIS.Geologic.Map">
-      <HintPath>..\..\..\..\..\..\MapGIS 10\Program\MapGIS.Geologic.Map.dll</HintPath>
-    </Reference>
     <Reference Include="MapGIS.Geologic.Model">
       <HintPath>..\..\..\..\..\..\MapGIS 10\Program\MapGIS.Geologic.Model.dll</HintPath>
     </Reference>
@@ -185,6 +182,7 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Windows.Forms.DataVisualization" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -216,6 +214,20 @@
     <Compile Include="电磁处理功能\Csamt\CsamtNearFieldCorrectionCommand.cs" />
     <Compile Include="电磁处理功能\Csamt\CsamtProposed2DInversionCommand.cs" />
     <Compile Include="电磁处理功能\Csamt\CsamtStaticCorrectionCommand.cs" />
+    <Compile Include="电磁处理功能\Mt\Form_MT1di.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="电磁处理功能\Mt\Form_MT1di.Designer.cs">
+      <DependentUpon>Form_MT1di.cs</DependentUpon>
+    </Compile>
+    <Compile Include="电磁处理功能\Mt\Form_MTAddData.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="电磁处理功能\Mt\Form_MTAddData.Designer.cs">
+      <DependentUpon>Form_MTAddData.cs</DependentUpon>
+    </Compile>
+    <Compile Include="电磁处理功能\Mt\MT1diCommand.cs" />
+    <Compile Include="电磁处理功能\Mt\MTAddDataCommand.cs" />
     <Compile Include="目录树\CreatePrjectForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -234,7 +246,6 @@
     <Compile Include="重磁处理功能\AddDataForm.Designer.cs">
       <DependentUpon>AddDataForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="电磁处理功能\Command1.cs" />
     <Compile Include="重磁处理功能\MagCorrelationImagingCommand.cs" />
     <Compile Include="重磁处理功能\Command2.cs" />
     <Compile Include="重磁处理功能\Command3.cs" />
@@ -251,12 +262,6 @@
     </Compile>
     <Compile Include="重磁处理功能\Form2.Designer.cs">
       <DependentUpon>Form2.cs</DependentUpon>
-    </Compile>
-    <Compile Include="电磁处理功能\Form3.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="电磁处理功能\Form3.Designer.cs">
-      <DependentUpon>Form3.cs</DependentUpon>
     </Compile>
     <Compile Include="重磁处理功能\Form_MagCorrelationImaging.cs">
       <SubType>Form</SubType>
@@ -297,6 +302,12 @@
     <EmbeddedResource Include="工程相关\ProjectTreeControl.resx">
       <DependentUpon>ProjectTreeControl.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="电磁处理功能\Mt\Form_MT1di.resx">
+      <DependentUpon>Form_MT1di.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="电磁处理功能\Mt\Form_MTAddData.resx">
+      <DependentUpon>Form_MTAddData.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="目录树\CreatePrjectForm.resx">
       <DependentUpon>CreatePrjectForm.cs</DependentUpon>
     </EmbeddedResource>
@@ -308,9 +319,6 @@
     </EmbeddedResource>
     <EmbeddedResource Include="重磁处理功能\Form2.resx">
       <DependentUpon>Form2.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="电磁处理功能\Form3.resx">
-      <DependentUpon>Form3.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="重磁处理功能\Form_MagCorrelationImaging.resx">
       <DependentUpon>Form_MagCorrelationImaging.cs</DependentUpon>
@@ -332,7 +340,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Processor\" />
-    <Folder Include="电磁处理功能\Mt\" />
     <Folder Include="电磁处理功能\Sip\" />
     <Folder Include="电磁处理功能\Tdip\" />
     <Folder Include="电磁处理功能\Tem\" />
