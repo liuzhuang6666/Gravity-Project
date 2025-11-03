@@ -366,52 +366,36 @@ namespace MapGISPlugin3
             }
 
             string selectedLine = cmbLineName.SelectedItem.ToString();
-            // --- [调试 1] ---
-            MessageBox.Show($"[调试 1/7] 已选中测线: '{selectedLine}'。即将开始查询。", "cmbLineName_SelectedIndexChanged", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
+           
             this.Cursor = Cursors.WaitCursor; // 开始等待
 
             try
             {
-                // 1. (TODO 1) 查询 SFeatureCls (点图层)，获取所有测点 (X, Y, 测点号)
-                // --- [调试 2] ---
-                MessageBox.Show("[调试 2/7] 即将调用 QueryStationsForLine (查询测点)...", "cmbLineName_SelectedIndexChanged", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
+                // 1.  查询 SFeatureCls (点图层)，获取所有测点 (X, Y, 测点号)
+                
                 m_CurrentLineStations = QueryStationsForLine(selectedLine);
 
-                // --- [新调试 3] ---
-                MessageBox.Show($"[调试 3/7] QueryStationsForLine 执行完毕。查询到 {m_CurrentLineStations.Count} 个测点。", "cmbLineName_SelectedIndexChanged", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                
 
-
-                // 2. (TODO 2) 查询 ObjectCls (测深表)，获取该测线所有数据
-                // --- [新调试 4] ---
-                MessageBox.Show("[调试 4/7] 即将调用 QuerySoundingDataForLine (查询测深数据)...", "cmbLineName_SelectedIndexChanged", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                // 2. 查询 ObjectCls (测深表)，获取该测线所有数据
                 m_CurrentLineData = QuerySoundingDataForLine(selectedLine);
-                // --- [新调试 5] ---
-                MessageBox.Show($"[调试 5/7] QuerySoundingDataForLine 执行完毕。查询到 {m_CurrentLineData.Rows.Count} 条测深数据。", "cmbLineName_SelectedIndexChanged", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-
-                // 3. (TODO 3) 刷新"计算"页的小地图
+                
+                // 3. 刷新"计算"页的小地图
                 UpdateProfileView();
 
-                // 4. (TODO 4 & 5) 刷新"TE" 和 "TM" 页的表格
+                // 4.刷新"TE" 和 "TM" 页的表格
                 UpdateDataGrids();
-                // --- [新调试 6] ---
-                MessageBox.Show("[调试 6/7] 小地图 (ProfileView) 和数据表格 (DataGrids) 已刷新。", "cmbLineName_SelectedIndexChanged", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-
-                // 6. (TODO 6) 自动选中第一个点
+                // 6.自动选中第一个点
                 if (m_CurrentLineStations.Count > 0)
                 {
                     string firstStation = m_CurrentLineStations[0].StationName;
-                    // --- [新调试 7] ---
-                    MessageBox.Show($"[调试 7/7] 即将自动选中第一个测点: '{firstStation}' 并刷新右侧图表。", "cmbLineName_SelectedIndexChanged", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     // 自动选中第一个点并刷新右侧图表
                     SelectStationAndRefreshCharts(firstStation);
                 }
                 else
                 {
-                    MessageBox.Show("[调试 7/7] 未查询到测点，跳过自动选中。", "cmbLineName_SelectedIndexChanged", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    Console.WriteLine("cmbLineName_SelectedIndexChanged: 未查询到测点，跳过自动选中。");
                 }
             }
             catch (COMException comEx)
@@ -929,7 +913,11 @@ namespace MapGISPlugin3
         /// (辅助函数) 刷新右栏的两张曲线图
         /// 【V4 - 已修正为根据 tabControl2 状态刷新】
         /// </summary>
-        private void UpdateRightPanelCharts()
+        /// <summary>
+        /// (辅助函数) 刷新右栏的两张曲线图
+        /// 【V5 - 已修正图例和坐标轴标题】
+        /// </summary>
+        private void UpdateRightPanelCharts()
         {
             chartResistivity.Series.Clear();
             chartPhase.Series.Clear();
@@ -938,19 +926,29 @@ namespace MapGISPlugin3
             {
                 if (chartResistivity.Titles.Count > 0) chartResistivity.Titles[0].Text = "周期-视电阻率";
                 if (chartPhase.Titles.Count > 0) chartPhase.Titles[0].Text = "周期-相位";
+
+                // 【Request 1】即使清空，也要显示默认轴标题
+                chartResistivity.ChartAreas[0].AxisX.Title = "周期(s)";
+                chartResistivity.ChartAreas[0].AxisY.Title = "视电阻率";
+                chartPhase.ChartAreas[0].AxisX.Title = "周期(s)";
+                chartPhase.ChartAreas[0].AxisY.Title = "相位";
                 return;
             }
 
+            // --- 【Request 2: 修改图例名称】 ---
             string resField = "视电阻率_TM";
             string phaseField = "相位_TM";
-            string seriesName = "TM 模式";
+            string resSeriesName = "视电阻率(TM)"; // 新的图例/系列名称
+            string phaseSeriesName = "相位(TM)";     // 新的图例/系列名称
 
             if (tabControl2.SelectedTab == tabPageDisplayTE)
             {
                 resField = "视电阻率_TE";
                 phaseField = "相位_TE";
-                seriesName = "TE 模式";
+                resSeriesName = "视电阻率(TE)";   // TE 模式的名称
+                phaseSeriesName = "相位(TE)";       // TE 模式的名称
             }
+            // --- 修改结束 ---
 
             Console.WriteLine($"UpdateRightPanelCharts: resField={resField}, phaseField={phaseField}");
 
@@ -960,9 +958,17 @@ namespace MapGISPlugin3
                 return;
             }
 
-            // 更新标题（如示例）
-            if (chartResistivity.Titles.Count > 0) chartResistivity.Titles[0].Text = $"{m_CurrentSelectedStationName} - 视电阻率({seriesName})";
-            if (chartPhase.Titles.Count > 0) chartPhase.Titles[0].Text = $"{m_CurrentSelectedStationName} - 相位({seriesName})";
+            // 更新标题 (使用新的系列名称)
+            if (chartResistivity.Titles.Count > 0) chartResistivity.Titles[0].Text = $"{m_CurrentSelectedStationName} - {resSeriesName}";
+            if (chartPhase.Titles.Count > 0) chartPhase.Titles[0].Text = $"{m_CurrentSelectedStationName} - {phaseSeriesName}";
+
+            // 【Request 1】设置坐标轴标题
+            chartResistivity.ChartAreas[0].AxisX.Title = "周期(s)";
+            chartResistivity.ChartAreas[0].AxisY.Title = "视电阻率";
+            chartPhase.ChartAreas[0].AxisX.Title = "周期(s)";
+            chartPhase.ChartAreas[0].AxisY.Title = "相位";
+            // --- 修改结束 ---
+
 
             DataView dvStation = new DataView(m_CurrentLineData);
             try
@@ -982,14 +988,19 @@ namespace MapGISPlugin3
             }
 
             // 创建 Series（用 Spline 连接线，像示例平滑）
-            var resSeries = chartResistivity.Series.Add(seriesName);
-            var phaseSeries = chartPhase.Series.Add(seriesName);
+            // 【Request 2】使用新的系列名称
+            var resSeries = chartResistivity.Series.Add(resSeriesName);
+            var phaseSeries = chartPhase.Series.Add(phaseSeriesName);
+            // --- 修改结束 ---
+
             resSeries.ChartType = SeriesChartType.Spline; // 平滑线 + 点
             resSeries.MarkerStyle = MarkerStyle.Circle;
             resSeries.MarkerSize = 5; // 小点，像示例
+            resSeries.BorderWidth = 2; // (可选) 让线条加粗一点
             phaseSeries.ChartType = SeriesChartType.Spline;
             phaseSeries.MarkerStyle = MarkerStyle.Circle;
             phaseSeries.MarkerSize = 5;
+            phaseSeries.BorderWidth = 2; // (可选) 让线条加粗一点
 
             // 收集数据（用于轴检查）
             List<double> periods = new List<double>();
@@ -1035,10 +1046,17 @@ namespace MapGISPlugin3
             if (!canLogYRes) Console.WriteLine("警告: 视电阻率有 ≤0 值，使用线性轴。");
 
             // 设置范围（像示例扩展一点）
-            if (canLogX)
+            if (canLogX && periods.Count > 0) // 增加检查
             {
                 double minX = periods.Min();
                 double maxX = periods.Max();
+                // 确保 min 和 max 不同，防止崩溃
+                if (minX == maxX)
+                {
+                    minX = minX * 0.1;
+                    maxX = maxX * 10;
+                }
+
                 chartResistivity.ChartAreas[0].AxisX.Minimum = Math.Pow(10, Math.Floor(Math.Log10(minX)));
                 chartResistivity.ChartAreas[0].AxisX.Maximum = Math.Pow(10, Math.Ceiling(Math.Log10(maxX)));
                 chartPhase.ChartAreas[0].AxisX.Minimum = chartResistivity.ChartAreas[0].AxisX.Minimum;
@@ -1066,6 +1084,9 @@ namespace MapGISPlugin3
             // 字体：标准Arial，稍大
             area.AxisX.LabelStyle.Font = new System.Drawing.Font("Arial", 9f);
             area.AxisY.LabelStyle.Font = new System.Drawing.Font("Arial", 9f);
+            // 轴标题字体 (Request 1)
+            area.AxisX.TitleFont = new System.Drawing.Font("微软雅黑", 10f);
+            area.AxisY.TitleFont = new System.Drawing.Font("微软雅黑", 10f);
 
             // 无旋转（避免丑），用自动调整防止重叠
             area.AxisX.LabelStyle.Angle = 0;
@@ -1098,6 +1119,17 @@ namespace MapGISPlugin3
             area.AxisY.MajorGrid.LineWidth = 1;
             area.AxisY.MajorGrid.LineColor = System.Drawing.Color.LightGray;
 
+
+            // 启用次网格线（示例中的虚线）
+            area.AxisX.MinorGrid.Enabled = true;
+            area.AxisX.MinorGrid.LineDashStyle = ChartDashStyle.Dot; // 虚线
+            area.AxisX.MinorGrid.LineColor = System.Drawing.Color.Gainsboro; // 比主网格更浅
+
+            area.AxisY.MinorGrid.Enabled = true;
+            area.AxisY.MinorGrid.LineDashStyle = ChartDashStyle.Dot; // 虚线
+            area.AxisY.MinorGrid.LineColor = System.Drawing.Color.Gainsboro; // 比主网格更浅
+            // --- 修改结束 ---
+
             // 轴线：黑粗
             area.AxisX.LineWidth = 1;
             area.AxisX.LineColor = System.Drawing.Color.Black;
@@ -1121,10 +1153,7 @@ namespace MapGISPlugin3
             {
                 // --- 1. 打印字段名，确认存在 ---
                 Fields fields = m_SelectedStationLayer.Fields;
-                MessageBox.Show($"字段总数: {fields.Count}\n字段列表:\n" +
-                    string.Join("\n", Enumerable.Range(0, fields.Count).Select(i =>
-                        $"{i}: {fields[i].FieldName} (类型: {fields[i].FieldType})"
-                    )));
+                
 
                 // --- 2. 检查测线号字段是否存在 ---
                 string lineField = "测线号"; // 你用的字段
@@ -1159,7 +1188,6 @@ namespace MapGISPlugin3
                     return stations;
                 }
 
-                MessageBox.Show($"查询成功！共 {rs.Count} 条记录，开始遍历...");
 
                 // --- 5. 预加载 ---
                 rs.MoveLast();
@@ -1289,26 +1317,6 @@ namespace MapGISPlugin3
                     }
                 } while (rs.MoveNext() && !rs.IsEOF);
                 // --- 循环结束 ---
-
-                // --- 显示调试报告 V2.2 ---
-                if (!fieldNameError)
-                {
-                    MessageBox.Show($"遍历报告 (QueryStationsForLine V2.2):\n\n" +
-                                    $"总记录 (rs.Count): {totalRecords}\n" +
-                                    $"-------------------------------------\n" +
-                                    $"成功添加测点: {successCount} (List.Count: {stations.Count})\n" +
-                                    $"跳过 (几何错误): {geomFailCount}\n" +
-                                    $"跳过 (属性为空): {attNullCount}\n" +
-                                    $"跳过 (测点号为空): {nameNullCount}\n\n" +
-                                    $"第一个错误几何类型: {firstGeomType}",
-                                    "调试报告", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
-
-
-
-
-
-
             }
             catch (Exception ex)
             {
@@ -1327,7 +1335,6 @@ namespace MapGISPlugin3
                 }
             }
 
-            MessageBox.Show($"最终返回 {stations.Count} 个测点");
             return stations.OrderBy(s => s.X).ToList();
         }
 
