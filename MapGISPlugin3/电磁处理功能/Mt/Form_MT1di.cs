@@ -800,18 +800,40 @@ namespace MapGISPlugin3
         /// </summary>
         private void ClearAllDisplays()
         {
-            Console.WriteLine("执行 ClearAllDisplays..."); // 调试信息
-            if (chartProfileView.Series != null) chartProfileView.Series.Clear(); // 安全检查
+            Console.WriteLine("执行 ClearAllDisplays...");
+
+            // 清空 Series
+            if (chartProfileView.Series != null) chartProfileView.Series.Clear();
+            if (chartResistivity.Series != null) chartResistivity.Series.Clear();
+            if (chartPhase.Series != null) chartPhase.Series.Clear();
+
+            // 重置轴为线性（关键：防止对数残留）
+            if (chartResistivity.ChartAreas.Count > 0)
+            {
+                chartResistivity.ChartAreas[0].AxisX.IsLogarithmic = false;
+                chartResistivity.ChartAreas[0].AxisY.IsLogarithmic = false;
+            }
+            if (chartPhase.ChartAreas.Count > 0)
+            {
+                chartPhase.ChartAreas[0].AxisX.IsLogarithmic = false;
+                chartPhase.ChartAreas[0].AxisY.IsLogarithmic = false;
+            }
+            if (chartProfileView.ChartAreas.Count > 0)
+            {
+                chartProfileView.ChartAreas[0].AxisX.IsLogarithmic = false;
+                chartProfileView.ChartAreas[0].AxisY.IsLogarithmic = false;
+            }
+
+            // 清空数据源
             gridTE.DataSource = null;
             gridTM.DataSource = null;
-            m_CurrentLineStations?.Clear(); // 使用 ?. 安全调用
-            m_CurrentLineData?.Clear(); // 使用 ?. 安全调用
+            m_CurrentLineStations?.Clear();
+            m_CurrentLineData?.Clear();
             m_CurrentSelectedStationName = null;
 
-            if (chartResistivity.Series != null) chartResistivity.Series.Clear(); // 安全检查
-            if (chartPhase.Series != null) chartPhase.Series.Clear(); // 安全检查
-            if (chartResistivity.Titles != null && chartResistivity.Titles.Count > 0) chartResistivity.Titles[0].Text = "周期-视电阻率";
-            if (chartPhase.Titles != null && chartPhase.Titles.Count > 0) chartPhase.Titles[0].Text = "周期-相位";
+            // 重置标题
+            if (chartResistivity.Titles.Count > 0) chartResistivity.Titles[0].Text = "周期-视电阻率";
+            if (chartPhase.Titles.Count > 0) chartPhase.Titles[0].Text = "周期-相位";
         }
 
 
@@ -919,87 +941,171 @@ namespace MapGISPlugin3
                 return;
             }
 
-            string resField, phaseField, seriesName;
+            string resField = "视电阻率_TM";
+            string phaseField = "相位_TM";
+            string seriesName = "TM 模式";
 
-            // --- 【!! 核心修改 !!】 ---
-            // 根据 Designer.cs，右侧的 TabControl 是 tabControl2
-            // "TE" 标签页是 tabPageDisplayTE
-            if (tabControl2.SelectedTab == tabPageDisplayTE)
+            if (tabControl2.SelectedTab == tabPageDisplayTE)
             {
                 resField = "视电阻率_TE";
                 phaseField = "相位_TE";
                 seriesName = "TE 模式";
             }
-            else // 默认 TM (或选中了 tabPageDisplayTM)
-            {
-                resField = "视电阻率_TM";
-                phaseField = "相位_TM";
-                seriesName = "TM 模式";
+
+            Console.WriteLine($"UpdateRightPanelCharts: resField={resField}, phaseField={phaseField}");
+
+            if (string.IsNullOrEmpty(resField) || string.IsNullOrEmpty(phaseField))
+            {
+                MessageBox.Show("内部错误：resField 或 phaseField 未初始化！", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
             }
-            // --- 逻辑修改结束 ---
 
-
-            if (chartResistivity.Titles.Count > 0) chartResistivity.Titles[0].Text = $"{m_CurrentSelectedStationName} - 周期-视电阻率 ({seriesName})";
-            if (chartPhase.Titles.Count > 0) chartPhase.Titles[0].Text = $"{m_CurrentSelectedStationName} - 周期-相位 ({seriesName})";
+            // 更新标题（如示例）
+            if (chartResistivity.Titles.Count > 0) chartResistivity.Titles[0].Text = $"{m_CurrentSelectedStationName} - 视电阻率({seriesName})";
+            if (chartPhase.Titles.Count > 0) chartPhase.Titles[0].Text = $"{m_CurrentSelectedStationName} - 相位({seriesName})";
 
             DataView dvStation = new DataView(m_CurrentLineData);
             try
             {
-                // 【!! 确认字段名 '测点编号' !!】
-                dvStation.RowFilter = $"测点编号 = '{m_CurrentSelectedStationName}'";
+                dvStation.RowFilter = $"测点编号 = '{m_CurrentSelectedStationName}'";
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"筛选测点 '{m_CurrentSelectedStationName}' 时出错: {ex.Message}\n请检查字段名 '测点编号'。", "数据筛选错误");
+                MessageBox.Show($"筛选测点出错: {ex.Message}", "错误");
                 return;
             }
 
             if (dvStation.Count == 0)
             {
-                Console.WriteLine($"未能在 m_CurrentLineData 中找到测点 '{m_CurrentSelectedStationName}' 的数据。");
+                Console.WriteLine($"未找到测点数据: {m_CurrentSelectedStationName}");
                 return;
             }
 
+            // 创建 Series（用 Spline 连接线，像示例平滑）
             var resSeries = chartResistivity.Series.Add(seriesName);
             var phaseSeries = chartPhase.Series.Add(seriesName);
-
-            resSeries.ChartType = SeriesChartType.Point;
+            resSeries.ChartType = SeriesChartType.Spline; // 平滑线 + 点
             resSeries.MarkerStyle = MarkerStyle.Circle;
-            phaseSeries.ChartType = SeriesChartType.Point;
-            phaseSeries.MarkerStyle = MarkerStyle.Square;
+            resSeries.MarkerSize = 5; // 小点，像示例
+            phaseSeries.ChartType = SeriesChartType.Spline;
+            phaseSeries.MarkerStyle = MarkerStyle.Circle;
+            phaseSeries.MarkerSize = 5;
 
-            try
+            // 收集数据（用于轴检查）
+            List<double> periods = new List<double>();
+            List<double> resistivities = new List<double>();
+            List<double> phases = new List<double>();
+
+            foreach (DataRowView row in dvStation)
             {
-                foreach (DataRowView row in dvStation)
-                {
-                    // 【!! 确认字段名 '周期' !!】
-                    if (row["周期"] == DBNull.Value || row[resField] == DBNull.Value || row[phaseField] == DBNull.Value)
-                        continue;
+                if (row["周期"] == DBNull.Value || row[resField] == DBNull.Value || row[phaseField] == DBNull.Value)
+                    continue;
 
-                    double period = Convert.ToDouble(row["周期"]);
-                    double res = Convert.ToDouble(row[resField]);
-                    double phase = Convert.ToDouble(row[phaseField]);
+                double period = Convert.ToDouble(row["周期"]);
+                double res = Convert.ToDouble(row[resField]);
+                double phase = Convert.ToDouble(row[phaseField]);
 
-                    resSeries.Points.AddXY(period, res);
-                    phaseSeries.Points.AddXY(period, phase);
-                }
+                // 过滤无效（防止对数崩溃）
+                if (period <= 0 || res <= 0) continue; // res >0 for log Y
+
+                periods.Add(period);
+                resistivities.Add(res);
+                phases.Add(phase);
+
+                resSeries.Points.AddXY(period, res);
+                phaseSeries.Points.AddXY(period, phase);
             }
-            catch (Exception ex)
+
+            if (periods.Count == 0)
             {
-                MessageBox.Show($"填充图表时出错: {ex.Message}\n请检查字段名 '{resField}', '{phaseField}', '周期' 是否正确。", "图表错误");
+                Console.WriteLine("无有效数据点，跳过绘制。");
                 return;
             }
 
-            chartResistivity.ChartAreas[0].AxisX.IsLogarithmic = true;
-            chartResistivity.ChartAreas[0].AxisY.IsLogarithmic = true;
-            chartPhase.ChartAreas[0].AxisX.IsLogarithmic = true;
-            chartPhase.ChartAreas[0].AxisY.IsLogarithmic = false;
+            // 安全设置对数轴（恢复示例的对数）
+            bool canLogX = periods.All(p => p > 0);
+            bool canLogYRes = resistivities.All(r => r > 0);
+
+            chartResistivity.ChartAreas[0].AxisX.IsLogarithmic = canLogX;
+            chartResistivity.ChartAreas[0].AxisY.IsLogarithmic = canLogYRes;
+            chartPhase.ChartAreas[0].AxisX.IsLogarithmic = canLogX;
+            chartPhase.ChartAreas[0].AxisY.IsLogarithmic = false; // 相位始终线性
+
+            if (!canLogX) Console.WriteLine("警告: 周期有 ≤0 值，使用线性轴。");
+            if (!canLogYRes) Console.WriteLine("警告: 视电阻率有 ≤0 值，使用线性轴。");
+
+            // 设置范围（像示例扩展一点）
+            if (canLogX)
+            {
+                double minX = periods.Min();
+                double maxX = periods.Max();
+                chartResistivity.ChartAreas[0].AxisX.Minimum = Math.Pow(10, Math.Floor(Math.Log10(minX)));
+                chartResistivity.ChartAreas[0].AxisX.Maximum = Math.Pow(10, Math.Ceiling(Math.Log10(maxX)));
+                chartPhase.ChartAreas[0].AxisX.Minimum = chartResistivity.ChartAreas[0].AxisX.Minimum;
+                chartPhase.ChartAreas[0].AxisX.Maximum = chartResistivity.ChartAreas[0].AxisX.Maximum;
+            }
 
             chartResistivity.ChartAreas[0].RecalculateAxesScale();
             chartPhase.ChartAreas[0].RecalculateAxesScale();
+
+            // 美化轴（接近示例：简洁标签、无旋转、浅网格）
+            BeautifyChartAxes(chartResistivity.ChartAreas[0]);
+            BeautifyChartAxes(chartPhase.ChartAreas[0]);
         }
 
 
+
+        private void BeautifyChartAxes(ChartArea area)
+        {
+            if (area == null) return;
+
+            // 标签格式：简洁，如0.001（示例中无多小数）
+            area.AxisX.LabelStyle.Format = "0.###";
+            area.AxisY.LabelStyle.Format = "0.##";
+
+            // 字体：标准Arial，稍大
+            area.AxisX.LabelStyle.Font = new System.Drawing.Font("Arial", 9f);
+            area.AxisY.LabelStyle.Font = new System.Drawing.Font("Arial", 9f);
+
+            // 无旋转（避免丑），用自动调整防止重叠
+            area.AxisX.LabelStyle.Angle = 0;
+            area.AxisX.LabelStyle.IsStaggered = false; // 示例中不交错
+
+            // 间隔：对数每十年一标签，像示例0.001到1
+            if (area.AxisX.IsLogarithmic)
+            {
+                area.AxisX.LogarithmBase = 10;
+                area.AxisX.Interval = 1; // 每个10的幂
+            }
+            else
+            {
+                area.AxisX.IntervalAutoMode = IntervalAutoMode.VariableCount;
+            }
+
+            if (area.AxisY.IsLogarithmic)
+            {
+                area.AxisY.LogarithmBase = 10;
+                area.AxisY.Interval = 1;
+            }
+            else
+            {
+                area.AxisY.IntervalAutoMode = IntervalAutoMode.VariableCount;
+            }
+
+            // 网格：浅灰细线，像示例
+            area.AxisX.MajorGrid.LineWidth = 1;
+            area.AxisX.MajorGrid.LineColor = System.Drawing.Color.LightGray;
+            area.AxisY.MajorGrid.LineWidth = 1;
+            area.AxisY.MajorGrid.LineColor = System.Drawing.Color.LightGray;
+
+            // 轴线：黑粗
+            area.AxisX.LineWidth = 1;
+            area.AxisX.LineColor = System.Drawing.Color.Black;
+            area.AxisY.LineWidth = 1;
+            area.AxisY.LineColor = System.Drawing.Color.Black;
+
+            area.RecalculateAxesScale();
+        }
 
         private List<StationInfo> QueryStationsForLine(string lineName)
         {
