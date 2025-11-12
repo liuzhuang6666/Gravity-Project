@@ -12,12 +12,17 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using MapGIS.UI.Controls; // GDBSelectFolderDialog
-using MapGIS.PluginEngine; // <-- 【关键】 必须引用
+using MapGIS.PluginEngine;
+using System.Drawing; // <-- 【关键】 必须引用
 
 namespace MapGISPlugin3 // 确保命名空间正确
 {
     public partial class Form_MTAddData : Form
     {
+        private Point mousePoint = new Point();
+        private int lastWidth = 0;
+        private int lastHeight = 0;
+        private Label[] borderLabels = new Label[4];
         private IApplication _hook;
         private string selectedDataSource = "MapGisLocalPlus";
         private string selectedGdbDirectory = "/Temporary";
@@ -27,6 +32,9 @@ namespace MapGISPlugin3 // 确保命名空间正确
             InitializeComponent();
             _hook = hook;
             UpdateGdbPathDisplay();
+            // 新增：初始化拖动和边框功能
+            InitCustomBorder();
+            InitDragEvent();
         }
 
         #region --- 事件处理程序 ---
@@ -418,5 +426,158 @@ namespace MapGISPlugin3 // 确保命名空间正确
             this.btnCancel.UseVisualStyleBackColor = true;
             this.btnCancel.Click += new System.EventHandler(this.btnCancel_Click);
         }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            this.Close();
+        }
+        #region --- 新增：窗口拖动与边框拉伸核心逻辑 ---
+        /// <summary>
+        /// 初始化自定义边框（左、上、右、下）
+        /// </summary>
+        private void InitCustomBorder()
+        {
+            // 创建4个边框Label
+            for (int i = 0; i < 4; i++)
+            {
+                borderLabels[i] = new Label();
+                borderLabels[i].BackColor = System.Drawing.Color.FromArgb(188, 182, 211);
+                borderLabels[i].Size = new Size(2, 2);
+                this.Controls.Add(borderLabels[i]);
+                this.Controls.SetChildIndex(borderLabels[i], 0); // 确保边框在最底层
+            }
+
+            // 设置边框停靠和光标
+            borderLabels[0].Dock = DockStyle.Left;     // 左边框
+            borderLabels[1].Dock = DockStyle.Top;      // 上边框
+            borderLabels[2].Dock = DockStyle.Right;    // 右边框
+            borderLabels[3].Dock = DockStyle.Bottom;   // 下边框
+
+            borderLabels[0].Cursor = Cursors.SizeWE;   // 左右拉伸光标
+            borderLabels[2].Cursor = Cursors.SizeWE;
+            borderLabels[1].Cursor = Cursors.SizeNS;   // 上下拉伸光标
+            borderLabels[3].Cursor = Cursors.SizeNS;
+
+            // 绑定边框事件
+            foreach (var label in borderLabels)
+            {
+                label.MouseDown += Border_MouseDown;
+            }
+            borderLabels[0].MouseMove += LeftBorder_MouseMove;
+            borderLabels[1].MouseMove += TopBorder_MouseMove;
+            borderLabels[2].MouseMove += RightBorder_MouseMove;
+            borderLabels[3].MouseMove += BottomBorder_MouseMove;
+        }
+
+        /// <summary>
+        /// 初始化标题栏拖动事件（绑定panel1）
+        /// </summary>
+        private void InitDragEvent()
+        {
+            panel1.MouseDown += TitlePanel_MouseDown;
+            panel1.MouseMove += TitlePanel_MouseMove;
+        }
+
+        /// <summary>
+        /// 标题栏按下：记录鼠标相对位置
+        /// </summary>
+        private void TitlePanel_MouseDown(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                mousePoint.X = e.X;
+                mousePoint.Y = e.Y;
+            }
+        }
+
+        /// <summary>
+        /// 标题栏移动：计算窗口新位置
+        /// </summary>
+        private void TitlePanel_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                this.Left = Control.MousePosition.X - mousePoint.X;
+                this.Top = Control.MousePosition.Y - mousePoint.Y;
+            }
+        }
+
+        /// <summary>
+        /// 边框按下：记录窗口初始尺寸和鼠标位置
+        /// </summary>
+        private void Border_MouseDown(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                lastWidth = this.Width;
+                lastHeight = this.Height;
+                mousePoint = Control.MousePosition;
+            }
+        }
+
+        /// <summary>
+        /// 左边框拉伸
+        /// </summary>
+        private void LeftBorder_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                int newWidth = lastWidth - (Control.MousePosition.X - mousePoint.X);
+                if (newWidth >= 500) // 限制最小宽度（适配表单内容）
+                {
+                    this.Width = newWidth;
+                    this.Left = Control.MousePosition.X;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 右边框拉伸
+        /// </summary>
+        private void RightBorder_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                int newWidth = lastWidth + (Control.MousePosition.X - mousePoint.X);
+                if (newWidth >= 500)
+                {
+                    this.Width = newWidth;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 上边框拉伸
+        /// </summary>
+        private void TopBorder_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                int newHeight = lastHeight - (Control.MousePosition.Y - mousePoint.Y);
+                if (newHeight >= 280) // 限制最小高度（适配表单内容）
+                {
+                    this.Height = newHeight;
+                    this.Top = Control.MousePosition.Y;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 下边框拉伸
+        /// </summary>
+        private void BottomBorder_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                int newHeight = lastHeight + (Control.MousePosition.Y - mousePoint.Y);
+                if (newHeight >= 280)
+                {
+                    this.Height = newHeight;
+                }
+            }
+        }
+
+        #endregion
+
     } // End Class Form_MT_Import
 } // End namespace

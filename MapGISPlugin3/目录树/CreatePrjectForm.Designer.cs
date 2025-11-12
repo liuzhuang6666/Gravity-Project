@@ -28,120 +28,196 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.panelControl_path = new DevExpress.XtraEditors.PanelControl();
-            this.buttonEdit_path = new DevExpress.XtraEditors.ButtonEdit();
-            this.labelControl1 = new DevExpress.XtraEditors.LabelControl();
-            this.simpleButton_ok = new DevExpress.XtraEditors.SimpleButton();
-            this.simpleButton_cancel = new DevExpress.XtraEditors.SimpleButton();
+            this.components = new System.ComponentModel.Container();
+            DevExpress.XtraEditors.Controls.EditorButtonImageOptions editorButtonImageOptions1 = new DevExpress.XtraEditors.Controls.EditorButtonImageOptions();
+            DevExpress.Utils.KeyShortcut keyShortcut1 = new DevExpress.Utils.KeyShortcut();
+            DevExpress.Utils.SerializableAppearanceObject serializableAppearanceObject1 = new DevExpress.Utils.SerializableAppearanceObject();
+            DevExpress.Utils.SerializableAppearanceObject serializableAppearanceObject2 = new DevExpress.Utils.SerializableAppearanceObject();
+            DevExpress.Utils.SerializableAppearanceObject serializableAppearanceObject3 = new DevExpress.Utils.SerializableAppearanceObject();
+            DevExpress.Utils.SerializableAppearanceObject serializableAppearanceObject4 = new DevExpress.Utils.SerializableAppearanceObject();
             this.labelControl_name = new DevExpress.XtraEditors.LabelControl();
+            this.labelControl1 = new DevExpress.XtraEditors.LabelControl();
+            this.groupControl_info = new DevExpress.XtraEditors.GroupControl();
+            this.buttonEdit_path = new DevExpress.XtraEditors.ButtonEdit();
             this.textEdit_name = new DevExpress.XtraEditors.TextEdit();
-            this.toolTipController1 = new DevExpress.Utils.ToolTipController();
-            ((System.ComponentModel.ISupportInitialize)(this.panelControl_path)).BeginInit();
-            this.panelControl_path.SuspendLayout();
+            this.simpleButton_cancel = new DevExpress.XtraEditors.SimpleButton();
+            this.simpleButton_ok = new DevExpress.XtraEditors.SimpleButton();
+            this.panel_title = new DevExpress.XtraEditors.PanelControl();
+            this.label_title = new DevExpress.XtraEditors.LabelControl();
+            this.btn_close = new DevExpress.XtraEditors.SimpleButton();
+            this.toolTipController1 = new DevExpress.Utils.ToolTipController(this.components);
+            ((System.ComponentModel.ISupportInitialize)(this.groupControl_info)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.buttonEdit_path.Properties)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.textEdit_name.Properties)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.panel_title)).BeginInit();
             this.SuspendLayout();
             // 
-            // panelControl_path
+            // labelControl_name
             // 
-            this.panelControl_path.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.panelControl_path.BorderStyle = DevExpress.XtraEditors.Controls.BorderStyles.NoBorder;
-            this.panelControl_path.Controls.Add(this.buttonEdit_path);
-            this.panelControl_path.Location = new System.Drawing.Point(83, 58);
-            this.panelControl_path.Name = "panelControl_path";
-            this.panelControl_path.Size = new System.Drawing.Size(259, 32);
-            this.panelControl_path.TabIndex = 17;
-            // 
-            // buttonEdit_path
-            // 
-            this.buttonEdit_path.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.buttonEdit_path.Location = new System.Drawing.Point(40, 9);
-            this.buttonEdit_path.Name = "buttonEdit_path";
-            this.buttonEdit_path.Properties.Buttons.AddRange(new DevExpress.XtraEditors.Controls.EditorButton[] {
-            new DevExpress.XtraEditors.Controls.EditorButton()});
-            this.buttonEdit_path.Properties.ReadOnly = true;
-            this.buttonEdit_path.Size = new System.Drawing.Size(216, 20);
-            this.buttonEdit_path.TabIndex = 6;
-            this.buttonEdit_path.ButtonClick += new DevExpress.XtraEditors.Controls.ButtonPressedEventHandler(this.buttonEdit_path_ButtonClick);
+            this.labelControl_name.Location = new System.Drawing.Point(48, 42);
+            this.labelControl_name.Margin = new System.Windows.Forms.Padding(4);
+            this.labelControl_name.Name = "labelControl_name";
+            this.labelControl_name.Size = new System.Drawing.Size(60, 14);
+            this.labelControl_name.TabIndex = 0;
+            this.labelControl_name.Text = "工程名称：";
             // 
             // labelControl1
             // 
-            this.labelControl1.Location = new System.Drawing.Point(27, 72);
+            this.labelControl1.Location = new System.Drawing.Point(48, 96);
+            this.labelControl1.Margin = new System.Windows.Forms.Padding(4);
             this.labelControl1.Name = "labelControl1";
-            this.labelControl1.Size = new System.Drawing.Size(48, 14);
-            this.labelControl1.TabIndex = 7;
-            this.labelControl1.Text = "保存路径";
+            this.labelControl1.Size = new System.Drawing.Size(60, 14);
+            this.labelControl1.TabIndex = 1;
+            this.labelControl1.Text = "保存路径：";
             // 
-            // simpleButton_ok
+            // groupControl_info
             // 
-            this.simpleButton_ok.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.simpleButton_ok.Location = new System.Drawing.Point(114, 123);
-            this.simpleButton_ok.Name = "simpleButton_ok";
-            this.simpleButton_ok.Size = new System.Drawing.Size(60, 23);
-            this.simpleButton_ok.TabIndex = 16;
-            this.simpleButton_ok.Text = "确定";
-            this.simpleButton_ok.Click += new System.EventHandler(this.simpleButton_ok_Click);
+            this.groupControl_info.Controls.Add(this.buttonEdit_path);
+            this.groupControl_info.Controls.Add(this.textEdit_name);
+            this.groupControl_info.Controls.Add(this.labelControl1);
+            this.groupControl_info.Controls.Add(this.labelControl_name);
+            this.groupControl_info.Location = new System.Drawing.Point(61, 38);
+            this.groupControl_info.Margin = new System.Windows.Forms.Padding(4);
+            this.groupControl_info.Name = "groupControl_info";
+            this.groupControl_info.Size = new System.Drawing.Size(400, 152);
+            this.groupControl_info.TabIndex = 2;
+            this.groupControl_info.Text = "基本信息";
+            // 
+            // buttonEdit_path
+            // 
+            this.buttonEdit_path.Location = new System.Drawing.Point(131, 93);
+            this.buttonEdit_path.Margin = new System.Windows.Forms.Padding(4);
+            this.buttonEdit_path.Name = "buttonEdit_path";
+            // 
+            // 
+            // 
+            this.buttonEdit_path.Properties.Appearance.BackColor = System.Drawing.SystemColors.Control;
+            this.buttonEdit_path.Properties.Appearance.Options.UseBackColor = true;
+            this.buttonEdit_path.Properties.BorderStyle = DevExpress.XtraEditors.Controls.BorderStyles.Simple;
+            this.buttonEdit_path.Properties.Buttons.AddRange(new DevExpress.XtraEditors.Controls.EditorButton[] {
+            new DevExpress.XtraEditors.Controls.EditorButton(DevExpress.XtraEditors.Controls.ButtonPredefines.Glyph, "...", 20, true, true, false, editorButtonImageOptions1, keyShortcut1, serializableAppearanceObject1, serializableAppearanceObject2, serializableAppearanceObject3, serializableAppearanceObject4, "", null, null, DevExpress.Utils.ToolTipAnchor.Default)});
+            this.buttonEdit_path.Properties.ReadOnly = true;
+            this.buttonEdit_path.Size = new System.Drawing.Size(200, 21);
+            this.buttonEdit_path.TabIndex = 4;
+            this.buttonEdit_path.ButtonClick += new DevExpress.XtraEditors.Controls.ButtonPressedEventHandler(this.buttonEdit_path_ButtonClick);
+            // 
+            // textEdit_name
+            // 
+            this.textEdit_name.Location = new System.Drawing.Point(131, 38);
+            this.textEdit_name.Margin = new System.Windows.Forms.Padding(4);
+            this.textEdit_name.Name = "textEdit_name";
+            // 
+            // 
+            // 
+            this.textEdit_name.Properties.Appearance.BackColor = System.Drawing.SystemColors.Control;
+            this.textEdit_name.Properties.Appearance.Options.UseBackColor = true;
+            this.textEdit_name.Properties.BorderStyle = DevExpress.XtraEditors.Controls.BorderStyles.Simple;
+            this.textEdit_name.Size = new System.Drawing.Size(200, 20);
+            this.textEdit_name.TabIndex = 3;
+            this.textEdit_name.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.textEdit_name_KeyPress);
             // 
             // simpleButton_cancel
             // 
             this.simpleButton_cancel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.simpleButton_cancel.ButtonStyle = DevExpress.XtraEditors.Controls.BorderStyles.Flat;
             this.simpleButton_cancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.simpleButton_cancel.Location = new System.Drawing.Point(180, 122);
+            this.simpleButton_cancel.Location = new System.Drawing.Point(332, 220);
+            this.simpleButton_cancel.Margin = new System.Windows.Forms.Padding(4);
             this.simpleButton_cancel.Name = "simpleButton_cancel";
-            this.simpleButton_cancel.Size = new System.Drawing.Size(60, 23);
-            this.simpleButton_cancel.TabIndex = 15;
+            this.simpleButton_cancel.Size = new System.Drawing.Size(88, 27);
+            this.simpleButton_cancel.TabIndex = 5;
             this.simpleButton_cancel.Text = "取消";
             this.simpleButton_cancel.Click += new System.EventHandler(this.simpleButton_cancel_Click);
             // 
-            // labelControl_name
+            // simpleButton_ok
             // 
-            this.labelControl_name.Location = new System.Drawing.Point(27, 44);
-            this.labelControl_name.Name = "labelControl_name";
-            this.labelControl_name.Size = new System.Drawing.Size(48, 14);
-            this.labelControl_name.TabIndex = 14;
-            this.labelControl_name.Text = "工程名称";
+            this.simpleButton_ok.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.simpleButton_ok.ButtonStyle = DevExpress.XtraEditors.Controls.BorderStyles.Flat;
+            this.simpleButton_ok.Location = new System.Drawing.Point(88, 220);
+            this.simpleButton_ok.Margin = new System.Windows.Forms.Padding(4);
+            this.simpleButton_ok.Name = "simpleButton_ok";
+            this.simpleButton_ok.Size = new System.Drawing.Size(88, 27);
+            this.simpleButton_ok.TabIndex = 6;
+            this.simpleButton_ok.Text = "确定";
+            this.simpleButton_ok.Click += new System.EventHandler(this.simpleButton_ok_Click);
             // 
-            // textEdit_name
+            // panel_title
             // 
-            this.textEdit_name.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.textEdit_name.Location = new System.Drawing.Point(83, 41);
-            this.textEdit_name.Name = "textEdit_name";
-            this.textEdit_name.Size = new System.Drawing.Size(259, 20);
-            this.textEdit_name.TabIndex = 13;
+            this.panel_title.Appearance.BackColor = System.Drawing.SystemColors.Control;
+            this.panel_title.Appearance.Options.UseBackColor = true;
+            this.panel_title.BorderStyle = DevExpress.XtraEditors.Controls.BorderStyles.NoBorder;
+            this.panel_title.Controls.Add(this.label_title);
+            this.panel_title.Controls.Add(this.btn_close);
+            this.panel_title.Dock = System.Windows.Forms.DockStyle.Top;
+            this.panel_title.Location = new System.Drawing.Point(0, 0);
+            this.panel_title.Margin = new System.Windows.Forms.Padding(4);
+            this.panel_title.Name = "panel_title";
+            this.panel_title.Size = new System.Drawing.Size(527, 23);
+            this.panel_title.TabIndex = 0;
+            // 
+            // label_title
+            // 
+            this.label_title.Appearance.Options.UseTextOptions = true;
+            this.label_title.Appearance.TextOptions.HAlignment = DevExpress.Utils.HorzAlignment.Center;
+            this.label_title.Dock = System.Windows.Forms.DockStyle.Left;
+            this.label_title.Location = new System.Drawing.Point(0, 0);
+            this.label_title.Margin = new System.Windows.Forms.Padding(4);
+            this.label_title.Name = "label_title";
+            this.label_title.Padding = new System.Windows.Forms.Padding(0, 4, 0, 0);
+            this.label_title.Size = new System.Drawing.Size(48, 18);
+            this.label_title.TabIndex = 0;
+            this.label_title.Text = "创建项目";
+            // 
+            // btn_close
+            // 
+            this.btn_close.Appearance.Font = new System.Drawing.Font("宋体", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.btn_close.Appearance.Options.UseFont = true;
+            this.btn_close.ButtonStyle = DevExpress.XtraEditors.Controls.BorderStyles.Flat;
+            this.btn_close.Dock = System.Windows.Forms.DockStyle.Right;
+            this.btn_close.Location = new System.Drawing.Point(504, 0);
+            this.btn_close.Margin = new System.Windows.Forms.Padding(4);
+            this.btn_close.Name = "btn_close";
+            this.btn_close.Size = new System.Drawing.Size(23, 23);
+            this.btn_close.TabIndex = 1;
+            this.btn_close.Text = "X";
+            this.btn_close.Click += new System.EventHandler(this.btn_close_Click);
             // 
             // CreatePrjectForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 14F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(354, 179);
-            this.Controls.Add(this.panelControl_path);
-            this.Controls.Add(this.labelControl1);
+            this.ClientSize = new System.Drawing.Size(527, 280);
+            this.Controls.Add(this.panel_title);
             this.Controls.Add(this.simpleButton_ok);
             this.Controls.Add(this.simpleButton_cancel);
-            this.Controls.Add(this.labelControl_name);
-            this.Controls.Add(this.textEdit_name);
+            this.Controls.Add(this.groupControl_info);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
+            this.Margin = new System.Windows.Forms.Padding(4);
+            this.MaximumSize = new System.Drawing.Size(527, 280);
+            this.MinimumSize = new System.Drawing.Size(527, 280);
             this.Name = "CreatePrjectForm";
-            this.Text = "新建工程";
-            ((System.ComponentModel.ISupportInitialize)(this.panelControl_path)).EndInit();
-            this.panelControl_path.ResumeLayout(false);
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+            this.Text = "CreatePorjectForm";
+            ((System.ComponentModel.ISupportInitialize)(this.groupControl_info)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.buttonEdit_path.Properties)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.textEdit_name.Properties)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.panel_title)).EndInit();
             this.ResumeLayout(false);
-            this.PerformLayout();
 
         }
 
         #endregion
-        private DevExpress.XtraEditors.PanelControl panelControl_path;
-        private DevExpress.XtraEditors.ButtonEdit buttonEdit_path;
-        private DevExpress.XtraEditors.LabelControl labelControl1;
-        private DevExpress.XtraEditors.SimpleButton simpleButton_ok;
-        private DevExpress.XtraEditors.SimpleButton simpleButton_cancel;
+
         private DevExpress.XtraEditors.LabelControl labelControl_name;
+        private DevExpress.XtraEditors.LabelControl labelControl1;
+        private DevExpress.XtraEditors.GroupControl groupControl_info;
+        private DevExpress.XtraEditors.ButtonEdit buttonEdit_path;
         private DevExpress.XtraEditors.TextEdit textEdit_name;
+        private DevExpress.XtraEditors.SimpleButton simpleButton_cancel;
+        private DevExpress.XtraEditors.SimpleButton simpleButton_ok;
+        private DevExpress.XtraEditors.PanelControl panel_title;
+        private DevExpress.XtraEditors.LabelControl label_title;
+        private DevExpress.XtraEditors.SimpleButton btn_close;
         private DevExpress.Utils.ToolTipController toolTipController1;
     }
 }
