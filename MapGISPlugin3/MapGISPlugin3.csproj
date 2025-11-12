@@ -20,12 +20,12 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>D:\MapGIS\MapGIS 10\Program\plugin\</OutputPath>
+    <OutputPath>..\..\..\..\vs\MapGIS 10\MapGIS 10\Program\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
-    <PlatformTarget>x64</PlatformTarget>
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <UseVSHostingProcess>false</UseVSHostingProcess>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -85,96 +85,96 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="DevExpress.Data.v17.2, Version=17.2.7.0, Culture=neutral, PublicKeyToken=58eb2150d286b637">
-      <HintPath>F:\项目\地球物理处理软件配置\DevExpress17.2\DevExpress.DLL\DevExpress.Data.v17.2.dll</HintPath>
+      <HintPath>D:\Code\DevExpress17.2\DevExpress.DLL\DevExpress.Data.v17.2.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="DevExpress.Utils.v17.2, Version=17.2.7.0, Culture=neutral, PublicKeyToken=58eb2150d286b637, processorArchitecture=MSIL">
-      <HintPath>F:\项目\地球物理处理软件配置\DevExpress17.2\DevExpress.DLL\DevExpress.Utils.v17.2.dll</HintPath>
+      <HintPath>D:\Code\DevExpress17.2\DevExpress.DLL\DevExpress.Utils.v17.2.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="DevExpress.XtraBars.v17.2">
-      <HintPath>F:\项目\地球物理处理软件配置\DevExpress17.2\DevExpress.DLL\DevExpress.XtraBars.v17.2.dll</HintPath>
+      <HintPath>D:\Code\DevExpress17.2\DevExpress.DLL\DevExpress.XtraBars.v17.2.dll</HintPath>
     </Reference>
     <Reference Include="DevExpress.XtraEditors.v17.2, Version=17.2.7.0, Culture=neutral, PublicKeyToken=58eb2150d286b637, processorArchitecture=MSIL">
-      <HintPath>F:\项目\地球物理处理软件配置\DevExpress17.2\DevExpress.DLL\DevExpress.XtraEditors.v17.2.dll</HintPath>
+      <HintPath>D:\Code\DevExpress17.2\DevExpress.DLL\DevExpress.XtraEditors.v17.2.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="DevExpress.XtraTreeList.v17.2">
-      <HintPath>F:\项目\地球物理处理软件配置\DevExpress17.2\DevExpress.DLL\DevExpress.XtraTreeList.v17.2.dll</HintPath>
+      <HintPath>D:\Code\DevExpress17.2\DevExpress.DLL\DevExpress.XtraTreeList.v17.2.dll</HintPath>
     </Reference>
     <Reference Include="MapGIS.DemAnalysis.Plugin">
-      <HintPath>F:\项目\地球物理数据处理软件工程文件\vs\MapGIS 10\MapGIS 10\Program\MapGIS.DemAnalysis.Plugin.dll</HintPath>
+      <HintPath>D:\Program Files\MapGIS 10\Program\MapGIS.DemAnalysis.Plugin.dll</HintPath>
     </Reference>
     <Reference Include="MapGIS.Desktop.Resources, Version=1.0.0.0, Culture=neutral, PublicKeyToken=3c41f9a6f834b774, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>D:\MapGIS\MapGIS 10\Program\MapGIS.Desktop.Resources.dll</HintPath>
+      <HintPath>D:\Program Files\MapGIS 10\Program\MapGIS.Desktop.Resources.dll</HintPath>
     </Reference>
     <Reference Include="MapGIS.Desktop.UI.Controls, Version=1.0.0.0, Culture=neutral, PublicKeyToken=3c41f9a6f834b774, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>D:\MapGIS\MapGIS 10\Program\MapGIS.Desktop.UI.Controls.dll</HintPath>
+      <HintPath>D:\Program Files\MapGIS 10\Program\MapGIS.Desktop.UI.Controls.dll</HintPath>
     </Reference>
     <Reference Include="MapGIS.G3DAttModeling.Plugin">
-      <HintPath>D:\MapGIS\MapGIS 10\Program\plugin\MapGIS.G3DAttModeling.Plugin.dll</HintPath>
+      <HintPath>D:\Program Files\MapGIS 10\Program\plugin\MapGIS.G3DAttModeling.Plugin.dll</HintPath>
     </Reference>
     <Reference Include="MapGIS.G3DWorkSpace.Plugin, Version=10.6.0.10, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>D:\MapGIS\MapGIS 10\Program\plugin\MapGIS.G3DWorkSpace.Plugin.dll</HintPath>
+      <HintPath>D:\Program Files\MapGIS 10\Program\MapGIS.G3DWorkSpace.Plugin.dll</HintPath>
     </Reference>
     <Reference Include="MapGIS.GDBManager.Plugin">
-      <HintPath>F:\项目\地球物理数据处理软件工程文件\vs\MapGIS 10\MapGIS 10\Program\MapGIS.GDBManager.Plugin.dll</HintPath>
+      <HintPath>D:\Program Files\MapGIS 10\Program\plugin\MapGIS.GDBManager.Plugin.dll</HintPath>
     </Reference>
     <Reference Include="MapGIS.GeoDataBase, Version=7.6.0.0, Culture=neutral, PublicKeyToken=1ffc64e70f4d38c4, processorArchitecture=AMD64">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>D:\MapGIS\MapGIS 10\Program\MapGIS.GeoDataBase.dll</HintPath>
+      <HintPath>D:\Program Files\MapGIS 10\Program\MapGIS.GeoDataBase.dll</HintPath>
     </Reference>
     <Reference Include="MapGIS.Geologic.Model">
-      <HintPath>D:\MapGIS\MapGIS 10\Program\MapGIS.Geologic.Model.dll</HintPath>
+      <HintPath>D:\Program Files\MapGIS 10\Program\MapGIS.Geologic.Model.dll</HintPath>
     </Reference>
     <Reference Include="MapGIS.GeoMap, Version=7.6.0.0, Culture=neutral, PublicKeyToken=1ffc64e70f4d38c4, processorArchitecture=AMD64">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>D:\MapGIS\MapGIS 10\Program\MapGIS.GeoMap.dll</HintPath>
+      <HintPath>D:\Program Files\MapGIS 10\Program\MapGIS.GeoMap.dll</HintPath>
     </Reference>
     <Reference Include="MapGIS.GeoObjects, Version=7.6.0.0, Culture=neutral, PublicKeyToken=1ffc64e70f4d38c4, processorArchitecture=AMD64">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>D:\MapGIS\MapGIS 10\Program\MapGIS.GeoObjects.dll</HintPath>
+      <HintPath>D:\Program Files\MapGIS 10\Program\MapGIS.GeoObjects.dll</HintPath>
     </Reference>
     <Reference Include="MapGIS.GISControl, Version=7.6.0.0, Culture=neutral, PublicKeyToken=1ffc64e70f4d38c4, processorArchitecture=AMD64">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>D:\MapGIS\MapGIS 10\Program\MapGIS.GISControl.dll</HintPath>
+      <HintPath>D:\Program Files\MapGIS 10\Program\MapGIS.GISControl.dll</HintPath>
     </Reference>
     <Reference Include="MapGIS.PluginEngine, Version=1.0.0.0, Culture=neutral, PublicKeyToken=3c41f9a6f834b774, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>D:\MapGIS\MapGIS 10\Program\MapGIS.PluginEngine.dll</HintPath>
+      <HintPath>D:\Program Files\MapGIS 10\Program\MapGIS.PluginEngine.dll</HintPath>
     </Reference>
     <Reference Include="MapGIS.PlugUtility, Version=1.0.0.0, Culture=neutral, PublicKeyToken=3c41f9a6f834b774, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>D:\MapGIS\MapGIS 10\Program\MapGIS.PlugUtility.dll</HintPath>
+      <HintPath>D:\Program Files\MapGIS 10\Program\MapGIS.PlugUtility.dll</HintPath>
     </Reference>
     <Reference Include="MapGIS.RasAnalysis, Version=7.6.0.0, Culture=neutral, PublicKeyToken=1ffc64e70f4d38c4, processorArchitecture=AMD64">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>D:\MapGIS\MapGIS 10\Program\MapGIS.RasAnalysis.dll</HintPath>
+      <HintPath>D:\Program Files\MapGIS 10\Program\MapGIS.RasAnalysis.dll</HintPath>
     </Reference>
     <Reference Include="MapGIS.SceneControl">
-      <HintPath>D:\MapGIS\MapGIS 10\Program\MapGIS.SceneControl.dll</HintPath>
+      <HintPath>D:\Program Files\MapGIS 10\Program\MapGIS.SceneControl.dll</HintPath>
     </Reference>
     <Reference Include="MapGIS.UI.Controls, Version=1.0.0.0, Culture=neutral, PublicKeyToken=3c41f9a6f834b774, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>D:\MapGIS\MapGIS 10\Program\MapGIS.UI.Controls.dll</HintPath>
+      <HintPath>D:\Program Files\MapGIS 10\Program\MapGIS.UI.Controls.dll</HintPath>
     </Reference>
     <Reference Include="MapGIS.WorkSpace.Plugin">
       <HintPath>D:\Program Files\MapGIS 10\Program\plugin\MapGIS.WorkSpace.Plugin.dll</HintPath>
     </Reference>
     <Reference Include="MapGIS.WorkSpace.Style, Version=1.0.0.0, Culture=neutral, PublicKeyToken=3c41f9a6f834b774, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>D:\MapGIS\MapGIS 10\Program\MapGIS.WorkSpace.Style.dll</HintPath>
+      <HintPath>D:\Program Files\MapGIS 10\Program\MapGIS.WorkSpace.Style.dll</HintPath>
     </Reference>
     <Reference Include="MapGIS.WorkSpaceEngine, Version=1.0.0.0, Culture=neutral, PublicKeyToken=3c41f9a6f834b774, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>D:\MapGIS\MapGIS 10\Program\MapGIS.WorkSpaceEngine.dll</HintPath>
+      <HintPath>D:\Program Files\MapGIS 10\Program\MapGIS.WorkSpaceEngine.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>D:\MapGIS\MapGIS 10\Program\Newtonsoft.Json.dll</HintPath>
+      <HintPath>D:\Program Files\MapGIS 10\Program\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -224,12 +224,6 @@
     </Compile>
     <Compile Include="电磁处理功能\Mt\MT1diCommand.cs" />
     <Compile Include="电磁处理功能\Mt\MTAddDataCommand.cs" />
-    <Compile Include="目录树\CreatePorjectForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="目录树\CreatePorjectForm.Designer.cs">
-      <DependentUpon>CreatePorjectForm.cs</DependentUpon>
-    </Compile>
     <Compile Include="目录树\CreatePrjectForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -317,9 +311,6 @@
     </EmbeddedResource>
     <EmbeddedResource Include="电磁处理功能\Mt\Form_MTAddData.resx">
       <DependentUpon>Form_MTAddData.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="目录树\CreatePorjectForm.resx">
-      <DependentUpon>CreatePorjectForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="目录树\CreatePrjectForm.resx">
       <DependentUpon>CreatePrjectForm.cs</DependentUpon>
