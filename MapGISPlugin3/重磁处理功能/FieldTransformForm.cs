@@ -30,15 +30,6 @@ namespace MapGISPlugin3
 {
     public partial class Form1 : Form
     {
-        //[DllImport("magdpless.dll", EntryPoint = "echo")]
-        //public static extern void echo();
-
-        //[DllImport("magdpless.dll", EntryPoint = "test0")]
-        //public static extern void test0(int nx, int ny, double dx, double dy, double od, double oi);
-
-        //[DllImport("magdpless.dll", EntryPoint = "test2")]
-        //public static extern void test2(double[] value, int size);
-
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate void AddAnsi([MarshalAs(UnmanagedType.R8)] double res);
 
@@ -63,71 +54,57 @@ namespace MapGISPlugin3
         [DllImport(@"D:\APrj\地球物理数据处理\magdpless.dll", EntryPoint = "second")]
         public static extern void compon(int nx, int ny, double dx, double dy, double[] values, double od, double oi, int direction, AddAnsi add);
 
+        // 【修改】移除未使用的成员：activeMap 和 m_geodaba（避免潜在释放问题）
+        // private Map activeMap = new Map();
+        // private DataBase m_geodaba;
 
-        private Document m_doc = new Document();//地图文档
-        private Document m_doc2 = new Document();
-        private Map m_Map = new Map();//地图
-        private Map m_Map2 = new Map();//地图
-        private Map activeMap = new Map();//地图
-        private Document m_Maindoc;//主框上的地图文档
-        private IApplication m_Hook; // <--- 【新增】添加这个成员变量来保存整个应用程序钩子
-        private bool m_ShowRasOrTin = true;//是否显示底图栅格
-        private MapControl m_mtr = null;//视图控件
-        private MapControl m_mtr2 = null;//视图控件2
-        private MapControl mp = null;//主框上的地图
-        private DataBase m_geodaba;//数据库
+        private Document m_tempDoc = new Document(); // 【修改】使用一个临时 Document 管理插件内部地图
+        private Map m_Map = new Map(); // 【修改】左侧临时地图（用于源数据可视化）
+        private Map m_Map2 = new Map(); // 【修改】右侧临时地图（用于结果可视化）
+        private Document m_Maindoc; // 主文档（从 hook 获取，不要 Dispose）
+        private Map m_SourceMap; // 【新增】记录源层所属的主地图，用于添加结果
+        private IApplication m_Hook;
+        private bool m_ShowRasOrTin = true;
+        private MapControl m_mtr = null;
+        private MapControl m_mtr2 = null;
+        private string _inputFilePath = null;
 
-
-        public static string in_url = null;
-
-        //private Raster m_ras = null;
-        private Rect m_Rect = null;//数据范围
-        private ContourParamStrcT_Stru m_ContourParamStrcT = null;//等值线追踪参数结构
-        private int m_BandNum = 1;//波段号
-        private DataTable dataTable = new DataTable();//等值层信息表
-        private double m_Min = 0;//像元最大值
-        private double m_Max = 0;//像元最小值
-        private ContourNoteParam_Stru m_ContourNoteParam = null;//等值线注记参数结构
-        private DataBase m_Tempdaba;//临时数据库
-        private SFeatureCls m_Tempsfclslin;//临时线简单要素类
-        private SFeatureCls m_TempsfclsSlopelin;//临时示坡线简单要素类
-        private SFeatureCls m_Tempsfclsreg;//临时区简单要素类
-        private AnnotationCls m_tempann;//临时注记
-        private double m_ScaleX = 0;//X方向显示比
-        private double m_ScaleY = 0;//Y方向显示比
-        private bool m_ClipLine = true;//是否裁剪线
-        private bool m_ShowReg = true;//是否显示区
-        private bool m_ShowLine = true;//是否显示线
-        private bool m_ShowSlopelin = false;//是否显示示坡线
-        private bool m_ShowAnn = true;//是否显示注记
-        private bool m_SymbolShow = true;//是否符号化显示
-        private double m_LfZstep = 10;//等值线步长
-        private float m_FSlopeYEps = 0;//示坡线宽
+        private Rect m_Rect = null;
+        private ContourParamStrcT_Stru m_ContourParamStrcT = null;
+        private int m_BandNum = 1;
+        private DataTable dataTable = new DataTable();
+        private double m_Min = 0;
+        private double m_Max = 0;
+        private ContourNoteParam_Stru m_ContourNoteParam = null;
+        private DataBase m_Tempdaba;
+        private SFeatureCls m_Tempsfclslin;
+        private SFeatureCls m_TempsfclsSlopelin;
+        private SFeatureCls m_Tempsfclsreg;
+        private AnnotationCls m_tempann;
+        private double m_ScaleX = 0;
+        private double m_ScaleY = 0;
+        private bool m_ClipLine = true;
+        private bool m_ShowReg = true;
+        private bool m_ShowLine = true;
+        private bool m_ShowSlopelin = false;
+        private bool m_ShowAnn = true;
+        private bool m_SymbolShow = true;
+        private double m_LfZstep = 10;
+        private float m_FSlopeYEps = 0;
         private float m_Length = 0;
-        private SlopLinParam_Stru m_SlopLineParam = null;//示坡线参数结构
+        private SlopLinParam_Stru m_SlopLineParam = null;
 
-        private int[] Imc ={601,603,498,500,436,408,391,233,190,184,154,122,106,33,31,
-               127,391,128,392,393,136,149,150,442,443,186,444,179,180,445,189,190};//初始化区颜色
-        private LayerSelectComboBox layerSelectComboBoxRas;
-
-
-
+        private int[] Imc = {601,603,498,500,436,408,391,233,190,184,154,122,106,33,31,
+               127,391,128,392,393,136,149,150,442,443,186,444,179,180,445,189,190};
 
         public Form1(IApplication hook)
         {
-
             InitializeComponent();
-            m_Hook = hook; // <--- 【修改】将传入的 hook 保存到成员变量中
-            // 构造函数中可以尝试获取一次 Document，但这不是关键
+            m_Hook = hook;
             if (m_Hook != null)
             {
                 m_Maindoc = m_Hook.Document;
             }
-            //m_Maindoc = hook.Document;
-            //IMapContentsView mainContentsView = hook.ActiveContentsView as IMapContentsView;
-
-            //MapControl mp = mainContentsView.MapControl;
-            //Map activeMap = mp.ActiveMap;
 
             this.m_mtr = new MapControl();
             this.m_mtr.Dock = DockStyle.Fill;
@@ -135,22 +112,15 @@ namespace MapGISPlugin3
             this.m_mtr.ShowScrollBar = false;
             this.panelControl1.Controls.Add(m_mtr);
 
-
-            Document dc = hook.Document;
-            Maps maps = dc.GetMaps();
-            m_Map = maps.GetMap(0);
-            m_Map2 = maps.GetMap(2);
-
-
             this.m_mtr2 = new MapControl();
             this.m_mtr2.Dock = DockStyle.Fill;
             this.m_mtr2.ShowRuler = false;
             this.m_mtr2.ShowScrollBar = false;
             this.panelControl2.Controls.Add(m_mtr2);
 
-
-            m_doc2.GetMaps().Append(m_Map2);
-            m_doc.GetMaps().Append(m_Map);
+            // 【修改】将临时地图添加到临时文档
+            m_tempDoc.GetMaps().Append(m_Map);
+            m_tempDoc.GetMaps().Append(m_Map2);
 
             this.dataTable.Columns.Add("等值线层");
             this.dataTable.Columns.Add("线层");
@@ -158,12 +128,14 @@ namespace MapGISPlugin3
             this.dataTable.Columns.Add("注记层");
             this.dataTable.Columns.Add("线层数据", typeof(LinInfo));
             this.dataTable.Columns.Add("区层数据", typeof(RegInfo));
-
-            this.layerSelectComboBoxRas = new LayerSelectComboBox();
         }
 
         private void Form1_Load(object sender, EventArgs e)
         {
+            this.buttonEdit1.Properties.ReadOnly = true;
+            this.buttonEdit1.Properties.Buttons[0].Enabled = false;
+            this.buttonEdit1.BackColor = System.Drawing.SystemColors.ControlLight;
+
             this.m_mtr.ActiveMap = m_Map;
             this.m_mtr2.ActiveMap = m_Map2;
             this.m_mtr.ShowRuler = true;
@@ -176,10 +148,11 @@ namespace MapGISPlugin3
             this.comboBox1.Items.Add("二次导数");
             this.comboBox1.Items.Add("分量");
             this.comboBox1.SelectedIndex = 0;
-            return;
         }
+
         private void Init()
         {
+            // 【修改】使用 m_mtr.ActiveMap（临时地图）代替固定 m_Map
             if (this.m_mtr.ActiveMap.LayerCount == 0) return;
             if (this.m_mtr.ActiveMap.get_Layer(0) is RasterLayer)
             {
@@ -190,16 +163,11 @@ namespace MapGISPlugin3
                 m_Max = rasdataset.GetRasterBand(m_BandNum).MaxValue;
                 if (m_Min.CompareTo(m_Max) == 0) return;
             }
-            else
-            {
-
-            }
 
             m_ScaleX = (m_Rect.XMax - m_Rect.XMin) / 1000.0;
             m_ScaleY = (m_Rect.YMax - m_Rect.YMin) / 1000.0;
 
-            #region 做计算,初始化等值线追踪结构体中参数
-
+            #region 初始化等值线参数（保持不变）
             short a = 0;
             double fMapLength = RasCommonFunction.RsGetCriteriaNumb(m_Rect.XMax - m_Rect.XMin, ref a);
             double LengthScale = (long)((m_Rect.XMax - m_Rect.XMin) / fMapLength);
@@ -246,7 +214,7 @@ namespace MapGISPlugin3
                 if (dk < 10) m_LfZstep = m_LfZstep * 0.5;
             } while (1 > 0);
             zdat = 0; k = (int)dk;
-            if (m_Min < 0) // 确定最小等值线值...
+            if (m_Min < 0)
             {
                 do
                 {
@@ -261,7 +229,7 @@ namespace MapGISPlugin3
                     zdat += m_LfZstep;
                 } while (zdat < m_Min);
             }
-            k = 0;  // 对每层设定高程值...
+            k = 0;
             List<double> lstfZdem = new List<double>();
             do
             {
@@ -270,10 +238,8 @@ namespace MapGISPlugin3
                 k++;
             } while (zdat < m_Max);
             lstfZdem.Add(m_Max);
-
             #endregion
 
-            //初始化DataTable
             this.dataTable.Rows.Clear();
             for (int i = 0; i <= k; i++)
             {
@@ -283,74 +249,66 @@ namespace MapGISPlugin3
                 reginfo.OutPenW = 1; reginfo.Ovprnt = true; reginfo.PatClr = 3; reginfo.PatHeight = 10; reginfo.PatWidth = 10; reginfo.FillClr = Imc[i];
                 this.dataTable.Rows.Add(lstfZdem[i].ToString("F2"), "", "", (i % 3 == 0) ? "YES" : "NO", linInfo, reginfo);
             }
-
         }
-
 
         private void 数据导入ToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            // --- 检查逻辑保持不变，非常棒 ---
             if (m_Hook == null)
             {
                 MessageBox.Show("严重错误：插件未能正确初始化，无法与主程序通信。", "初始化失败", MessageBoxButtons.OK, MessageBoxIcon.Stop);
                 return;
             }
-            Document docToUse = m_Hook.Document;
-            if (docToUse == null)
+            if (m_Maindoc == null)
             {
                 MessageBox.Show("操作失败：无法获取当前的地图文档。请确保您已在数据中心打开一个地图工程。", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            // --- 弹出选择对话框的逻辑保持不变 ---
             LayerSelectDialog layerSelectDialog = new LayerSelectDialog(m_Hook);
             if (layerSelectDialog.ShowDialog() == DialogResult.OK)
             {
                 RasterLayer selectedLayerFromMainDoc = layerSelectDialog.SelectedRasterLayer;
-                if (selectedLayerFromMainDoc != null)
+                m_SourceMap = layerSelectDialog.SelectedMap; // 【新增】记录源地图
+                if (selectedLayerFromMainDoc != null && m_SourceMap != null)
                 {
-                    // 【关键修改点】
-                    // 不要直接移动 selectedLayerFromMainDoc 对象。
-                    // 而是获取它的数据源URL，然后创建一个新的图层对象。
-
-                    // 1. 获取选中图层的数据源路径 (URL)
                     string layerUrl = selectedLayerFromMainDoc.URL;
-
-                    // (调试) 可以加一个弹窗来确认URL是否正确获取
-                    // MessageBox.Show("获取到的图层URL是: " + layerUrl);
-
                     if (string.IsNullOrEmpty(layerUrl))
                     {
                         MessageBox.Show("选中的图层没有有效的URL，无法加载。", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         return;
                     }
 
-                    // 2. 创建一个全新的、属于本插件的 RasterLayer 对象
                     RasterLayer newLayerForPlugin = new RasterLayer();
-
-                    // 3. 将新图层的URL指向同一个数据源
                     newLayerForPlugin.URL = layerUrl;
 
-                    // 4. 连接数据，这是非常重要的一步！
                     if (newLayerForPlugin.ConnectData())
                     {
-                        // 5. （可选但推荐）给新图层一个名字，可以和原来的一样
                         newLayerForPlugin.Name = selectedLayerFromMainDoc.Name;
-
-                        // 6. 现在可以安全地操作插件内部的 m_Map 了
-                        // 清空上一个map中的图层
-                        m_Map.RemoveAll();
-
-                        // 7. 将我们【新创建的】图层添加到插件的 m_Map 中
+                        m_Map.RemoveAll(); // 只清空临时地图
                         m_Map.Append(newLayerForPlugin);
 
-                        // 后续逻辑保持不变，它们现在会作用于这个有效的新图层
+                        try
+                        {
+                            _inputFilePath = new Uri(layerUrl).LocalPath;
+                            string inputDirectory = Path.GetDirectoryName(_inputFilePath);
+                            string inputFileNameWithoutExt = Path.GetFileNameWithoutExtension(_inputFilePath);
+                            string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+                            string newFileName = $"{inputFileNameWithoutExt}_{timestamp}.grd";
+                            string newfilePath = Path.Combine(inputDirectory, newFileName);
+                            this.buttonEdit1.Text = newfilePath;
+                        }
+                        catch (Exception ex)
+                        {
+                            MessageBox.Show($"自动生成输出路径时出错: {ex.Message}", "路径错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            this.buttonEdit1.Text = "";
+                            _inputFilePath = null;
+                        }
+
                         if (this.m_mtr.ActiveMap.LayerCount != 0)
                             this.m_mtr.ActiveMap.get_Layer(0).State = m_ShowRasOrTin ? LayerState.Visible : LayerState.UnVisible;
 
                         this.m_mtr.Restore();
 
-                        // 初始化
                         m_Tempsfclslin = null;
                         m_TempsfclsSlopelin = null;
                         m_Tempsfclsreg = null;
@@ -361,17 +319,14 @@ namespace MapGISPlugin3
                     }
                     else
                     {
-                        // 如果ConnectData失败，说明路径有问题或者文件损坏
                         MessageBox.Show("无法连接到栅格数据源，请检查文件是否有效。\n路径: " + layerUrl, "数据连接失败", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        // 释放创建失败的对象
-                        System.Runtime.InteropServices.Marshal.ReleaseComObject(newLayerForPlugin);
                     }
                 }
             }
             layerSelectDialog.Dispose();
         }
 
-        // 新增的 LayerSelectDialog 类（作为内部类或单独文件，这里作为内部）
+        // 【修改】LayerSelectDialog 添加 SelectedMap
         private class LayerSelectDialog : Form
         {
             private TreeView treeViewLayers;
@@ -379,6 +334,7 @@ namespace MapGISPlugin3
             private Button btnCancel;
             private IApplication m_Hook;
             public RasterLayer SelectedRasterLayer { get; private set; }
+            public Map SelectedMap { get; private set; } // 【新增】
 
             public LayerSelectDialog(IApplication hook)
             {
@@ -434,6 +390,7 @@ namespace MapGISPlugin3
                         Map map = maps.GetMap(i);
                         if (map == null) continue;
                         TreeNode mapNode = new TreeNode(map.Name);
+                        mapNode.Tag = map; // 【新增】设置 Tag 为 Map
                         treeViewLayers.Nodes.Add(mapNode);
                         AddLayersToNode(mapNode, map);
                     }
@@ -445,10 +402,6 @@ namespace MapGISPlugin3
                 catch (Exception ex)
                 {
                     MessageBox.Show($"填充图层列表时出错: {ex.Message}", "列表加载失败");
-                }
-                finally
-                {
-                    // Removed: if (maps != null) Marshal.ReleaseComObject(maps);
                 }
             }
 
@@ -529,6 +482,18 @@ namespace MapGISPlugin3
             {
                 TreeNode selectedNode = treeViewLayers.SelectedNode;
                 SelectedRasterLayer = selectedNode?.Tag as RasterLayer;
+
+                // 【新增】向上查找所属 Map
+                TreeNode node = selectedNode;
+                while (node != null && (node.Tag == null || !(node.Tag is Map)))
+                {
+                    node = node.Parent;
+                }
+                if (node != null)
+                {
+                    SelectedMap = node.Tag as Map;
+                }
+
                 this.DialogResult = DialogResult.OK;
                 this.Close();
             }
@@ -540,55 +505,18 @@ namespace MapGISPlugin3
             }
         }
 
-        private void AddLayerToDoc(string savePath, RasterLayer rasLayer)
-        {
-            if (savePath.Contains("/ras/"))
-            {//栅格数据集
-                rasLayer.URL = savePath;
-                string[] ss = savePath.Split('/');
-                savePath = ss[ss.Length - 1];
-            }
-            else
-            {//影像文件
-                rasLayer.URL = "file:///" + savePath;
-                string[] ss = savePath.Split('\\');
-                savePath = ss[ss.Length - 1];
-            }
-            if (rasLayer.ConnectData())
-            {
-                // 修改说明：选择地图中的数据进行操作，结果生成到该地图中。
-                // 修改人：韩俊鹏 2014-05-29
-                rasLayer.Name = savePath;
-                Map mp = MapGIS.DemAnalysis.Plugin.Util.GetMapByLayer(this.layerSelectComboBoxRas.SelectedDocumentItem);
-                if (mp != null)
-                    mp.Append(rasLayer);
-                else
-                {
-                    if (m_doc.GetMaps().Count != 0)
-                        m_doc.GetMaps().GetMap(0).Append(rasLayer);
-                    else
-                    {
-                        Map map = new Map();
-                        map.Name = this.Text;
-                        map.Append(rasLayer);
-                        m_doc.GetMaps().Append(map);
-                    }
-                }
-            }
-        }
-
-        private void DengZhiXianKeShiHua(Map m_Map, MapControl m_mtr)
+        private void DengZhiXianKeShiHua(Map mapToUse, MapControl mtrToUse)
         {
             if (m_ContourParamStrcT == null) return;
-            //清空这一个map中的图层，只留一个raslayer
-            while (m_Map.LayerCount != 1)
+            // 清空地图中的图层，只留一个 raster layer
+            while (mapToUse.LayerCount != 1)
             {
-                m_Map.Remove(1);
+                mapToUse.Remove(1);
             }
             RasTraceContour traceContour = null;
-            if (m_mtr.ActiveMap.get_Layer(0) is RasterLayer)
+            if (mtrToUse.ActiveMap.get_Layer(0) is RasterLayer)
             {
-                RasterDataSet rasdataset = (m_mtr.ActiveMap.get_Layer(0) as RasterLayer).GetData() as RasterDataSet;
+                RasterDataSet rasdataset = (mtrToUse.ActiveMap.get_Layer(0) as RasterLayer).GetData() as RasterDataSet;
                 traceContour = new RasTraceContour(rasdataset, m_BandNum);
             }
             else
@@ -596,7 +524,6 @@ namespace MapGISPlugin3
                 return;
             }
             int n = this.dataTable.Rows.Count;
-            //构造等值层信息结构体
             ZVelStrcT_Stru[] arrayZVelStrcT = new ZVelStrcT_Stru[n];
             for (int i = 0; i < n; i++)
             {
@@ -607,21 +534,16 @@ namespace MapGISPlugin3
                 ZVelStrcT.mskOn = (sbyte)((this.dataTable.Rows[i][3] as string) == "YES" ? 1 : 0);
                 arrayZVelStrcT[i] = ZVelStrcT;
             }
-            //添加等值层信息结构体到追踪参数结构体中
             m_ContourParamStrcT.SetZVelBuf(arrayZVelStrcT);
             m_ContourParamStrcT.pContourNoteParam = m_ContourNoteParam;
-            //初始化临时简单要素类
             m_Tempsfclslin = null;
             m_TempsfclsSlopelin = null;
             m_Tempsfclsreg = null;
             m_tempann = null;
             if (m_Tempdaba == null)
                 m_Tempdaba = DataBase.OpenTempDB();
-            // 修改说明：OpenTempDB可能会不成功，返回null（Bug6696）
-            // 修改人：陈容 2015-09-23
             if (m_Tempdaba == null)
                 return;
-            //创建临时简单要素类
             m_Tempsfclslin = new SFeatureCls(m_Tempdaba);
             if (m_Tempsfclslin.Create(Guid.NewGuid().ToString(), GeomType.Lin, 0, 0, null) <= 0)
                 return;
@@ -644,12 +566,7 @@ namespace MapGISPlugin3
                     return;
             }
             traceContour.ShowProgressBar(true);
-            //追踪
             int rtn = traceContour.RsTraceContour(m_ContourParamStrcT, m_Tempsfclslin, m_TempsfclsSlopelin, m_Tempsfclsreg, m_tempann, 1024, false, m_ClipLine);
-            //if (m_ContourParamStrcT.Colscl == 1)
-            //{
-            //    traceContour.RsMakeColScale(arrayZVelStrcT, m_ContourNoteParam, m_Tempsfclslin, m_Tempsfclsreg, m_tempann, m_Rect.XMin, m_Rect.YMin, m_Rect.XMax - m_Rect.XMin);
-            //}
             traceContour.Dispose();
             if (m_Tempsfclsreg == null)
             {
@@ -669,96 +586,82 @@ namespace MapGISPlugin3
                 if (m_tempann.Create(Guid.NewGuid().ToString(), AnnType.Text, 0, 0, null) <= 0)
                     return;
             }
-            //设置结果显示比
             m_Tempsfclslin.ScaleX = m_ScaleX;
             m_Tempsfclslin.ScaleY = m_ScaleY;
             m_TempsfclsSlopelin.ScaleX = m_ScaleX;
             m_TempsfclsSlopelin.ScaleY = m_ScaleY;
             m_Tempsfclsreg.ScaleX = m_ScaleX;
             m_Tempsfclsreg.ScaleY = m_ScaleY;
-            //添加结果到视图
             if (rtn > 0)
             {
                 VectorLayer vectorlayer1 = new VectorLayer(VectorLayerType.SFclsLayer);
                 if (vectorlayer1.AttachData(m_Tempsfclsreg))
                     vectorlayer1.Name = "可视化区";
-                m_mtr.ActiveMap.Append(vectorlayer1);
+                mtrToUse.ActiveMap.Append(vectorlayer1);
 
                 VectorLayer vectorlayer2 = new VectorLayer(VectorLayerType.SFclsLayer);
                 if (vectorlayer2.AttachData(m_Tempsfclslin))
                     vectorlayer2.Name = "可视化线";
-                m_mtr.ActiveMap.Append(vectorlayer2);
+                mtrToUse.ActiveMap.Append(vectorlayer2);
 
                 VectorLayer vectorlayer3 = new VectorLayer(VectorLayerType.SFclsLayer);
                 if (vectorlayer3.AttachData(m_TempsfclsSlopelin))
                     vectorlayer3.Name = "可视化线";
-                m_mtr.ActiveMap.Append(vectorlayer3);
+                mtrToUse.ActiveMap.Append(vectorlayer3);
 
                 VectorLayer vectorlayer4 = new VectorLayer(VectorLayerType.AnnLayer);
                 if (vectorlayer4.AttachData(m_tempann))
                     vectorlayer4.Name = "可视化注释";
-                m_mtr.ActiveMap.Append(vectorlayer4);
+                mtrToUse.ActiveMap.Append(vectorlayer4);
 
-                m_mtr.ActiveMap.get_Layer(1).State = m_ShowReg ? LayerState.Visible : LayerState.UnVisible;
-                m_mtr.ActiveMap.get_Layer(2).State = m_ShowLine ? LayerState.Visible : LayerState.UnVisible;
-                (m_mtr.ActiveMap.get_Layer(2) as VectorLayer).SymbolShow = m_SymbolShow;
-                m_mtr.ActiveMap.get_Layer(3).State = m_ShowSlopelin ? LayerState.Visible : LayerState.UnVisible;
-                (m_mtr.ActiveMap.get_Layer(3) as VectorLayer).SymbolShow = m_SymbolShow;
-                m_mtr.ActiveMap.get_Layer(4).State = m_ShowAnn ? LayerState.Visible : LayerState.UnVisible;
+                mtrToUse.ActiveMap.get_Layer(1).State = m_ShowReg ? LayerState.Visible : LayerState.UnVisible;
+                mtrToUse.ActiveMap.get_Layer(2).State = m_ShowLine ? LayerState.Visible : LayerState.UnVisible;
+                (mtrToUse.ActiveMap.get_Layer(2) as VectorLayer).SymbolShow = m_SymbolShow;
+                mtrToUse.ActiveMap.get_Layer(3).State = m_ShowSlopelin ? LayerState.Visible : LayerState.UnVisible;
+                (mtrToUse.ActiveMap.get_Layer(3) as VectorLayer).SymbolShow = m_SymbolShow;
+                mtrToUse.ActiveMap.get_Layer(4).State = m_ShowAnn ? LayerState.Visible : LayerState.UnVisible;
 
-                m_mtr.Restore();
+                mtrToUse.Restore();
             }
-
-
         }
-
 
         private void button1_Click(object sender, EventArgs e)
         {
-            if (this.buttonEdit1.Text.Trim() == "")
+            string newfilePath = this.buttonEdit1.Text.Trim();
+            if (string.IsNullOrEmpty(newfilePath) || _inputFilePath == null || m_SourceMap == null)
             {
-                XMessageBox.Information("请填写路径");
+                XMessageBox.Information("请先通过“数据导入”加载数据，程序将自动生成输出路径。");
                 return;
             }
-            string modeStr = comboBox1.SelectedItem.ToString();
-            MapLayer x = this.m_mtr.ActiveMap.get_Layer(0);
-            Uri uri = new Uri(x.URL);
 
-            string filePath = uri.LocalPath;
-            FileStream fs = new FileStream(filePath, System.IO.FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-            StreamReader sr = new StreamReader(fs, System.Text.Encoding.Default);
-            string line;
-            line = sr.ReadLine();
+            string modeStr = comboBox1.SelectedItem.ToString();
+
+            FileStream fs = new FileStream(_inputFilePath, System.IO.FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            StreamReader sr = new StreamReader(fs, Encoding.Default);
+            string line = sr.ReadLine();
 
             if (line == "DSAA")
             {
                 string[] separatingStrings = { " ", "\r\n", "\r", "\n" };
-
-                int nx = 0;
-                int ny = 0;
-                double coorx0 = 0.0;
-                double coorx2 = 0.0;
-                double coory0 = 0.0;
-                double coory2 = 0.0;
-                double intervalx = 0.0;
-                double intervaly = 0.0;
-                double od = 10.0;
-                double oi = 50.0;
+                int nx = 0, ny = 0;
+                double coorx0 = 0.0, coorx2 = 0.0, coory0 = 0.0, coory2 = 0.0;
+                double intervalx = 0.0, intervaly = 0.0;
+                double od = 10.0, oi = 50.0;
                 List<double> values = new List<double>();
                 List<double> res = new List<double>();
 
                 line = sr.ReadLine();
-                string[] words = line.Split(separatingStrings, System.StringSplitOptions.RemoveEmptyEntries);
+                string[] words = line.Split(separatingStrings, StringSplitOptions.RemoveEmptyEntries);
                 Int32.TryParse(words[0], out nx);
                 Int32.TryParse(words[1], out ny);
 
                 line = sr.ReadLine();
-                words = line.Split(separatingStrings, System.StringSplitOptions.RemoveEmptyEntries);
+                words = line.Split(separatingStrings, StringSplitOptions.RemoveEmptyEntries);
                 double.TryParse(words[0], out coorx0);
                 double.TryParse(words[1], out coorx2);
 
                 line = sr.ReadLine();
-                words = line.Split(separatingStrings, System.StringSplitOptions.RemoveEmptyEntries);
+                words = line.Split(separatingStrings, StringSplitOptions.RemoveEmptyEntries);
                 double.TryParse(words[0], out coory0);
                 double.TryParse(words[1], out coory2);
 
@@ -767,7 +670,7 @@ namespace MapGISPlugin3
 
                 sr.ReadLine();
                 line = sr.ReadToEnd();
-                words = line.Split(separatingStrings, System.StringSplitOptions.RemoveEmptyEntries);
+                words = line.Split(separatingStrings, StringSplitOptions.RemoveEmptyEntries);
                 foreach (string each in words)
                 {
                     double temp = 0.0;
@@ -777,11 +680,6 @@ namespace MapGISPlugin3
 
                 double[] buffer = new double[nx * ny];
                 int index = 0;
-                //foreach (double temp in values)
-                //{
-                //    buffer[index] = temp;
-                //    index = index + 1;
-                //}
                 for (int j = 0; j < ny; j++)
                 {
                     for (int i = 0; i < nx; i++)
@@ -791,15 +689,6 @@ namespace MapGISPlugin3
                     }
                 }
 
-                int size = Marshal.SizeOf(buffer[0]) * buffer.Length;
-                //test0(nx, ny, intervalx, intervaly, od, oi);
-                //test2(buffer, nx * ny);
-                //var lst = new List<double>();
-                //test3(lst.Add);
-                //foreach (double each in lst)
-                //{ 
-                //    Console.WriteLine(each);
-                //}
                 if (modeStr == "化极")
                     polar(nx, ny, intervalx, intervaly, buffer, od, oi, res.Add);
                 else if (modeStr == "三角")
@@ -821,65 +710,49 @@ namespace MapGISPlugin3
                 }
                 else if (modeStr == "二次导数")
                 {
-                    int direction = 2;
+                    int direction = 2; // 根据 RadioButton 调整
                     second(nx, ny, intervalx, intervaly, buffer, od, oi, direction, res.Add);
                 }
                 else
                 {
-                    int direction = 2;
+                    int direction = 2; // 根据 RadioButton 调整
                     compon(nx, ny, intervalx, intervaly, buffer, od, oi, direction, res.Add);
-
                 }
 
-
-                double[,] grd = ConvertListToGrd(res, nx, ny);
-                // 保存到.grd文件
-
-                string newfilePath = this.buttonEdit1.Text.Trim();
-
-
-                double xllcorner = 0.0;
-                double yllcorner = 0.0;
-                double cellsize = 1.0;
+                double[,] grd = ConvertListToGrd(res, ny, nx);
+                double xllcorner = coorx0;
+                double yllcorner = coory0;
+                double cellsize = intervalx;
                 double nodataValue = -9999;
 
                 GrdWriter.SaveToAsciiGrid(grd, newfilePath, xllcorner, yllcorner, cellsize, nodataValue);
 
-                /* RasterLayer rasterlayer = new RasterLayer();
-                 rasterlayer.URL = newfilePath;
-
-                 this.m_mtr2.ActiveMap.Append(rasterlayer);
-
-
-                 foreach (double each in res)
-                 {
-                     listBox1.Items.Add(each);
-
-
-                 }
-                 this.m_mtr2.Restore();*/
-
+                // 【修改】添加结果到源地图（主界面）
+                RasterLayer raslayerForMain = new RasterLayer();
+                raslayerForMain.URL = "file:///" + newfilePath;
+                if (raslayerForMain.ConnectData())
                 {
-                    RasterLayer raslayer = new RasterLayer();
+                    raslayerForMain.Name = Path.GetFileNameWithoutExtension(newfilePath);
+                    m_SourceMap.Append(raslayerForMain);
 
-                    if (newfilePath.Contains("/ras/"))
-                        raslayer.URL = newfilePath;
-                    else if (newfilePath.Contains("file:///"))
-                        raslayer.URL = newfilePath;
-                    else
-                        raslayer.URL = "file:///" + newfilePath;
-                    if (raslayer.ConnectData())
+                    // 刷新主视图
+                    if (m_Hook.ActiveContentsView is IMapContentsView mapView)
                     {
-                        m_Map2.Append(raslayer);
-
-
-                        string fullPath = this.buttonEdit1.Text.Trim();
-                        string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(fullPath);
-                        raslayer.Name = fileNameWithoutExtension;
+                        mapView.MapControl.Refresh();
                     }
-                    else
-                        XMessageBox.Information(newfilePath);
+                }
+                else
+                {
+                    XMessageBox.Information("加载计算结果文件到主地图失败：\n" + newfilePath);
+                }
 
+                // 【修改】为插件右侧面板添加结果（使用临时地图）
+                RasterLayer raslayerForPlugin = new RasterLayer();
+                raslayerForPlugin.URL = "file:///" + newfilePath;
+                if (raslayerForPlugin.ConnectData())
+                {
+                    m_Map2.RemoveAll();
+                    m_Map2.Append(raslayerForPlugin);
                 }
 
                 if (this.m_mtr2.ActiveMap.LayerCount != 0)
@@ -887,33 +760,25 @@ namespace MapGISPlugin3
                 this.m_mtr2.Restore();
 
                 DengZhiXianKeShiHua(m_Map2, m_mtr2);
-
-
-
-
-
-                sr.Close();
             }
+            sr.Close();
         }
 
         private void buttonEdit1_ButtonClick(object sender, DevExpress.XtraEditors.Controls.ButtonPressedEventArgs e)
         {
-            // 使用标准的SaveFileDialog
             SaveFileDialog savefile = new SaveFileDialog();
-
-            // 设置文件过滤器，让用户方便地保存为.grd文件
             savefile.Filter = "Surfer 6 Grid File (*.grd)|*.grd|All files (*.*)|*.*";
             savefile.FilterIndex = 1;
-            savefile.RestoreDirectory = true; // 对话框记忆上次打开的目录
+            savefile.RestoreDirectory = true;
             savefile.Title = "请选择计算结果(.grd)的保存位置";
 
             if (savefile.ShowDialog() == DialogResult.OK)
             {
-                // 获取用户选择的完整、标准的Windows文件路径
                 this.buttonEdit1.Text = savefile.FileName;
             }
             savefile.Dispose();
         }
+
         public class GrdWriter
         {
             public static void SaveToAsciiGrid(double[,] grid, string filePath, double xllcorner, double yllcorner, double cellsize, double nodataValue)
@@ -923,7 +788,6 @@ namespace MapGISPlugin3
 
                 using (StreamWriter writer = new StreamWriter(filePath))
                 {
-                    // 写入文件头
                     writer.WriteLine("ncols         " + cols);
                     writer.WriteLine("nrows         " + rows);
                     writer.WriteLine("xllcorner     " + xllcorner);
@@ -931,7 +795,6 @@ namespace MapGISPlugin3
                     writer.WriteLine("cellsize      " + cellsize);
                     writer.WriteLine("nodata_value  " + nodataValue);
 
-                    // 写入数据
                     for (int row = 0; row < rows; row++)
                     {
                         for (int col = 0; col < cols; col++)
@@ -945,27 +808,16 @@ namespace MapGISPlugin3
                 }
             }
         }
+
         public static double[,] ConvertListToGrd(List<double> dataList, int rows, int cols)
         {
-            // 检查数据长度是否匹配
             if (dataList.Count != rows * cols)
             {
                 throw new ArgumentException("数据长度与指定的行列数不匹配");
             }
 
-            // 创建二维数组
             double[,] grd = new double[rows, cols];
-
-            // 填充二维数组
             int index = 0;
-            //for (int row = 0; row < rows; row++)
-            //{
-            //    for (int col = 0; col < cols; col++)
-            //    {
-            //        grd[row, col] = dataList[index];
-            //        index++;
-            //    }
-            //}
             for (int row = rows - 1; row >= 0; row--)
             {
                 for (int col = 0; col < cols; col++)
@@ -974,85 +826,54 @@ namespace MapGISPlugin3
                     index++;
                 }
             }
-
             return grd;
         }
 
         private void button3_Click(object sender, EventArgs e)
         {
             DengZhiXianKeShiHua(m_Map2, m_mtr2);
-
         }
+
         private void button4_Click(object sender, EventArgs e)
         {
             DengZhiXianKeShiHua(m_Map, m_mtr);
         }
 
-/*        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
-        {
-            // 释放第一个 MapControl
-            if (m_mtr != null)
-            {
-                m_mtr.Dispose();
-                m_mtr = null;
-            }
-
-            // 【添加】释放第二个 MapControl
-            if (m_mtr2 != null)
-            {
-                m_mtr2.Dispose();
-                m_mtr2 = null;
-            }
-
-            // （可选但推荐）在这里也可以添加对 m_Tempdaba 等其他长生命周期成员的清理
-        }*/
-
-
-        // 这个方法现在变得不那么关键了，但留着也无害
-        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
-        {
-            // `using` 语句会处理 Dispose 的调用
-        }
-        // 在 FieldTransformForm.cs 文件中，用这段完整的代码替换你粘贴过来的 Dispose 方法
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
-                // 首先，释放设计器管理的托管组件
                 if (components != null)
                 {
                     components.Dispose();
                 }
 
-                // 然后，在这里添加我们自己的COM对象释放逻辑
-                // 释放临时简单要素类和注记
-                if (m_Tempsfclslin != null) { System.Runtime.InteropServices.Marshal.ReleaseComObject(m_Tempsfclslin); m_Tempsfclslin = null; }
-                if (m_TempsfclsSlopelin != null) { System.Runtime.InteropServices.Marshal.ReleaseComObject(m_TempsfclsSlopelin); m_TempsfclsSlopelin = null; }
-                if (m_Tempsfclsreg != null) { System.Runtime.InteropServices.Marshal.ReleaseComObject(m_Tempsfclsreg); m_Tempsfclsreg = null; }
-                if (m_tempann != null) { System.Runtime.InteropServices.Marshal.ReleaseComObject(m_tempann); m_tempann = null; }
+                // 【修改】移除所有 Marshal.ReleaseComObject 调用（避免对非 COM 对象的释放导致异常）
+                // 只调用 Dispose（如果对象实现 IDisposable）
+                // 临时简单要素类和注记：设为 null，让 GC 处理（假设无 Dispose 方法）
+                m_Tempsfclslin = null;
+                m_TempsfclsSlopelin = null;
+                m_Tempsfclsreg = null;
+                m_tempann = null;
 
-                // 释放临时数据库
-                if (m_Tempdaba != null) { System.Runtime.InteropServices.Marshal.ReleaseComObject(m_Tempdaba); m_Tempdaba = null; }
+                // 临时数据库：设为 null（如果有 Close 方法，可调用；这里假设无）
+                m_Tempdaba = null;
 
-                // MapControl 是控件，理论上会被 components.Dispose() 处理，但再次调用 Dispose() 是安全的
+                // MapControl：调用 Dispose
                 if (m_mtr != null) { m_mtr.Dispose(); m_mtr = null; }
                 if (m_mtr2 != null) { m_mtr2.Dispose(); m_mtr2 = null; }
 
-                // 释放你自己创建的 Map 和 Document 对象
-                // 注意：从主程序 hook 获取的对象通常不应由你来释放，但你自己 new() 的必须释放
-                if (m_Map != null) { System.Runtime.InteropServices.Marshal.ReleaseComObject(m_Map); m_Map = null; }
-                if (m_Map2 != null) { System.Runtime.InteropServices.Marshal.ReleaseComObject(m_Map2); m_Map2 = null; }
-                if (activeMap != null) { System.Runtime.InteropServices.Marshal.ReleaseComObject(activeMap); activeMap = null; }
+                // 临时 Document：调用 Dispose（插件创建的）
+                if (m_tempDoc != null) { m_tempDoc.Dispose(); m_tempDoc = null; }
 
-                // Document 实现了 IDisposable，调用 Dispose() 是最佳方式
-                if (m_doc != null) { m_doc.Dispose(); m_doc = null; }
-                if (m_doc2 != null) { m_doc2.Dispose(); m_doc2 = null; }
-
-                // 释放其他可能的COM对象
-                if (m_geodaba != null) { System.Runtime.InteropServices.Marshal.ReleaseComObject(m_geodaba); m_geodaba = null; }
+                // 【修改】不要释放或 Dispose 从 hook 获取的对象（如 m_Maindoc, m_SourceMap）
+                // 它们由主程序管理
+                m_Maindoc = null;
+                m_SourceMap = null;
+                m_Hook = null;
+                m_Map = null;
+                m_Map2 = null;
             }
-
-            // 最后，必须调用基类的 Dispose 方法
             base.Dispose(disposing);
         }
     }

@@ -197,6 +197,7 @@ namespace MapGISPlugin3
             this.btnCalculate.TabIndex = 0;
             this.btnCalculate.Text = "计算";
             this.btnCalculate.UseVisualStyleBackColor = true;
+            this.btnCalculate.Click += new System.EventHandler(this.btnCalculate_Click);
             // 
             // chartProfileView
             // 
@@ -213,6 +214,7 @@ namespace MapGISPlugin3
             this.chartProfileView.Size = new System.Drawing.Size(782, 619);
             this.chartProfileView.TabIndex = 0;
             this.chartProfileView.Text = "chart1";
+            this.chartProfileView.MouseClick += new System.Windows.Forms.MouseEventHandler(this.chartProfileView_MouseClick);
             // 
             // tabPage2
             // 
@@ -340,6 +342,7 @@ namespace MapGISPlugin3
             this.tabControl2.SelectedIndex = 0;
             this.tabControl2.Size = new System.Drawing.Size(609, 28);
             this.tabControl2.TabIndex = 0;
+            this.tabControl2.SelectedIndexChanged += new System.EventHandler(this.tabControl2_SelectedIndexChanged);
             // 
             // tabPageDisplayTE
             // 
