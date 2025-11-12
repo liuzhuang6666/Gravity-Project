@@ -246,6 +246,13 @@
     <Compile Include="重磁处理功能\AddDataForm.Designer.cs">
       <DependentUpon>AddDataForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="重磁处理功能\Form_GravityCorrelationImaging.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="重磁处理功能\Form_GravityCorrelationImaging.Designer.cs">
+      <DependentUpon>Form_GravityCorrelationImaging.cs</DependentUpon>
+    </Compile>
+    <Compile Include="重磁处理功能\GravityCorrelationImagingCommand.cs" />
     <Compile Include="重磁处理功能\MagCorrelationImagingCommand.cs" />
     <Compile Include="重磁处理功能\FieldTransformCommand.cs" />
     <Compile Include="重磁处理功能\Command3.cs" />
@@ -320,6 +327,9 @@
     <EmbeddedResource Include="重磁处理功能\Form2.resx">
       <DependentUpon>Form2.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="重磁处理功能\Form_GravityCorrelationImaging.resx">
+      <DependentUpon>Form_GravityCorrelationImaging.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="重磁处理功能\Form_MagCorrelationImaging.resx">
       <DependentUpon>Form_MagCorrelationImaging.cs</DependentUpon>
     </EmbeddedResource>
@@ -345,6 +355,24 @@
     <Folder Include="电磁处理功能\Tem\" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Algorithm\GravityCorrelationImaging\a.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Algorithm\GravityCorrelationImaging\libgcc_s_seh-1.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Algorithm\GravityCorrelationImaging\libgomp-1.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Algorithm\GravityCorrelationImaging\libstdc++-6.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Algorithm\GravityCorrelationImaging\libwinpthread-1.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Algorithm\GravityCorrelationImaging\magdpicore.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Algorithm\MagCorrelationImaging\a.exe">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -377,6 +405,12 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
+    <None Include="Algorithm\GravityCorrelationImaging\magdpicore.lib">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Algorithm\GravityCorrelationImaging\Makefile.EXEED">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="Algorithm\MagCorrelationImaging\Makefile.EXEED">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

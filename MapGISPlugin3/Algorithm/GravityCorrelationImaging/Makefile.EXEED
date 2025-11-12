@@ -1,0 +1,13 @@
+CC      =   x86_64-w64-mingw32-g++
+INC    	=	-I./inc
+CFLAGS  =   -Os -fvisibility=hidden $(INC) -fopenmp
+LDFLAGS =   -s -fopenmp -Wl,--export-all-symbols
+LDLIBS  =	magdpicore.lib
+
+all: a.exe
+
+a.exe: a.cpp
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ a.cpp $(LDLIBS)
+
+clean:
+	rm -f a.exe
