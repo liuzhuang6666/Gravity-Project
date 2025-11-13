@@ -1,0 +1,13 @@
+CC      =   x86_64-w64-mingw32-g++
+INC    	=	-I../code/inc
+CFLAGS  =   -Os -fvisibility=hidden $(INC)
+LDFLAGS =   -s -Wl,--export-all-symbols
+LDLIBS  =	-L../ -lmagdprcore
+
+all: a.exe
+
+a.exe: a.cpp
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ a.cpp $(LDLIBS)
+
+clean:
+	rm -f a.exe
