@@ -216,6 +216,12 @@
     <Compile Include="电磁处理功能\Mt\Form_MT1di.Designer.cs">
       <DependentUpon>Form_MT1di.cs</DependentUpon>
     </Compile>
+    <Compile Include="电磁处理功能\Mt\Form_MT2di.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="电磁处理功能\Mt\Form_MT2di.Designer.cs">
+      <DependentUpon>Form_MT2di.cs</DependentUpon>
+    </Compile>
     <Compile Include="电磁处理功能\Mt\Form_MTAddData.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -309,6 +315,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="电磁处理功能\Mt\Form_MT1di.resx">
       <DependentUpon>Form_MT1di.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="电磁处理功能\Mt\Form_MT2di.resx">
+      <DependentUpon>Form_MT2di.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="电磁处理功能\Mt\Form_MTAddData.resx">
       <DependentUpon>Form_MTAddData.cs</DependentUpon>
