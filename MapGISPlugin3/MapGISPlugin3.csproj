@@ -296,6 +296,7 @@
     <Compile Include="重磁处理功能\Form_GravityMagnetic.Designer.cs">
       <DependentUpon>Form_GravityMagnetic.cs</DependentUpon>
     </Compile>
+    <Compile Include="重磁处理功能\PluginResourceManager.cs" />
     <Compile Include="重磁处理功能\ShowMyProcessorCommand.cs" />
   </ItemGroup>
   <ItemGroup>
