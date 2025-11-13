@@ -629,6 +629,106 @@ namespace MapGISPlugin3
         }
 
 
+        // 【新增】执行外部的“方向导数”算法 a.exe
+        private bool ExecuteDirectionalDerivativeAlgorithm(string inputGrdPath, double ori, double ord, out string resultDatPath)
+        {
+            resultDatPath = null;
+            try
+            {
+                // 1. 定位 a.exe 及其工作目录
+                string pluginPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                string algorithmDir = Path.Combine(pluginPath, "Algorithm", "DirectionalDerivative");
+                string exePath = Path.Combine(algorithmDir, "a.exe");
+                // --- 【调试点 1: 验证路径和参数】 ---
+                string debug_msg1 = "[调试] 即将执行方向导数算法，请检查以下信息：\n\n" +
+                                    $"EXE 路径:\n{exePath}\n\n" +
+                                    $"工作目录:\n{algorithmDir}\n\n" +
+                                    $"输入 GRD 文件:\n{inputGrdPath}\n\n" +
+                                    $"方位角(ori): {ori}\n" +
+                                    $"阶数(ord): {ord}";
+                MessageBox.Show(debug_msg1, "调试点 1: 执行前检查");
+                if (!File.Exists(exePath))
+                {
+                    MessageBox.Show($"算法模块 (a.exe) 丢失！\n请确保它位于以下路径：\n{exePath}", "文件丢失", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return false;
+                }
+                // 2. 准备进程启动信息
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName = exePath,
+                    Arguments = $"\"{inputGrdPath}\" {ori} {ord}",
+                    WorkingDirectory = algorithmDir,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true
+                };
+                // 3. 执行进程并等待结果
+                using (Process process = new Process { StartInfo = startInfo })
+                {
+                    StringBuilder errorOutput = new StringBuilder();
+                    process.Start();
+                    errorOutput.Append(process.StandardError.ReadToEnd());
+                    bool exited = process.WaitForExit(5 * 60 * 1000); // 5分钟超时
+                    // --- 【调试点 2: 检查 a.exe 执行结果】 ---
+                    string debug_msg2 = "[调试] a.exe 执行完毕。\n\n" +
+                                        $"是否正常退出: {exited}\n" +
+                                        $"退出码 (ExitCode): {(exited ? process.ExitCode.ToString() : "N/A (超时)")}\n\n" +
+                                        $"标准错误流信息 (如果有):\n-----\n{errorOutput}\n-----";
+                    MessageBox.Show(debug_msg2, "调试点 2: 进程执行结果");
+                    if (exited)
+                    {
+                        if (process.ExitCode != 0)
+                        {
+                            string errorMessage = $"外部算法 a.exe 执行失败，退出码: {process.ExitCode}。";
+                            if (errorOutput.Length > 0)
+                            {
+                                errorMessage += "\n\n错误信息:\n" + errorOutput.ToString();
+                            }
+                            MessageBox.Show(errorMessage, "算法执行失败", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        MessageBox.Show("算法执行超时（超过5分钟），操作被中断。", "超时错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        if (!process.HasExited) process.Kill();
+                        return false;
+                    }
+                }
+                // 4. 验证结果文件
+                resultDatPath = Path.Combine(algorithmDir, "result.dat");
+                // --- 【调试点 3: 检查 result.dat 文件状态】 ---
+                string debug_msg3;
+                if (File.Exists(resultDatPath))
+                {
+                    long fileSize = new FileInfo(resultDatPath).Length;
+                    debug_msg3 = "[调试] 检查结果文件。\n\n" +
+                                 $"文件路径:\n{resultDatPath}\n\n" +
+                                 "状态: 文件存在。\n" +
+                                 $"大小: {fileSize} 字节。";
+                }
+                else
+                {
+                    debug_msg3 = "[调试] 检查结果文件。\n\n" +
+                                 $"文件路径:\n{resultDatPath}\n\n" +
+                                 "状态: 文件不存在！";
+                }
+                MessageBox.Show(debug_msg3, "调试点 3: 结果文件检查");
+                if (!File.Exists(resultDatPath))
+                {
+                    MessageBox.Show("算法执行完毕，但未在预期位置找到结果文件 result.dat！", "结果文件丢失", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return false;
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("执行外部算法时发生严重错误: " + ex.Message, "执行异常", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+        }
+
         private void DengZhiXianKeShiHua(Map mapToUse, MapControl mtrToUse)
         {
             if (m_ContourParamStrcT == null) return;
@@ -757,15 +857,15 @@ namespace MapGISPlugin3
                 MessageBox.Show("请先通过“数据导入”加载数据，并指定结果输出路径。", "操作提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
-
             if (comboBox1.SelectedItem == null)
             {
                 MessageBox.Show("请选择一个处理方法。", "操作提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
-
             string modeStr = comboBox1.SelectedItem.ToString();
-            double od = 0, oi = 0, elev = 0, nd = 0, ni = 0; // 提前声明所有可能用到的参数变量
+            double od = 0, oi = 0, elev = 0, nd = 0, ni = 0;
+            // 【新增】方向导数参数
+            double ori = 0, ord = 0;
 
             #region 参数校验和读取
             // 根据当前选择的方法，校验并读取参数
@@ -808,51 +908,52 @@ namespace MapGISPlugin3
                         return;
                     }
                     break;
+                // 【新增】方向导数参数校验
+                case "方向导数":
+                    if (string.IsNullOrWhiteSpace(txtOri.Text) || !double.TryParse(txtOri.Text, out ori))
+                    {
+                        MessageBox.Show("请输入有效的方位角！", "输入错误", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        txtOri.Focus();
+                        return;
+                    }
+                    if (string.IsNullOrWhiteSpace(txtOrd.Text) || !double.TryParse(txtOrd.Text, out ord))
+                    {
+                        MessageBox.Show("请输入有效的阶数！", "输入错误", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        txtOrd.Focus();
+                        return;
+                    }
+                    break;
             }
             #endregion
 
-            // 【修改】将 fs 和 sr 放入 using 块，确保资源被正确释放
+            // 【修改】using块中处理文件读取（对于a.exe方法，不再读取values到内存）
             using (FileStream fs = new FileStream(_inputFilePath, System.IO.FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
             using (StreamReader sr = new StreamReader(fs, Encoding.Default))
             {
                 string line = sr.ReadLine();
-
                 if (line == "DSAA")
                 {
                     string[] separatingStrings = { " ", "\r\n", "\r", "\n" };
                     int nx = 0, ny = 0;
                     double coorx0 = 0.0, coorx2 = 0.0, coory0 = 0.0, coory2 = 0.0;
                     double intervalx = 0.0, intervaly = 0.0;
-
                     List<double> values = new List<double>();
                     List<double> res = new List<double>();
-
                     line = sr.ReadLine();
                     string[] words = line.Split(separatingStrings, StringSplitOptions.RemoveEmptyEntries);
                     Int32.TryParse(words[0], out nx);
                     Int32.TryParse(words[1], out ny);
-
                     line = sr.ReadLine();
                     words = line.Split(separatingStrings, StringSplitOptions.RemoveEmptyEntries);
                     double.TryParse(words[0], out coorx0);
                     double.TryParse(words[1], out coorx2);
-
                     line = sr.ReadLine();
                     words = line.Split(separatingStrings, StringSplitOptions.RemoveEmptyEntries);
                     double.TryParse(words[0], out coory0);
                     double.TryParse(words[1], out coory2);
-
                     intervalx = (nx > 1) ? (coorx2 - coorx0) / (nx - 1) : 100.0;
                     intervaly = (ny > 1) ? (coory2 - coory0) / (ny - 1) : 100.0;
-
-                    // 【修改】为了给 a.exe 提供完整的原始 GRD 文件，这里不再读取数据到内存
-                    // sr.ReadLine();
-                    // line = sr.ReadToEnd();
-                    // ... (旧的读取 values 的代码被移除)
-
-                    // 【修改】改为直接关闭文件流，因为 a.exe 会自己读取它
-                    // 我们只需要 _inputFilePath 这个路径即可
-                    sr.Close(); // 确保文件句柄被释放，a.exe才能访问
+                    sr.Close();
                     fs.Close();
 
                     // 【修改】这里的 buffer 数组不再需要，因为我们不再直接调用 DLL
@@ -887,6 +988,46 @@ namespace MapGISPlugin3
                                     }
                                 }
 
+                                if (res.Count != nx * ny)
+                                {
+                                    MessageBox.Show($"从 result.dat 读取数据量 ({res.Count}) 与预期 ({nx * ny}) 不符！\n请检查算法输出。", "数据错误", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                    return;
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                MessageBox.Show("读取算法结果文件 result.dat 时出错: " + ex.Message, "文件读取失败", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                return;
+                            }
+                        }
+                        else
+                        {
+                            return;
+                        }
+                    }
+                    else if (modeStr == "方向导数")
+                    {
+                        string resultDatPath;
+                        if (ExecuteDirectionalDerivativeAlgorithm(_inputFilePath, ori, ord, out resultDatPath))
+                        {
+                            try
+                            {
+                                string[] resultLines = File.ReadAllLines(resultDatPath);
+                                // 从第二行开始读取，跳过表头
+                                for (int i = 1; i < resultLines.Length; i++)
+                                {
+                                    string currentLine = resultLines[i];
+                                    if (string.IsNullOrWhiteSpace(currentLine)) continue;
+                                    string[] parts = currentLine.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+                                    if (parts.Length >= 3)
+                                    {
+                                        double val;
+                                        if (double.TryParse(parts[2], System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out val))
+                                        {
+                                            res.Add(val);
+                                        }
+                                    }
+                                }
                                 if (res.Count != nx * ny)
                                 {
                                     MessageBox.Show($"从 result.dat 读取数据量 ({res.Count}) 与预期 ({nx * ny}) 不符！\n请检查算法输出。", "数据错误", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -1099,18 +1240,18 @@ namespace MapGISPlugin3
         }
 
         // 创建一个新方法来管理UI的显示/隐藏
+        // 创建一个新方法来管理UI的显示/隐藏
         private void UpdateParameterUI()
         {
             // 首先隐藏所有参数面板
             pnlPolar.Visible = false;
             pnlContin.Visible = false;
             pnlDircomp.Visible = false;
+            // 【新增】隐藏方向导数面板
+            pnlDeriv.Visible = false;
             // 如果您为其他方法也创建了面板，也在这里隐藏它们
-
             if (comboBox1.SelectedItem == null) return;
-
             string selectedMethod = comboBox1.SelectedItem.ToString();
-
             // 根据选择，只显示对应的面板
             switch (selectedMethod)
             {
@@ -1123,6 +1264,10 @@ namespace MapGISPlugin3
                 case "方向分量":
                 case "导数": // “方向分量”和“导数”使用相同的参数
                     pnlDircomp.Visible = true;
+                    break;
+                // 【新增】显示方向导数面板
+                case "方向导数":
+                    pnlDeriv.Visible = true;
                     break;
                 // case "二次导数":
                 // case "分量":
