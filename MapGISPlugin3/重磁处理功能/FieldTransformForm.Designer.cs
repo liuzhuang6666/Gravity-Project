@@ -49,12 +49,15 @@ namespace MapGISPlugin3
             this.lblNi = new System.Windows.Forms.Label();
             this.txtNd = new System.Windows.Forms.TextBox();
             this.lblNd = new System.Windows.Forms.Label();
-            // 【新增】方向导数面板
             this.pnlDeriv = new System.Windows.Forms.Panel();
             this.txtOrd = new System.Windows.Forms.TextBox();
             this.lblOrd = new System.Windows.Forms.Label();
             this.txtOri = new System.Windows.Forms.TextBox();
             this.lblOri = new System.Windows.Forms.Label();
+            // 【新增】二次导数面板
+            this.pnlSecond = new System.Windows.Forms.Panel();
+            this.txtIsm = new System.Windows.Forms.TextBox();
+            this.lblIsm = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.panelControl1)).BeginInit();
             this.menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.panelControl2)).BeginInit();
@@ -62,8 +65,9 @@ namespace MapGISPlugin3
             this.pnlPolar.SuspendLayout();
             this.pnlContin.SuspendLayout();
             this.pnlDircomp.SuspendLayout();
-            // 【新增】SuspendLayout for pnlDeriv
             this.pnlDeriv.SuspendLayout();
+            // 【新增】SuspendLayout for pnlSecond
+            this.pnlSecond.SuspendLayout();
             this.SuspendLayout();
             // 
             // label1
@@ -353,26 +357,26 @@ namespace MapGISPlugin3
             this.lblNd.TabIndex = 3;
             this.lblNd.Text = "方向倾角";
             // 
-            // 【新增】pnlDeriv
+            // pnlDeriv
             // 
             this.pnlDeriv.Controls.Add(this.txtOrd);
             this.pnlDeriv.Controls.Add(this.lblOrd);
             this.pnlDeriv.Controls.Add(this.txtOri);
             this.pnlDeriv.Controls.Add(this.lblOri);
-            this.pnlDeriv.Location = new System.Drawing.Point(993, 163);  // 与pnlDircomp位置一致
+            this.pnlDeriv.Location = new System.Drawing.Point(993, 163);
             this.pnlDeriv.Name = "pnlDeriv";
             this.pnlDeriv.Size = new System.Drawing.Size(170, 80);
-            this.pnlDeriv.TabIndex = 25;  // 递增TabIndex
+            this.pnlDeriv.TabIndex = 25;
             this.pnlDeriv.Visible = false;
             // 
-            // 【新增】txtOrd
+            // txtOrd
             // 
             this.txtOrd.Location = new System.Drawing.Point(65, 45);
             this.txtOrd.Name = "txtOrd";
             this.txtOrd.Size = new System.Drawing.Size(100, 21);
             this.txtOrd.TabIndex = 0;
             // 
-            // 【新增】lblOrd
+            // lblOrd
             // 
             this.lblOrd.AutoSize = true;
             this.lblOrd.Location = new System.Drawing.Point(3, 48);
@@ -381,14 +385,14 @@ namespace MapGISPlugin3
             this.lblOrd.TabIndex = 1;
             this.lblOrd.Text = "阶数";
             // 
-            // 【新增】txtOri
+            // txtOri
             // 
             this.txtOri.Location = new System.Drawing.Point(65, 12);
             this.txtOri.Name = "txtOri";
             this.txtOri.Size = new System.Drawing.Size(100, 21);
             this.txtOri.TabIndex = 2;
             // 
-            // 【新增】lblOri
+            // lblOri
             // 
             this.lblOri.AutoSize = true;
             this.lblOri.Location = new System.Drawing.Point(3, 15);
@@ -397,12 +401,39 @@ namespace MapGISPlugin3
             this.lblOri.TabIndex = 3;
             this.lblOri.Text = "方位角";
             // 
+            // 【新增】pnlSecond
+            // 
+            this.pnlSecond.Controls.Add(this.txtIsm);
+            this.pnlSecond.Controls.Add(this.lblIsm);
+            this.pnlSecond.Location = new System.Drawing.Point(993, 163);  // 与pnlDeriv位置一致
+            this.pnlSecond.Name = "pnlSecond";
+            this.pnlSecond.Size = new System.Drawing.Size(170, 50);  // 只有一个参数，高度减小
+            this.pnlSecond.TabIndex = 26;  // 递增TabIndex
+            this.pnlSecond.Visible = false;
+            // 
+            // 【新增】txtIsm
+            // 
+            this.txtIsm.Location = new System.Drawing.Point(65, 12);
+            this.txtIsm.Name = "txtIsm";
+            this.txtIsm.Size = new System.Drawing.Size(100, 21);
+            this.txtIsm.TabIndex = 0;
+            // 
+            // 【新增】lblIsm
+            // 
+            this.lblIsm.AutoSize = true;
+            this.lblIsm.Location = new System.Drawing.Point(3, 15);
+            this.lblIsm.Name = "lblIsm";
+            this.lblIsm.Size = new System.Drawing.Size(53, 12);
+            this.lblIsm.TabIndex = 1;
+            this.lblIsm.Text = "计算模式";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1176, 601);
-            this.Controls.Add(this.pnlDeriv);  // 【新增】添加pnlDeriv到Form控件
+            this.Controls.Add(this.pnlSecond);  // 【新增】添加pnlSecond到Form控件
+            this.Controls.Add(this.pnlDeriv);
             this.Controls.Add(this.pnlDircomp);
             this.Controls.Add(this.pnlContin);
             this.Controls.Add(this.pnlPolar);
@@ -437,9 +468,11 @@ namespace MapGISPlugin3
             this.pnlContin.PerformLayout();
             this.pnlDircomp.ResumeLayout(false);
             this.pnlDircomp.PerformLayout();
-            // 【新增】ResumeLayout for pnlDeriv
             this.pnlDeriv.ResumeLayout(false);
             this.pnlDeriv.PerformLayout();
+            // 【新增】ResumeLayout for pnlSecond
+            this.pnlSecond.ResumeLayout(false);
+            this.pnlSecond.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
         }
@@ -479,11 +512,15 @@ namespace MapGISPlugin3
         private System.Windows.Forms.TextBox txtNd; // 方向倾角 输入框
         private System.Windows.Forms.Label lblNi; // 方向偏角 标签
         private System.Windows.Forms.TextBox txtNi; // 方向偏角 输入框
-        // 【新增】方向导数面板的控件
+        // --- 方向导数面板的控件 ---
         private System.Windows.Forms.Panel pnlDeriv;
         private System.Windows.Forms.Label lblOri; // 方位角 标签
         private System.Windows.Forms.TextBox txtOri; // 方位角 输入框
         private System.Windows.Forms.Label lblOrd; // 阶数 标签
         private System.Windows.Forms.TextBox txtOrd; // 阶数 输入框
+        // 【新增】二次导数面板的控件
+        private System.Windows.Forms.Panel pnlSecond;
+        private System.Windows.Forms.Label lblIsm; // 计算模式 标签
+        private System.Windows.Forms.TextBox txtIsm; // 计算模式 输入框
     }
 }
