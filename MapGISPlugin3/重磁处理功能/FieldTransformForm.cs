@@ -143,11 +143,11 @@ namespace MapGISPlugin3
             this.m_mtr2.ShowRuler = true;
 
             this.comboBox1.Items.Add("化极");
+            this.comboBox1.Items.Add("方向导数"); // 【新增】
+            this.comboBox1.Items.Add("二次导数");
             this.comboBox1.Items.Add("三角");
             this.comboBox1.Items.Add("方向分量");
             this.comboBox1.Items.Add("导数");
-            this.comboBox1.Items.Add("方向导数"); // 【新增】
-            this.comboBox1.Items.Add("二次导数");
             this.comboBox1.Items.Add("分量");
             this.comboBox1.SelectedIndex = 0;
 

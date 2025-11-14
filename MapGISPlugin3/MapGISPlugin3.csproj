@@ -178,6 +178,7 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Numerics" />
     <Reference Include="System.Windows.Forms.DataVisualization" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -206,10 +207,20 @@
     <Compile Include="工程相关\ResourceManage.cs" />
     <Compile Include="工程相关\StaticFunctions.cs" />
     <Compile Include="数据类浮窗\DockWindows.cs" />
-    <Compile Include="电磁处理功能\Csamt\Csamt1DForwardCommand.cs" />
-    <Compile Include="电磁处理功能\Csamt\CsamtNearFieldCorrectionCommand.cs" />
-    <Compile Include="电磁处理功能\Csamt\CsamtProposed2DInversionCommand.cs" />
-    <Compile Include="电磁处理功能\Csamt\CsamtStaticCorrectionCommand.cs" />
+    <Compile Include="电磁处理功能\Csamt\CSAMT1diCommand.cs" />
+    <Compile Include="电磁处理功能\Csamt\CSAMTAddDataCommand.cs" />
+    <Compile Include="电磁处理功能\Csamt\Form_CSAMT1di.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="电磁处理功能\Csamt\Form_CSAMT1di.Designer.cs">
+      <DependentUpon>Form_CSAMT1di.cs</DependentUpon>
+    </Compile>
+    <Compile Include="电磁处理功能\Csamt\Form_CSAMTAddData.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="电磁处理功能\Csamt\Form_CSAMTAddData.Designer.cs">
+      <DependentUpon>Form_CSAMTAddData.cs</DependentUpon>
+    </Compile>
     <Compile Include="电磁处理功能\Mt\Form_MT1di.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -319,6 +330,12 @@
     <EmbeddedResource Include="工程相关\ProjectTreeControl.resx">
       <DependentUpon>ProjectTreeControl.cs</DependentUpon>
       <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="电磁处理功能\Csamt\Form_CSAMT1di.resx">
+      <DependentUpon>Form_CSAMT1di.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="电磁处理功能\Csamt\Form_CSAMTAddData.resx">
+      <DependentUpon>Form_CSAMTAddData.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="电磁处理功能\Mt\Form_MT1di.resx">
       <DependentUpon>Form_MT1di.cs</DependentUpon>
