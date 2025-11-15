@@ -215,6 +215,30 @@ namespace MapGISPlugin3
 
 
                 }
+                // 1. 创建新命令的实例
+                GeophysicalPreviewCommand previewCommand = new GeophysicalPreviewCommand();
+                previewCommand.OnCreate(workSpace); // OnCreate 会设置 IApplication 钩子
+
+                // 2. 将它添加到矢量图层右键菜单
+                // (typeof(MapGIS.GeoMap.VectorLayer) 是TOC中矢量图层的类型)
+                IMenuExtander imeVecLayer = workSpace.GetMenuExtand(typeof(MapGIS.GeoMap.VectorLayer));
+                if (imeVecLayer != null)
+                {
+                    imeVecLayer.AddItem(previewCommand);
+                    appendMenuItems.Add(previewCommand); // 添加到列表，以便插件卸载时移除
+                }
+
+                // 3. (可选) 将它也添加到栅格图层右键菜单
+                IMenuExtander imeRasLayer = workSpace.GetMenuExtand(typeof(MapGIS.GeoMap.RasterLayer));
+                if (imeRasLayer != null)
+                {
+                    imeRasLayer.AddItem(previewCommand);
+                    // (如果您在两个菜单都添加了，只需在 appendMenuItems.Add() 一次)
+                    if (imeVecLayer == null) // 保证只添加一次
+                    {
+                        appendMenuItems.Add(previewCommand);
+                    }
+                }
             }
         }
     }

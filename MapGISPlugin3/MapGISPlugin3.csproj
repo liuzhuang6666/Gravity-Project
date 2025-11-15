@@ -190,6 +190,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="查看属性\GeophysicalPreviewCommand.cs" />
+    <Compile Include="查看属性\GeophysicalPreviewControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="查看属性\GeophysicalPreviewControl.Designer.cs">
+      <DependentUpon>GeophysicalPreviewControl.cs</DependentUpon>
+    </Compile>
+    <Compile Include="查看属性\GeophysicalPreviewContentsView.cs" />
     <Compile Include="添加数据\Form_AddData.cs">
       <SubType>Form</SubType>
     </Compile>
