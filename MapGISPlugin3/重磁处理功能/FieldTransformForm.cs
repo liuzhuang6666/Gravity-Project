@@ -25,6 +25,7 @@ using MapGIS.PluginEngine;
 using MapGIS.GeoObjects.Geometry3D; // For Dot3D if needed
 using MapGIS.GeoObjects.Att;
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 using System.Reflection;
 
 namespace MapGISPlugin3
@@ -94,6 +95,12 @@ namespace MapGISPlugin3
         private float m_FSlopeYEps = 0;
         private float m_Length = 0;
         private SlopLinParam_Stru m_SlopLineParam = null;
+
+        // 【新增】用于存储持久化图层URL的成员变量
+        private string m_LinClsUrl;
+        private string m_RegClsUrl;
+        private string m_AnnClsUrl;
+        private string m_SlopeLinClsUrl;
 
         private int[] Imc = {601,603,498,500,436,408,391,233,190,184,154,122,106,33,31,
                127,391,128,392,393,136,149,150,442,443,186,444,179,180,445,189,190};
@@ -322,6 +329,9 @@ namespace MapGISPlugin3
                         m_LfZstep = 10;
                         Init();
                         DengZhiXianKeShiHua(m_Map, m_mtr);
+
+                        // 【修改】在此处调用新方法，将导入数据的可视化结果添加到主地图
+                        AddVisualizationLayersToMainMap();
                     }
                     else
                     {
@@ -831,21 +841,27 @@ namespace MapGISPlugin3
         private void DengZhiXianKeShiHua(Map mapToUse, MapControl mtrToUse)
         {
             if (m_ContourParamStrcT == null) return;
+
             // 清空地图中的图层，只留一个 raster layer
-            while (mapToUse.LayerCount != 1)
+            while (mapToUse.LayerCount > 1) // Keep the base raster layer
             {
                 mapToUse.Remove(1);
             }
-            RasTraceContour traceContour = null;
+
+            RasTraceContour traceContour;
+            string rasterLayerName = "DataSource";
             if (mtrToUse.ActiveMap.get_Layer(0) is RasterLayer)
             {
-                RasterDataSet rasdataset = (mtrToUse.ActiveMap.get_Layer(0) as RasterLayer).GetData() as RasterDataSet;
+                RasterLayer rasLayer = mtrToUse.ActiveMap.get_Layer(0) as RasterLayer;
+                rasterLayerName = Path.GetFileNameWithoutExtension(rasLayer.Name);
+                RasterDataSet rasdataset = rasLayer.GetData() as RasterDataSet;
                 traceContour = new RasTraceContour(rasdataset, m_BandNum);
             }
             else
             {
                 return;
             }
+
             int n = this.dataTable.Rows.Count;
             ZVelStrcT_Stru[] arrayZVelStrcT = new ZVelStrcT_Stru[n];
             for (int i = 0; i < n; i++)
@@ -859,62 +875,99 @@ namespace MapGISPlugin3
             }
             m_ContourParamStrcT.SetZVelBuf(arrayZVelStrcT);
             m_ContourParamStrcT.pContourNoteParam = m_ContourNoteParam;
+
+            // 【修改】核心逻辑：使用 DataBase.OpenTempDB() 来确保数据库有效
             m_Tempsfclslin = null;
             m_TempsfclsSlopelin = null;
             m_Tempsfclsreg = null;
             m_tempann = null;
+
+            // 1. 打开或获取一个确保有效的临时数据库
             if (m_Tempdaba == null)
                 m_Tempdaba = DataBase.OpenTempDB();
             if (m_Tempdaba == null)
+            {
+                MessageBox.Show("打开临时数据库失败！", "错误");
                 return;
-            m_Tempsfclslin = new SFeatureCls(m_Tempdaba);
-            if (m_Tempsfclslin.Create(Guid.NewGuid().ToString(), GeomType.Lin, 0, 0, null) <= 0)
+            }
+
+            string baseName = GenerateClassName(rasterLayerName, "Contour");
+
+            // 2. 在这个数据库对象中创建要素类，并获取其URL
+            // 创建线要素类
+            string linClsName = baseName + "_Line";
+            m_Tempsfclslin = new SFeatureCls(m_Tempdaba); // 传入数据库对象
+            if (m_Tempsfclslin.Create(linClsName, GeomType.Lin, 0, 0, null) <= 0)
+            {
+                MessageBox.Show($"在数据库中创建线要素类失败: {linClsName}", "错误");
                 return;
+            }
+            m_LinClsUrl = m_Tempsfclslin.URL; // 创建成功后获取URL
+
+            // 创建坡度线要素类 (如果需要)
             if (m_ContourParamStrcT.bShowSlin)
             {
+                string slopeLinClsName = baseName + "_SlopeLine";
                 m_TempsfclsSlopelin = new SFeatureCls(m_Tempdaba);
-                if (m_TempsfclsSlopelin.Create(Guid.NewGuid().ToString(), GeomType.Lin, 0, 0, null) <= 0)
+                if (m_TempsfclsSlopelin.Create(slopeLinClsName, GeomType.Lin, 0, 0, null) <= 0)
+                {
+                    MessageBox.Show($"在数据库中创建坡度线要素类失败: {slopeLinClsName}", "错误");
                     return;
+                }
+                m_SlopeLinClsUrl = m_TempsfclsSlopelin.URL;
             }
+
+            // 创建区要素类
             if (m_ContourParamStrcT.bMakeReg == false)
             {
+                string regClsName = baseName + "_Region";
                 m_Tempsfclsreg = new SFeatureCls(m_Tempdaba);
-                if (m_Tempsfclsreg.Create(Guid.NewGuid().ToString(), GeomType.Reg, 0, 0, null) <= 0)
+                if (m_Tempsfclsreg.Create(regClsName, GeomType.Reg, 0, 0, null) <= 0)
+                {
+                    MessageBox.Show($"在数据库中创建区要素类失败: {regClsName}", "错误");
                     return;
+                }
+                m_RegClsUrl = m_Tempsfclsreg.URL;
             }
+
+            // 创建注记类
             if (m_ContourParamStrcT.bMapNote)
             {
+                string annClsName = baseName + "_Annotation";
                 m_tempann = new AnnotationCls(m_Tempdaba);
-                if (m_tempann.Create(Guid.NewGuid().ToString(), AnnType.Text, 0, 0, null) <= 0)
+                if (m_tempann.Create(annClsName, AnnType.Text, 0, 0, null) <= 0)
+                {
+                    MessageBox.Show($"在数据库中创建注记类失败: {annClsName}", "错误");
                     return;
+                }
+                m_AnnClsUrl = m_tempann.URL;
             }
+
+            // 3. 执行等值线追踪
             traceContour.ShowProgressBar(true);
             int rtn = traceContour.RsTraceContour(m_ContourParamStrcT, m_Tempsfclslin, m_TempsfclsSlopelin, m_Tempsfclsreg, m_tempann, 1024, false, m_ClipLine);
             traceContour.Dispose();
-            if (m_Tempsfclsreg == null)
-            {
-                m_Tempsfclsreg = new SFeatureCls(m_Tempdaba);
-                if (m_Tempsfclsreg.Create(Guid.NewGuid().ToString(), GeomType.Reg, 0, 0, null) <= 0)
-                    return;
-            }
-            if (m_TempsfclsSlopelin == null)
-            {
-                m_TempsfclsSlopelin = new SFeatureCls(m_Tempdaba);
-                if (m_TempsfclsSlopelin.Create(Guid.NewGuid().ToString(), GeomType.Lin, 0, 0, null) <= 0)
-                    return;
-            }
-            if (m_tempann == null)
-            {
-                m_tempann = new AnnotationCls(m_Tempdaba);
-                if (m_tempann.Create(Guid.NewGuid().ToString(), AnnType.Text, 0, 0, null) <= 0)
-                    return;
-            }
+
+            // 为null的情况创建空对象，以防止后续代码出错
+            if (m_Tempsfclsreg == null) m_Tempsfclsreg = new SFeatureCls();
+            if (m_TempsfclsSlopelin == null) m_TempsfclsSlopelin = new SFeatureCls();
+            if (m_tempann == null) m_tempann = new AnnotationCls();
+
+            // 设置符号比例
             m_Tempsfclslin.ScaleX = m_ScaleX;
             m_Tempsfclslin.ScaleY = m_ScaleY;
-            m_TempsfclsSlopelin.ScaleX = m_ScaleX;
-            m_TempsfclsSlopelin.ScaleY = m_ScaleY;
-            m_Tempsfclsreg.ScaleX = m_ScaleX;
-            m_Tempsfclsreg.ScaleY = m_ScaleY;
+            if (m_TempsfclsSlopelin.HasOpen())
+            {
+                m_TempsfclsSlopelin.ScaleX = m_ScaleX;
+                m_TempsfclsSlopelin.ScaleY = m_ScaleY;
+            }
+            if (m_Tempsfclsreg.HasOpen())
+            {
+                m_Tempsfclsreg.ScaleX = m_ScaleX;
+                m_Tempsfclsreg.ScaleY = m_ScaleY;
+            }
+
+            // 4. 在插件界面中显示结果 (这部分逻辑不变)
             if (rtn > 0)
             {
                 VectorLayer vectorlayer1 = new VectorLayer(VectorLayerType.SFclsLayer);
@@ -929,12 +982,12 @@ namespace MapGISPlugin3
 
                 VectorLayer vectorlayer3 = new VectorLayer(VectorLayerType.SFclsLayer);
                 if (vectorlayer3.AttachData(m_TempsfclsSlopelin))
-                    vectorlayer3.Name = "可视化线";
+                    vectorlayer3.Name = "可视化坡度线";
                 mtrToUse.ActiveMap.Append(vectorlayer3);
 
                 VectorLayer vectorlayer4 = new VectorLayer(VectorLayerType.AnnLayer);
                 if (vectorlayer4.AttachData(m_tempann))
-                    vectorlayer4.Name = "可视化注释";
+                    vectorlayer4.Name = "可视化注记";
                 mtrToUse.ActiveMap.Append(vectorlayer4);
 
                 mtrToUse.ActiveMap.get_Layer(1).State = m_ShowReg ? LayerState.Visible : LayerState.UnVisible;
@@ -947,7 +1000,6 @@ namespace MapGISPlugin3
                 mtrToUse.Restore();
             }
         }
-
         private void button1_Click(object sender, EventArgs e)
         {
             string newfilePath = this.buttonEdit1.Text.Trim();
@@ -1260,10 +1312,102 @@ namespace MapGISPlugin3
                     this.m_mtr2.Restore();
 
                     DengZhiXianKeShiHua(m_Map2, m_mtr2);
+
+                    // 【修改】在此处调用新方法，将计算结果的可视化图层添加到主地图
+                    AddVisualizationLayersToMainMap();
                 }
             } // using 结束，文件流自动关闭
         }
 
+
+
+        // 【新增】从参考代码中借鉴的类名生成函数
+        private string GenerateClassName(string baseName, string typeSuffix)
+        {
+            string sanitizedBase = Regex.Replace(baseName ?? "Import", @"[^\w]", "_");
+            sanitizedBase = Regex.Replace(sanitizedBase, "_+", "_").Trim('_');
+            if (string.IsNullOrWhiteSpace(sanitizedBase)) sanitizedBase = "Data";
+            string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+            string finalName = $"{sanitizedBase}_{typeSuffix}_{timestamp}";
+            if (finalName.Length > 64)
+            {
+                string prefix = $"{sanitizedBase}_{typeSuffix}_".Substring(0, Math.Min($"{sanitizedBase}_{typeSuffix}_".Length, 64 - timestamp.Length - 1));
+                finalName = prefix + timestamp;
+                if (finalName.Length > 64) finalName = finalName.Substring(0, 64);
+            }
+            if (!char.IsLetter(finalName[0]))
+            {
+                finalName = "Lyr_" + finalName.Substring(0, Math.Min(finalName.Length, 60));
+            }
+            finalName = finalName.TrimEnd('_');
+            return finalName;
+        }
+
+        // 【新增】将当前的可视化图层添加到主地图文档
+        // 【新增】将当前的可视化图层添加到主地图文档
+        private void AddVisualizationLayersToMainMap()
+        {
+            if (m_SourceMap == null) return;
+
+            if (m_Tempsfclsreg == null && m_Tempsfclslin == null && m_tempann == null) return;
+
+            string baseName = "Visualization";
+            MapLayer currentRasterLayer = m_mtr2.ActiveMap.LayerCount > 0 ? m_mtr2.ActiveMap.get_Layer(0) : (m_mtr.ActiveMap.LayerCount > 0 ? m_mtr.ActiveMap.get_Layer(0) : null);
+            if (currentRasterLayer != null)
+            {
+                baseName = Path.GetFileNameWithoutExtension(currentRasterLayer.Name) + "_Contour";
+            }
+
+            if (m_Tempsfclsreg != null && m_Tempsfclsreg.Count > 0)
+            {
+                VectorLayer regLayerForMain = new VectorLayer(VectorLayerType.SFclsLayer);
+                if (regLayerForMain.AttachData(m_Tempsfclsreg))
+                {
+                    regLayerForMain.Name = baseName + "_区";
+                    regLayerForMain.URL = m_RegClsUrl; // 【修改】设置持久化URL
+                    m_SourceMap.Append(regLayerForMain);
+                }
+            }
+
+            if (m_Tempsfclslin != null && m_Tempsfclslin.Count > 0)
+            {
+                VectorLayer lineLayerForMain = new VectorLayer(VectorLayerType.SFclsLayer);
+                if (lineLayerForMain.AttachData(m_Tempsfclslin))
+                {
+                    lineLayerForMain.Name = baseName + "_线";
+                    lineLayerForMain.URL = m_LinClsUrl; // 【修改】设置持久化URL
+                    m_SourceMap.Append(lineLayerForMain);
+                }
+            }
+
+            if (m_tempann != null && m_tempann.Count > 0)
+            {
+                VectorLayer annLayerForMain = new VectorLayer(VectorLayerType.AnnLayer);
+                if (annLayerForMain.AttachData(m_tempann))
+                {
+                    annLayerForMain.Name = baseName + "_注记";
+                    annLayerForMain.URL = m_AnnClsUrl; // 【修改】设置持久化URL
+                    m_SourceMap.Append(annLayerForMain);
+                }
+            }
+
+            // (可选) 如果需要，也可以添加坡度线图层
+            if (m_TempsfclsSlopelin != null && m_TempsfclsSlopelin.Count > 0)
+            {
+                VectorLayer slopeLineLayerForMain = new VectorLayer(VectorLayerType.SFclsLayer);
+                if (slopeLineLayerForMain.AttachData(m_TempsfclsSlopelin))
+                {
+                    slopeLineLayerForMain.Name = baseName + "_坡度线";
+                    slopeLineLayerForMain.URL = m_SlopeLinClsUrl;
+                    m_SourceMap.Append(slopeLineLayerForMain);
+                }
+            }
+
+            if (m_Hook != null && m_Hook.ActiveContentsView is IMapContentsView mapView)
+            {
+                mapView.MapControl.Refresh();
+            }
+        }
         private void buttonEdit1_ButtonClick(object sender, DevExpress.XtraEditors.Controls.ButtonPressedEventArgs e)
         {
             SaveFileDialog savefile = new SaveFileDialog();
