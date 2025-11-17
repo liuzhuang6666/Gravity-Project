@@ -44,7 +44,7 @@ namespace MapGISPlugin3
             }
 
             // 创建主窗体实例，并将钩子传递进去
-            using (Form1 form = new Form1(this.m_hook))
+            using (FieldTransformForm form = new FieldTransformForm(this.m_hook))
             {
                 // 使用 ShowDialog() 以模态方式显示窗体
                 // 这会暂停用户与MapGIS主界面的交互，直到此窗体关闭

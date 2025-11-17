@@ -198,6 +198,14 @@
     <Compile Include="可视化窗口\Form_ContourVisualization.Designer.cs">
       <DependentUpon>Form_ContourVisualization.cs</DependentUpon>
     </Compile>
+    <Compile Include="可视化窗口\VisualizationCommand.cs" />
+    <Compile Include="可视化窗口\VisualizationForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="可视化窗口\VisualizationForm.Designer.cs">
+      <DependentUpon>VisualizationForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="可视化窗口\VisualizationHelper.cs" />
     <Compile Include="查看属性\GeophysicalPreviewCommand.cs" />
     <Compile Include="查看属性\GeophysicalPreviewControl.cs">
       <SubType>UserControl</SubType>

@@ -15,7 +15,7 @@ namespace MapGISPlugin3
         {
             if (m_hook == null) return;
 
-            Form1 myForm = new Form1(m_hook);
+            FieldTransformForm myForm = new FieldTransformForm(m_hook);
             myForm.ShowDialog();
         }
 

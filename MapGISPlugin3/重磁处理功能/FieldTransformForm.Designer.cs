@@ -1,7 +1,7 @@
 ﻿using MapGIS.PluginEngine;
 namespace MapGISPlugin3
 {
-    partial class Form1
+    partial class FieldTransformForm
     {
         /// <summary>
         /// Required designer variable.
@@ -427,7 +427,7 @@ namespace MapGISPlugin3
             this.lblIsm.TabIndex = 1;
             this.lblIsm.Text = "计算模式";
             // 
-            // Form1
+            // FieldTransformForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -454,9 +454,9 @@ namespace MapGISPlugin3
             this.Controls.Add(this.label2);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.menuStrip1);
-            this.Name = "Form1";
+            this.Name = "FieldTransformForm";
             this.Text = "位场转换处理";
-            this.Load += new System.EventHandler(this.Form1_Load);
+            this.Load += new System.EventHandler(this.FieldTransformForm_Load);
             ((System.ComponentModel.ISupportInitialize)(this.panelControl1)).EndInit();
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();

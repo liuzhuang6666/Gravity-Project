@@ -30,7 +30,7 @@ using System.Reflection;
 
 namespace MapGISPlugin3
 {
-    public partial class Form1 : Form
+    public partial class FieldTransformForm : Form
     {
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate void AddAnsi([MarshalAs(UnmanagedType.R8)] double res);
@@ -105,7 +105,7 @@ namespace MapGISPlugin3
         private int[] Imc = {601,603,498,500,436,408,391,233,190,184,154,122,106,33,31,
                127,391,128,392,393,136,149,150,442,443,186,444,179,180,445,189,190};
 
-        public Form1(IApplication hook)
+        public FieldTransformForm(IApplication hook)
         {
             InitializeComponent();
             m_Hook = hook;
@@ -138,7 +138,7 @@ namespace MapGISPlugin3
             this.dataTable.Columns.Add("区层数据", typeof(RegInfo));
         }
 
-        private void Form1_Load(object sender, EventArgs e)
+        private void FieldTransformForm_Load(object sender, EventArgs e)
         {
             this.buttonEdit1.Properties.ReadOnly = true;
             this.buttonEdit1.Properties.Buttons[0].Enabled = false;
