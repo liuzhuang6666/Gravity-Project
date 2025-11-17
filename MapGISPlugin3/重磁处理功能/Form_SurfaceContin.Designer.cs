@@ -12,6 +12,7 @@
         /// </summary>
         /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
 
+
         #region Windows Form Designer generated code
 
         /// <summary>
@@ -23,6 +24,7 @@
             this.panel1 = new System.Windows.Forms.Panel();
             this.label7 = new System.Windows.Forms.Label();
             this.button1 = new System.Windows.Forms.Button();
+            this.btnImportData = new System.Windows.Forms.Button();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.panelControl1 = new System.Windows.Forms.Panel();
             this.button4 = new System.Windows.Forms.Button();
@@ -83,18 +85,29 @@
             this.button1.UseVisualStyleBackColor = true;
             this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
+            // btnImportData
+            // 
+            this.btnImportData.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.btnImportData.Location = new System.Drawing.Point(1, 37);
+            this.btnImportData.Name = "btnImportData";
+            this.btnImportData.Size = new System.Drawing.Size(98, 30);
+            this.btnImportData.TabIndex = 21;
+            this.btnImportData.Text = "数据导入";
+            this.btnImportData.UseVisualStyleBackColor = true;
+            this.btnImportData.Click += new System.EventHandler(this.btnImportData_Click);
+            // 
             // groupBox1
             // 
-            this.groupBox1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            this.groupBox1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
             | System.Windows.Forms.AnchorStyles.Left)));
             this.groupBox1.AutoSize = true;
             this.groupBox1.Controls.Add(this.panelControl1);
             this.groupBox1.Controls.Add(this.button4);
-            this.groupBox1.Location = new System.Drawing.Point(13, 163);
+            this.groupBox1.Location = new System.Drawing.Point(1, 200);
             this.groupBox1.Margin = new System.Windows.Forms.Padding(4);
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.Padding = new System.Windows.Forms.Padding(4);
-            this.groupBox1.Size = new System.Drawing.Size(410, 316);
+            this.groupBox1.Size = new System.Drawing.Size(729, 316);
             this.groupBox1.TabIndex = 15;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "输入数据可视化";
@@ -123,17 +136,17 @@
             // 
             // groupBox2
             // 
-            this.groupBox2.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
+            this.groupBox2.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+            | System.Windows.Forms.AnchorStyles.Left)
             | System.Windows.Forms.AnchorStyles.Right)));
             this.groupBox2.AutoSize = true;
             this.groupBox2.Controls.Add(this.panelControl2);
             this.groupBox2.Controls.Add(this.button3);
-            this.groupBox2.Location = new System.Drawing.Point(442, 163);
+            this.groupBox2.Location = new System.Drawing.Point(419, 200);
             this.groupBox2.Margin = new System.Windows.Forms.Padding(4);
             this.groupBox2.Name = "groupBox2";
             this.groupBox2.Padding = new System.Windows.Forms.Padding(4);
-            this.groupBox2.Size = new System.Drawing.Size(415, 316);
+            this.groupBox2.Size = new System.Drawing.Size(430, 316);
             this.groupBox2.TabIndex = 16;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "输出结果可视化";
@@ -162,18 +175,18 @@
             // 
             // groupBox3
             // 
-            this.groupBox3.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            this.groupBox3.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)
             | System.Windows.Forms.AnchorStyles.Right)));
             this.groupBox3.Controls.Add(this.pnlMainParams);
             this.groupBox3.Controls.Add(this.textBoxSavePath);
             this.groupBox3.Controls.Add(this.labelControl1);
             this.groupBox3.Controls.Add(this.btnBrowseOutput);
             this.groupBox3.Controls.Add(this.btnCalculate);
-            this.groupBox3.Location = new System.Drawing.Point(13, 50);
+            this.groupBox3.Location = new System.Drawing.Point(1, 74);
             this.groupBox3.Margin = new System.Windows.Forms.Padding(4);
             this.groupBox3.Name = "groupBox3";
             this.groupBox3.Padding = new System.Windows.Forms.Padding(4);
-            this.groupBox3.Size = new System.Drawing.Size(833, 86);
+            this.groupBox3.Size = new System.Drawing.Size(848, 103);
             this.groupBox3.TabIndex = 20;
             this.groupBox3.TabStop = false;
             this.groupBox3.Text = "计算参数";
@@ -182,21 +195,20 @@
             // 
             this.pnlMainParams.Controls.Add(this.txtHeight);
             this.pnlMainParams.Controls.Add(this.lblHeight);
-            this.pnlMainParams.Location = new System.Drawing.Point(418, 23);
+            this.pnlMainParams.Location = new System.Drawing.Point(407, 28);
             this.pnlMainParams.Name = "pnlMainParams";
-            this.pnlMainParams.Size = new System.Drawing.Size(250, 38);
+            this.pnlMainParams.Size = new System.Drawing.Size(250, 50);
             this.pnlMainParams.TabIndex = 20;
             // 
             // txtHeight
             // 
             this.txtHeight.BackColor = System.Drawing.SystemColors.Control;
             this.txtHeight.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.txtHeight.Location = new System.Drawing.Point(129, 9);
+            this.txtHeight.Location = new System.Drawing.Point(126, 10);
             this.txtHeight.Name = "txtHeight";
             this.txtHeight.Size = new System.Drawing.Size(100, 28);
             this.txtHeight.TabIndex = 1;
             this.txtHeight.Text = "0.0";
-            this.txtHeight.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             // 
             // lblHeight
             // 
@@ -211,16 +223,16 @@
             // 
             this.textBoxSavePath.BackColor = System.Drawing.SystemColors.Control;
             this.textBoxSavePath.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.textBoxSavePath.Location = new System.Drawing.Point(125, 33);
+            this.textBoxSavePath.Location = new System.Drawing.Point(110, 41);
             this.textBoxSavePath.Name = "textBoxSavePath";
             this.textBoxSavePath.ReadOnly = true;
-            this.textBoxSavePath.Size = new System.Drawing.Size(221, 28);
+            this.textBoxSavePath.Size = new System.Drawing.Size(239, 28);
             this.textBoxSavePath.TabIndex = 8;
             // 
             // labelControl1
             // 
             this.labelControl1.AutoSize = true;
-            this.labelControl1.Location = new System.Drawing.Point(30, 38);
+            this.labelControl1.Location = new System.Drawing.Point(15, 43);
             this.labelControl1.Name = "labelControl1";
             this.labelControl1.Size = new System.Drawing.Size(89, 18);
             this.labelControl1.TabIndex = 9;
@@ -229,9 +241,9 @@
             // btnBrowseOutput
             // 
             this.btnBrowseOutput.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.btnBrowseOutput.Location = new System.Drawing.Point(341, 33);
+            this.btnBrowseOutput.Location = new System.Drawing.Point(348, 41);
             this.btnBrowseOutput.Name = "btnBrowseOutput";
-            this.btnBrowseOutput.Size = new System.Drawing.Size(46, 28);
+            this.btnBrowseOutput.Size = new System.Drawing.Size(42, 28);
             this.btnBrowseOutput.TabIndex = 2;
             this.btnBrowseOutput.Text = "...";
             this.btnBrowseOutput.UseVisualStyleBackColor = true;
@@ -240,9 +252,10 @@
             // btnCalculate
             // 
             this.btnCalculate.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.btnCalculate.Location = new System.Drawing.Point(704, 32);
+            this.btnCalculate.ImageAlign = System.Drawing.ContentAlignment.BottomCenter;
+            this.btnCalculate.Location = new System.Drawing.Point(680, 35);
             this.btnCalculate.Name = "btnCalculate";
-            this.btnCalculate.Size = new System.Drawing.Size(98, 30);
+            this.btnCalculate.Size = new System.Drawing.Size(98, 34);
             this.btnCalculate.TabIndex = 3;
             this.btnCalculate.Text = "计算";
             this.btnCalculate.UseVisualStyleBackColor = true;
@@ -254,14 +267,15 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.AutoSize = true;
             this.BackColor = System.Drawing.SystemColors.Control;
-            this.ClientSize = new System.Drawing.Size(870, 520);
+            this.ClientSize = new System.Drawing.Size(870, 540);
+            this.Controls.Add(this.btnImportData);
             this.Controls.Add(this.groupBox3);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.groupBox1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
-            this.MaximumSize = new System.Drawing.Size(870, 520);
-            this.MinimumSize = new System.Drawing.Size(870, 520);
+            this.MaximumSize = new System.Drawing.Size(870, 540);
+            this.MinimumSize = new System.Drawing.Size(870, 540);
             this.Name = "Form_SurfaceContin";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "曲面延拓";
@@ -297,5 +311,8 @@
         private System.Windows.Forms.Label labelControl1;
         private System.Windows.Forms.Button btnBrowseOutput;
         private System.Windows.Forms.Button btnCalculate;
+        private System.Windows.Forms.MenuStrip menuStrip1;
+        private System.Windows.Forms.ToolStripMenuItem 数据导入ToolStripMenuItem;
+        private System.Windows.Forms.Button btnImportData;
     }
 }

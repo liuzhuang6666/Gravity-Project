@@ -256,6 +256,9 @@
       <DependentUpon>Form_MTAddData.cs</DependentUpon>
     </Compile>
     <Compile Include="电磁处理功能\Mt\MT1diCommand.cs" />
+    <Compile Include="电磁处理功能\Mt\MT2diCommand.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Compile>
     <Compile Include="电磁处理功能\Mt\MTAddDataCommand.cs" />
     <Compile Include="电磁处理功能\Tem\Form_TEMImport.cs">
       <SubType>Form</SubType>
@@ -416,6 +419,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="重磁处理功能\Form_GravityMagnetic.resx">
       <DependentUpon>Form_GravityMagnetic.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="重磁处理功能\Form_SurfaceContin.resx">
+      <DependentUpon>Form_SurfaceContin.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
