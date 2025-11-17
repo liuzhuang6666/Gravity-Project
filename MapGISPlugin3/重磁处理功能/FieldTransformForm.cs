@@ -1,5 +1,4 @@
-﻿// Form1.cs (Modified)
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -25,6 +24,9 @@ using MapGIS.UI.Controls;
 using MapGIS.PluginEngine;
 using MapGIS.GeoObjects.Geometry3D; // For Dot3D if needed
 using MapGIS.GeoObjects.Att;
+using System.Diagnostics;
+using System.Text.RegularExpressions;
+using System.Reflection;
 
 namespace MapGISPlugin3
 {
@@ -93,6 +95,12 @@ namespace MapGISPlugin3
         private float m_FSlopeYEps = 0;
         private float m_Length = 0;
         private SlopLinParam_Stru m_SlopLineParam = null;
+
+        // 【新增】用于存储持久化图层URL的成员变量
+        private string m_LinClsUrl;
+        private string m_RegClsUrl;
+        private string m_AnnClsUrl;
+        private string m_SlopeLinClsUrl;
 
         private int[] Imc = {601,603,498,500,436,408,391,233,190,184,154,122,106,33,31,
                127,391,128,392,393,136,149,150,442,443,186,444,179,180,445,189,190};
@@ -200,12 +208,17 @@ namespace MapGISPlugin3
             this.m_mtr2.ShowRuler = true;
 
             this.comboBox1.Items.Add("化极");
+            this.comboBox1.Items.Add("方向导数"); // 【新增】
+            this.comboBox1.Items.Add("二次导数");
             this.comboBox1.Items.Add("三角");
             this.comboBox1.Items.Add("方向分量");
             this.comboBox1.Items.Add("导数");
-            this.comboBox1.Items.Add("二次导数");
             this.comboBox1.Items.Add("分量");
             this.comboBox1.SelectedIndex = 0;
+
+
+            // 【新增】在加载时就更新一次UI
+            UpdateParameterUI();
         }
 
         private void Init()
@@ -374,6 +387,9 @@ namespace MapGISPlugin3
                         m_LfZstep = 10;
                         Init();
                         DengZhiXianKeShiHua(m_Map, m_mtr);
+
+                        // 【修改】在此处调用新方法，将导入数据的可视化结果添加到主地图
+                        AddVisualizationLayersToMainMap();
                     }
                     else
                     {
@@ -562,24 +578,347 @@ namespace MapGISPlugin3
             }
         }
 
+        /// <summary>
+        /// 【带有调试弹窗的版本】执行外部的“化极”算法 a.exe
+        /// </summary>
+        private bool ExecuteReduceToPoleAlgorithm(string inputGrdPath, double oi, double od, out string resultDatPath)
+        {
+            resultDatPath = null;
+            try
+            {
+                // 1. 定位 a.exe 及其工作目录
+                string pluginPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                string algorithmDir = Path.Combine(pluginPath, "Algorithm", "ReduceToPole");
+                string exePath = Path.Combine(algorithmDir, "a.exe");
+
+                // --- 【调试点 1: 验证路径和参数】 ---
+                // 在执行前，弹窗显示所有即将使用的路径和参数，让你确认它们是否正确。
+                string debug_msg1 = "[调试] 即将执行算法，请检查以下信息：\n\n" +
+                                    $"EXE 路径:\n{exePath}\n\n" +
+                                    $"工作目录:\n{algorithmDir}\n\n" +
+                                    $"输入 GRD 文件:\n{inputGrdPath}\n\n" +
+                                    $"磁倾角(oi): {oi}\n" +
+                                    $"磁偏角(od): {od}";
+                MessageBox.Show(debug_msg1, "调试点 1: 执行前检查");
+
+                if (!File.Exists(exePath))
+                {
+                    MessageBox.Show($"算法模块 (a.exe) 丢失！\n请确保它位于以下路径：\n{exePath}", "文件丢失", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return false;
+                }
+
+                // 2. 准备进程启动信息
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName = exePath,
+                    Arguments = $"\"{inputGrdPath}\" {oi} {od}",
+                    WorkingDirectory = algorithmDir,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true
+                };
+
+                // 3. 执行进程并等待结果
+                using (Process process = new Process { StartInfo = startInfo })
+                {
+                    StringBuilder errorOutput = new StringBuilder();
+                    process.Start();
+
+                    errorOutput.Append(process.StandardError.ReadToEnd());
+                    bool exited = process.WaitForExit(5 * 60 * 1000);
+
+                    // --- 【调试点 2: 检查 a.exe 执行结果】 ---
+                    // 弹窗显示 a.exe 的退出码和任何错误信息。这是最关键的调试步骤！
+                    string debug_msg2 = "[调试] a.exe 执行完毕。\n\n" +
+                                        $"是否正常退出: {exited}\n" +
+                                        $"退出码 (ExitCode): {(exited ? process.ExitCode.ToString() : "N/A (超时)")}\n\n" +
+                                        $"标准错误流信息 (如果有):\n-----\n{errorOutput}\n-----";
+                    MessageBox.Show(debug_msg2, "调试点 2: 进程执行结果");
+
+                    if (exited)
+                    {
+                        if (process.ExitCode != 0)
+                        {
+                            // 这里的弹窗保持，因为它是有用的最终错误提示
+                            string errorMessage = $"外部算法 a.exe 执行失败，退出码: {process.ExitCode}。";
+                            if (errorOutput.Length > 0)
+                            {
+                                errorMessage += "\n\n错误信息:\n" + errorOutput.ToString();
+                            }
+                            MessageBox.Show(errorMessage, "算法执行失败", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        MessageBox.Show("算法执行超时（超过5分钟），操作被中断。", "超时错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        if (!process.HasExited) process.Kill();
+                        return false;
+                    }
+                }
+
+                // 4. 验证结果文件
+                resultDatPath = Path.Combine(algorithmDir, "result.dat");
+
+                // --- 【调试点 3: 检查 result.dat 文件状态】 ---
+                // 在读取文件之前，检查它是否存在以及大小是否大于0。
+                string debug_msg3;
+                if (File.Exists(resultDatPath))
+                {
+                    long fileSize = new FileInfo(resultDatPath).Length;
+                    debug_msg3 = "[调试] 检查结果文件。\n\n" +
+                                 $"文件路径:\n{resultDatPath}\n\n" +
+                                 "状态: 文件存在。\n" +
+                                 $"大小: {fileSize} 字节。";
+                }
+                else
+                {
+                    debug_msg3 = "[调试] 检查结果文件。\n\n" +
+                                 $"文件路径:\n{resultDatPath}\n\n" +
+                                 "状态: 文件不存在！";
+                }
+                MessageBox.Show(debug_msg3, "调试点 3: 结果文件检查");
+
+                if (!File.Exists(resultDatPath))
+                {
+                    MessageBox.Show("算法执行完毕，但未在预期位置找到结果文件 result.dat！", "结果文件丢失", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return false;
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("执行外部算法时发生严重错误: " + ex.Message, "执行异常", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+        }
+
+
+        // 【新增】执行外部的“方向导数”算法 a.exe
+        private bool ExecuteDirectionalDerivativeAlgorithm(string inputGrdPath, double ori, double ord, out string resultDatPath)
+        {
+            resultDatPath = null;
+            try
+            {
+                // 1. 定位 a.exe 及其工作目录
+                string pluginPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                string algorithmDir = Path.Combine(pluginPath, "Algorithm", "DirectionalDerivative");
+                string exePath = Path.Combine(algorithmDir, "a.exe");
+                // --- 【调试点 1: 验证路径和参数】 ---
+                string debug_msg1 = "[调试] 即将执行方向导数算法，请检查以下信息：\n\n" +
+                                    $"EXE 路径:\n{exePath}\n\n" +
+                                    $"工作目录:\n{algorithmDir}\n\n" +
+                                    $"输入 GRD 文件:\n{inputGrdPath}\n\n" +
+                                    $"方位角(ori): {ori}\n" +
+                                    $"阶数(ord): {ord}";
+                MessageBox.Show(debug_msg1, "调试点 1: 执行前检查");
+                if (!File.Exists(exePath))
+                {
+                    MessageBox.Show($"算法模块 (a.exe) 丢失！\n请确保它位于以下路径：\n{exePath}", "文件丢失", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return false;
+                }
+                // 2. 准备进程启动信息
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName = exePath,
+                    Arguments = $"\"{inputGrdPath}\" {ori} {ord}",
+                    WorkingDirectory = algorithmDir,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true
+                };
+                // 3. 执行进程并等待结果
+                using (Process process = new Process { StartInfo = startInfo })
+                {
+                    StringBuilder errorOutput = new StringBuilder();
+                    process.Start();
+                    errorOutput.Append(process.StandardError.ReadToEnd());
+                    bool exited = process.WaitForExit(5 * 60 * 1000); // 5分钟超时
+                    // --- 【调试点 2: 检查 a.exe 执行结果】 ---
+                    string debug_msg2 = "[调试] a.exe 执行完毕。\n\n" +
+                                        $"是否正常退出: {exited}\n" +
+                                        $"退出码 (ExitCode): {(exited ? process.ExitCode.ToString() : "N/A (超时)")}\n\n" +
+                                        $"标准错误流信息 (如果有):\n-----\n{errorOutput}\n-----";
+                    MessageBox.Show(debug_msg2, "调试点 2: 进程执行结果");
+                    if (exited)
+                    {
+                        if (process.ExitCode != 0)
+                        {
+                            string errorMessage = $"外部算法 a.exe 执行失败，退出码: {process.ExitCode}。";
+                            if (errorOutput.Length > 0)
+                            {
+                                errorMessage += "\n\n错误信息:\n" + errorOutput.ToString();
+                            }
+                            MessageBox.Show(errorMessage, "算法执行失败", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        MessageBox.Show("算法执行超时（超过5分钟），操作被中断。", "超时错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        if (!process.HasExited) process.Kill();
+                        return false;
+                    }
+                }
+                // 4. 验证结果文件
+                resultDatPath = Path.Combine(algorithmDir, "result.dat");
+                // --- 【调试点 3: 检查 result.dat 文件状态】 ---
+                string debug_msg3;
+                if (File.Exists(resultDatPath))
+                {
+                    long fileSize = new FileInfo(resultDatPath).Length;
+                    debug_msg3 = "[调试] 检查结果文件。\n\n" +
+                                 $"文件路径:\n{resultDatPath}\n\n" +
+                                 "状态: 文件存在。\n" +
+                                 $"大小: {fileSize} 字节。";
+                }
+                else
+                {
+                    debug_msg3 = "[调试] 检查结果文件。\n\n" +
+                                 $"文件路径:\n{resultDatPath}\n\n" +
+                                 "状态: 文件不存在！";
+                }
+                MessageBox.Show(debug_msg3, "调试点 3: 结果文件检查");
+                if (!File.Exists(resultDatPath))
+                {
+                    MessageBox.Show("算法执行完毕，但未在预期位置找到结果文件 result.dat！", "结果文件丢失", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return false;
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("执行外部算法时发生严重错误: " + ex.Message, "执行异常", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+        }
+
+        // 【新增】执行外部的“二次导数”算法 a.exe
+        private bool ExecuteSecondDerivativeAlgorithm(string inputGrdPath, int ism, out string resultDatPath)
+        {
+            resultDatPath = null;
+            try
+            {
+                // 1. 定位 a.exe 及其工作目录
+                string pluginPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                string algorithmDir = Path.Combine(pluginPath, "Algorithm", "SecondDerivative");
+                string exePath = Path.Combine(algorithmDir, "a.exe");
+                // --- 【调试点 1: 验证路径和参数】 ---
+                string debug_msg1 = "[调试] 即将执行二次导数算法，请检查以下信息：\n\n" +
+                                    $"EXE 路径:\n{exePath}\n\n" +
+                                    $"工作目录:\n{algorithmDir}\n\n" +
+                                    $"输入 GRD 文件:\n{inputGrdPath}\n\n" +
+                                    $"计算模式(ism): {ism}";
+                MessageBox.Show(debug_msg1, "调试点 1: 执行前检查");
+                if (!File.Exists(exePath))
+                {
+                    MessageBox.Show($"算法模块 (a.exe) 丢失！\n请确保它位于以下路径：\n{exePath}", "文件丢失", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return false;
+                }
+                // 2. 准备进程启动信息
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName = exePath,
+                    Arguments = $"\"{inputGrdPath}\" {ism}",
+                    WorkingDirectory = algorithmDir,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true
+                };
+                // 3. 执行进程并等待结果
+                using (Process process = new Process { StartInfo = startInfo })
+                {
+                    StringBuilder errorOutput = new StringBuilder();
+                    process.Start();
+                    errorOutput.Append(process.StandardError.ReadToEnd());
+                    bool exited = process.WaitForExit(5 * 60 * 1000); // 5分钟超时
+                    // --- 【调试点 2: 检查 a.exe 执行结果】 ---
+                    string debug_msg2 = "[调试] a.exe 执行完毕。\n\n" +
+                                        $"是否正常退出: {exited}\n" +
+                                        $"退出码 (ExitCode): {(exited ? process.ExitCode.ToString() : "N/A (超时)")}\n\n" +
+                                        $"标准错误流信息 (如果有):\n-----\n{errorOutput}\n-----";
+                    MessageBox.Show(debug_msg2, "调试点 2: 进程执行结果");
+                    if (exited)
+                    {
+                        if (process.ExitCode != 0)
+                        {
+                            string errorMessage = $"外部算法 a.exe 执行失败，退出码: {process.ExitCode}。";
+                            if (errorOutput.Length > 0)
+                            {
+                                errorMessage += "\n\n错误信息:\n" + errorOutput.ToString();
+                            }
+                            MessageBox.Show(errorMessage, "算法执行失败", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        MessageBox.Show("算法执行超时（超过5分钟），操作被中断。", "超时错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        if (!process.HasExited) process.Kill();
+                        return false;
+                    }
+                }
+                // 4. 验证结果文件
+                resultDatPath = Path.Combine(algorithmDir, "result.dat");
+                // --- 【调试点 3: 检查 result.dat 文件状态】 ---
+                string debug_msg3;
+                if (File.Exists(resultDatPath))
+                {
+                    long fileSize = new FileInfo(resultDatPath).Length;
+                    debug_msg3 = "[调试] 检查结果文件。\n\n" +
+                                 $"文件路径:\n{resultDatPath}\n\n" +
+                                 "状态: 文件存在。\n" +
+                                 $"大小: {fileSize} 字节。";
+                }
+                else
+                {
+                    debug_msg3 = "[调试] 检查结果文件。\n\n" +
+                                 $"文件路径:\n{resultDatPath}\n\n" +
+                                 "状态: 文件不存在！";
+                }
+                MessageBox.Show(debug_msg3, "调试点 3: 结果文件检查");
+                if (!File.Exists(resultDatPath))
+                {
+                    MessageBox.Show("算法执行完毕，但未在预期位置找到结果文件 result.dat！", "结果文件丢失", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return false;
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("执行外部算法时发生严重错误: " + ex.Message, "执行异常", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+        }
+
         private void DengZhiXianKeShiHua(Map mapToUse, MapControl mtrToUse)
         {
             if (m_ContourParamStrcT == null) return;
+
             // 清空地图中的图层，只留一个 raster layer
-            while (mapToUse.LayerCount != 1)
+            while (mapToUse.LayerCount > 1) // Keep the base raster layer
             {
                 mapToUse.Remove(1);
             }
-            RasTraceContour traceContour = null;
+
+            RasTraceContour traceContour;
+            string rasterLayerName = "DataSource";
             if (mtrToUse.ActiveMap.get_Layer(0) is RasterLayer)
             {
-                RasterDataSet rasdataset = (mtrToUse.ActiveMap.get_Layer(0) as RasterLayer).GetData() as RasterDataSet;
+                RasterLayer rasLayer = mtrToUse.ActiveMap.get_Layer(0) as RasterLayer;
+                rasterLayerName = Path.GetFileNameWithoutExtension(rasLayer.Name);
+                RasterDataSet rasdataset = rasLayer.GetData() as RasterDataSet;
                 traceContour = new RasTraceContour(rasdataset, m_BandNum);
             }
             else
             {
                 return;
             }
+
             int n = this.dataTable.Rows.Count;
             ZVelStrcT_Stru[] arrayZVelStrcT = new ZVelStrcT_Stru[n];
             for (int i = 0; i < n; i++)
@@ -593,62 +932,99 @@ namespace MapGISPlugin3
             }
             m_ContourParamStrcT.SetZVelBuf(arrayZVelStrcT);
             m_ContourParamStrcT.pContourNoteParam = m_ContourNoteParam;
+
+            // 【修改】核心逻辑：使用 DataBase.OpenTempDB() 来确保数据库有效
             m_Tempsfclslin = null;
             m_TempsfclsSlopelin = null;
             m_Tempsfclsreg = null;
             m_tempann = null;
+
+            // 1. 打开或获取一个确保有效的临时数据库
             if (m_Tempdaba == null)
                 m_Tempdaba = DataBase.OpenTempDB();
             if (m_Tempdaba == null)
+            {
+                MessageBox.Show("打开临时数据库失败！", "错误");
                 return;
-            m_Tempsfclslin = new SFeatureCls(m_Tempdaba);
-            if (m_Tempsfclslin.Create(Guid.NewGuid().ToString(), GeomType.Lin, 0, 0, null) <= 0)
+            }
+
+            string baseName = GenerateClassName(rasterLayerName, "Contour");
+
+            // 2. 在这个数据库对象中创建要素类，并获取其URL
+            // 创建线要素类
+            string linClsName = baseName + "_Line";
+            m_Tempsfclslin = new SFeatureCls(m_Tempdaba); // 传入数据库对象
+            if (m_Tempsfclslin.Create(linClsName, GeomType.Lin, 0, 0, null) <= 0)
+            {
+                MessageBox.Show($"在数据库中创建线要素类失败: {linClsName}", "错误");
                 return;
+            }
+            m_LinClsUrl = m_Tempsfclslin.URL; // 创建成功后获取URL
+
+            // 创建坡度线要素类 (如果需要)
             if (m_ContourParamStrcT.bShowSlin)
             {
+                string slopeLinClsName = baseName + "_SlopeLine";
                 m_TempsfclsSlopelin = new SFeatureCls(m_Tempdaba);
-                if (m_TempsfclsSlopelin.Create(Guid.NewGuid().ToString(), GeomType.Lin, 0, 0, null) <= 0)
+                if (m_TempsfclsSlopelin.Create(slopeLinClsName, GeomType.Lin, 0, 0, null) <= 0)
+                {
+                    MessageBox.Show($"在数据库中创建坡度线要素类失败: {slopeLinClsName}", "错误");
                     return;
+                }
+                m_SlopeLinClsUrl = m_TempsfclsSlopelin.URL;
             }
+
+            // 创建区要素类
             if (m_ContourParamStrcT.bMakeReg == false)
             {
+                string regClsName = baseName + "_Region";
                 m_Tempsfclsreg = new SFeatureCls(m_Tempdaba);
-                if (m_Tempsfclsreg.Create(Guid.NewGuid().ToString(), GeomType.Reg, 0, 0, null) <= 0)
+                if (m_Tempsfclsreg.Create(regClsName, GeomType.Reg, 0, 0, null) <= 0)
+                {
+                    MessageBox.Show($"在数据库中创建区要素类失败: {regClsName}", "错误");
                     return;
+                }
+                m_RegClsUrl = m_Tempsfclsreg.URL;
             }
+
+            // 创建注记类
             if (m_ContourParamStrcT.bMapNote)
             {
+                string annClsName = baseName + "_Annotation";
                 m_tempann = new AnnotationCls(m_Tempdaba);
-                if (m_tempann.Create(Guid.NewGuid().ToString(), AnnType.Text, 0, 0, null) <= 0)
+                if (m_tempann.Create(annClsName, AnnType.Text, 0, 0, null) <= 0)
+                {
+                    MessageBox.Show($"在数据库中创建注记类失败: {annClsName}", "错误");
                     return;
+                }
+                m_AnnClsUrl = m_tempann.URL;
             }
+
+            // 3. 执行等值线追踪
             traceContour.ShowProgressBar(true);
             int rtn = traceContour.RsTraceContour(m_ContourParamStrcT, m_Tempsfclslin, m_TempsfclsSlopelin, m_Tempsfclsreg, m_tempann, 1024, false, m_ClipLine);
             traceContour.Dispose();
-            if (m_Tempsfclsreg == null)
-            {
-                m_Tempsfclsreg = new SFeatureCls(m_Tempdaba);
-                if (m_Tempsfclsreg.Create(Guid.NewGuid().ToString(), GeomType.Reg, 0, 0, null) <= 0)
-                    return;
-            }
-            if (m_TempsfclsSlopelin == null)
-            {
-                m_TempsfclsSlopelin = new SFeatureCls(m_Tempdaba);
-                if (m_TempsfclsSlopelin.Create(Guid.NewGuid().ToString(), GeomType.Lin, 0, 0, null) <= 0)
-                    return;
-            }
-            if (m_tempann == null)
-            {
-                m_tempann = new AnnotationCls(m_Tempdaba);
-                if (m_tempann.Create(Guid.NewGuid().ToString(), AnnType.Text, 0, 0, null) <= 0)
-                    return;
-            }
+
+            // 为null的情况创建空对象，以防止后续代码出错
+            if (m_Tempsfclsreg == null) m_Tempsfclsreg = new SFeatureCls();
+            if (m_TempsfclsSlopelin == null) m_TempsfclsSlopelin = new SFeatureCls();
+            if (m_tempann == null) m_tempann = new AnnotationCls();
+
+            // 设置符号比例
             m_Tempsfclslin.ScaleX = m_ScaleX;
             m_Tempsfclslin.ScaleY = m_ScaleY;
-            m_TempsfclsSlopelin.ScaleX = m_ScaleX;
-            m_TempsfclsSlopelin.ScaleY = m_ScaleY;
-            m_Tempsfclsreg.ScaleX = m_ScaleX;
-            m_Tempsfclsreg.ScaleY = m_ScaleY;
+            if (m_TempsfclsSlopelin.HasOpen())
+            {
+                m_TempsfclsSlopelin.ScaleX = m_ScaleX;
+                m_TempsfclsSlopelin.ScaleY = m_ScaleY;
+            }
+            if (m_Tempsfclsreg.HasOpen())
+            {
+                m_Tempsfclsreg.ScaleX = m_ScaleX;
+                m_Tempsfclsreg.ScaleY = m_ScaleY;
+            }
+
+            // 4. 在插件界面中显示结果 (这部分逻辑不变)
             if (rtn > 0)
             {
                 VectorLayer vectorlayer1 = new VectorLayer(VectorLayerType.SFclsLayer);
@@ -663,12 +1039,12 @@ namespace MapGISPlugin3
 
                 VectorLayer vectorlayer3 = new VectorLayer(VectorLayerType.SFclsLayer);
                 if (vectorlayer3.AttachData(m_TempsfclsSlopelin))
-                    vectorlayer3.Name = "可视化线";
+                    vectorlayer3.Name = "可视化坡度线";
                 mtrToUse.ActiveMap.Append(vectorlayer3);
 
                 VectorLayer vectorlayer4 = new VectorLayer(VectorLayerType.AnnLayer);
                 if (vectorlayer4.AttachData(m_tempann))
-                    vectorlayer4.Name = "可视化注释";
+                    vectorlayer4.Name = "可视化注记";
                 mtrToUse.ActiveMap.Append(vectorlayer4);
 
                 mtrToUse.ActiveMap.get_Layer(1).State = m_ShowReg ? LayerState.Visible : LayerState.UnVisible;
@@ -681,146 +1057,414 @@ namespace MapGISPlugin3
                 mtrToUse.Restore();
             }
         }
-
         private void button1_Click(object sender, EventArgs e)
         {
             string newfilePath = this.buttonEdit1.Text.Trim();
             if (string.IsNullOrEmpty(newfilePath) || _inputFilePath == null || m_SourceMap == null)
             {
-                XMessageBox.Information("请先通过“数据导入”加载数据，程序将自动生成输出路径。");
+                MessageBox.Show("请先通过“数据导入”加载数据，并指定结果输出路径。", "操作提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
-
-            string modeStr = comboBox1.SelectedItem.ToString();
-
-            FileStream fs = new FileStream(_inputFilePath, System.IO.FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-            StreamReader sr = new StreamReader(fs, Encoding.Default);
-            string line = sr.ReadLine();
-
-            if (line == "DSAA")
+            if (comboBox1.SelectedItem == null)
             {
-                string[] separatingStrings = { " ", "\r\n", "\r", "\n" };
-                int nx = 0, ny = 0;
-                double coorx0 = 0.0, coorx2 = 0.0, coory0 = 0.0, coory2 = 0.0;
-                double intervalx = 0.0, intervaly = 0.0;
-                double od = 10.0, oi = 50.0;
-                List<double> values = new List<double>();
-                List<double> res = new List<double>();
-
-                line = sr.ReadLine();
-                string[] words = line.Split(separatingStrings, StringSplitOptions.RemoveEmptyEntries);
-                Int32.TryParse(words[0], out nx);
-                Int32.TryParse(words[1], out ny);
-
-                line = sr.ReadLine();
-                words = line.Split(separatingStrings, StringSplitOptions.RemoveEmptyEntries);
-                double.TryParse(words[0], out coorx0);
-                double.TryParse(words[1], out coorx2);
-
-                line = sr.ReadLine();
-                words = line.Split(separatingStrings, StringSplitOptions.RemoveEmptyEntries);
-                double.TryParse(words[0], out coory0);
-                double.TryParse(words[1], out coory2);
-
-                intervalx = (nx > 1) ? (coorx2 - coorx0) / (nx - 1) : 100.0;
-                intervaly = (ny > 1) ? (coory2 - coory0) / (ny - 1) : 100.0;
-
-                sr.ReadLine();
-                line = sr.ReadToEnd();
-                words = line.Split(separatingStrings, StringSplitOptions.RemoveEmptyEntries);
-                foreach (string each in words)
-                {
-                    double temp = 0.0;
-                    double.TryParse(each, out temp);
-                    values.Add(temp);
-                }
-
-                double[] buffer = new double[nx * ny];
-                int index = 0;
-                for (int j = 0; j < ny; j++)
-                {
-                    for (int i = 0; i < nx; i++)
-                    {
-                        buffer[j * nx + i] = values[index];
-                        index++;
-                    }
-                }
-
-                if (modeStr == "化极")
-                    polar(nx, ny, intervalx, intervaly, buffer, od, oi, res.Add);
-                else if (modeStr == "三角")
-                {
-                    double elev = Convert.ToDouble(textBox1.Text);
-                    contin(nx, ny, intervalx, intervaly, buffer, od, oi, elev, res.Add);
-                }
-                else if (modeStr == "方向分量")
-                {
-                    double nd = Convert.ToDouble(textBox2.Text);
-                    double ni = Convert.ToDouble(textBox3.Text);
-                    dircomp(nx, ny, intervalx, intervaly, buffer, od, oi, nd, ni, res.Add);
-                }
-                else if (modeStr == "导数")
-                {
-                    double nd = Convert.ToDouble(textBox2.Text);
-                    double ni = Convert.ToDouble(textBox3.Text);
-                    deriv(nx, ny, intervalx, intervaly, buffer, od, oi, nd, ni, res.Add);
-                }
-                else if (modeStr == "二次导数")
-                {
-                    int direction = 2; // 根据 RadioButton 调整
-                    second(nx, ny, intervalx, intervaly, buffer, od, oi, direction, res.Add);
-                }
-                else
-                {
-                    int direction = 2; // 根据 RadioButton 调整
-                    compon(nx, ny, intervalx, intervaly, buffer, od, oi, direction, res.Add);
-                }
-
-                double[,] grd = ConvertListToGrd(res, ny, nx);
-                double xllcorner = coorx0;
-                double yllcorner = coory0;
-                double cellsize = intervalx;
-                double nodataValue = -9999;
-
-                GrdWriter.SaveToAsciiGrid(grd, newfilePath, xllcorner, yllcorner, cellsize, nodataValue);
-
-                // 【修改】添加结果到源地图（主界面）
-                RasterLayer raslayerForMain = new RasterLayer();
-                raslayerForMain.URL = "file:///" + newfilePath;
-                if (raslayerForMain.ConnectData())
-                {
-                    raslayerForMain.Name = Path.GetFileNameWithoutExtension(newfilePath);
-                    m_SourceMap.Append(raslayerForMain);
-
-                    // 刷新主视图
-                    if (m_Hook.ActiveContentsView is IMapContentsView mapView)
-                    {
-                        mapView.MapControl.Refresh();
-                    }
-                }
-                else
-                {
-                    XMessageBox.Information("加载计算结果文件到主地图失败：\n" + newfilePath);
-                }
-
-                // 【修改】为插件右侧面板添加结果（使用临时地图）
-                RasterLayer raslayerForPlugin = new RasterLayer();
-                raslayerForPlugin.URL = "file:///" + newfilePath;
-                if (raslayerForPlugin.ConnectData())
-                {
-                    m_Map2.RemoveAll();
-                    m_Map2.Append(raslayerForPlugin);
-                }
-
-                if (this.m_mtr2.ActiveMap.LayerCount != 0)
-                    this.m_mtr2.ActiveMap.get_Layer(0).State = m_ShowRasOrTin ? LayerState.Visible : LayerState.UnVisible;
-                this.m_mtr2.Restore();
-
-                DengZhiXianKeShiHua(m_Map2, m_mtr2);
+                MessageBox.Show("请选择一个处理方法。", "操作提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
             }
-            sr.Close();
+            string modeStr = comboBox1.SelectedItem.ToString();
+            double od = 0, oi = 0, elev = 0, nd = 0, ni = 0, ori = 0, ord = 0;
+            // 【新增】二次导数参数
+            int ism = 0;
+
+            #region 参数校验和读取
+            // 根据当前选择的方法，校验并读取参数
+            switch (modeStr)
+            {
+                case "化极":
+                    if (string.IsNullOrWhiteSpace(txtOi.Text) || !double.TryParse(txtOi.Text, out oi))
+                    {
+                        MessageBox.Show("请输入有效的磁倾角！", "输入错误", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        txtOi.Focus();
+                        return;
+                    }
+                    if (string.IsNullOrWhiteSpace(txtOd.Text) || !double.TryParse(txtOd.Text, out od))
+                    {
+                        MessageBox.Show("请输入有效的磁偏角！", "输入错误", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        txtOd.Focus();
+                        return;
+                    }
+                    break;
+                case "三角":
+                    if (string.IsNullOrWhiteSpace(txtElev.Text) || !double.TryParse(txtElev.Text, out elev))
+                    {
+                        MessageBox.Show("请输入有效的延拓高度！", "输入错误", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        txtElev.Focus();
+                        return;
+                    }
+                    break;
+                case "方向分量":
+                case "导数":
+                    if (string.IsNullOrWhiteSpace(txtNd.Text) || !double.TryParse(txtNd.Text, out nd))
+                    {
+                        MessageBox.Show("请输入有效的方向倾角！", "输入错误", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        txtNd.Focus();
+                        return;
+                    }
+                    if (string.IsNullOrWhiteSpace(txtNi.Text) || !double.TryParse(txtNi.Text, out ni))
+                    {
+                        MessageBox.Show("请输入有效的方向偏角！", "输入错误", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        txtNi.Focus();
+                        return;
+                    }
+                    break;
+                case "方向导数":
+                    if (string.IsNullOrWhiteSpace(txtOri.Text) || !double.TryParse(txtOri.Text, out ori))
+                    {
+                        MessageBox.Show("请输入有效的方位角！", "输入错误", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        txtOri.Focus();
+                        return;
+                    }
+                    if (string.IsNullOrWhiteSpace(txtOrd.Text) || !double.TryParse(txtOrd.Text, out ord))
+                    {
+                        MessageBox.Show("请输入有效的阶数！", "输入错误", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        txtOrd.Focus();
+                        return;
+                    }
+                    break;
+                // 【新增】二次导数参数校验
+                case "二次导数":
+                    if (string.IsNullOrWhiteSpace(txtIsm.Text) || !int.TryParse(txtIsm.Text, out ism))
+                    {
+                        MessageBox.Show("请输入有效的计算模式（整数）！", "输入错误", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        txtIsm.Focus();
+                        return;
+                    }
+                    break;
+            }
+            #endregion
+
+            // 【修改】using块中处理文件读取（对于a.exe方法，不再读取values到内存）
+            using (FileStream fs = new FileStream(_inputFilePath, System.IO.FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            using (StreamReader sr = new StreamReader(fs, Encoding.Default))
+            {
+                string line = sr.ReadLine();
+                if (line == "DSAA")
+                {
+                    string[] separatingStrings = { " ", "\r\n", "\r", "\n" };
+                    int nx = 0, ny = 0;
+                    double coorx0 = 0.0, coorx2 = 0.0, coory0 = 0.0, coory2 = 0.0;
+                    double intervalx = 0.0, intervaly = 0.0;
+                    List<double> values = new List<double>();
+                    List<double> res = new List<double>();
+                    line = sr.ReadLine();
+                    string[] words = line.Split(separatingStrings, StringSplitOptions.RemoveEmptyEntries);
+                    Int32.TryParse(words[0], out nx);
+                    Int32.TryParse(words[1], out ny);
+                    line = sr.ReadLine();
+                    words = line.Split(separatingStrings, StringSplitOptions.RemoveEmptyEntries);
+                    double.TryParse(words[0], out coorx0);
+                    double.TryParse(words[1], out coorx2);
+                    line = sr.ReadLine();
+                    words = line.Split(separatingStrings, StringSplitOptions.RemoveEmptyEntries);
+                    double.TryParse(words[0], out coory0);
+                    double.TryParse(words[1], out coory2);
+                    intervalx = (nx > 1) ? (coorx2 - coorx0) / (nx - 1) : 100.0;
+                    intervaly = (ny > 1) ? (coory2 - coory0) / (ny - 1) : 100.0;
+                    sr.Close();
+                    fs.Close();
+
+                    // 【修改】这里的 buffer 数组不再需要，因为我们不再直接调用 DLL
+                    // double[] buffer = new double[nx * ny];
+                    // ... (填充 buffer 的代码被移除)
+
+                    if (modeStr == "化极")
+                    {
+                        string resultDatPath;
+                        if (ExecuteReduceToPoleAlgorithm(_inputFilePath, oi, od, out resultDatPath))
+                        {
+                            try
+                            {
+                                string[] resultLines = File.ReadAllLines(resultDatPath);
+                                // 从第二行开始读取，跳过表头
+                                for (int i = 1; i < resultLines.Length; i++)
+                                {
+                                    string currentLine = resultLines[i];
+                                    if (string.IsNullOrWhiteSpace(currentLine)) continue;
+
+                                    string[] parts = currentLine.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+
+                                    // 【修改】检查列数是否大于等于 3
+                                    if (parts.Length >= 3)
+                                    {
+                                        double val;
+                                        // 【修改】解析第 3 列 (索引为 2) 的值
+                                        if (double.TryParse(parts[2], System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out val))
+                                        {
+                                            res.Add(val);
+                                        }
+                                    }
+                                }
+
+                                if (res.Count != nx * ny)
+                                {
+                                    MessageBox.Show($"从 result.dat 读取数据量 ({res.Count}) 与预期 ({nx * ny}) 不符！\n请检查算法输出。", "数据错误", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                    return;
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                MessageBox.Show("读取算法结果文件 result.dat 时出错: " + ex.Message, "文件读取失败", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                return;
+                            }
+                        }
+                        else
+                        {
+                            return;
+                        }
+                    }
+                    else if (modeStr == "方向导数")
+                    {
+                        string resultDatPath;
+                        if (ExecuteDirectionalDerivativeAlgorithm(_inputFilePath, ori, ord, out resultDatPath))
+                        {
+                            try
+                            {
+                                string[] resultLines = File.ReadAllLines(resultDatPath);
+                                // 从第二行开始读取，跳过表头
+                                for (int i = 1; i < resultLines.Length; i++)
+                                {
+                                    string currentLine = resultLines[i];
+                                    if (string.IsNullOrWhiteSpace(currentLine)) continue;
+                                    string[] parts = currentLine.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+                                    if (parts.Length >= 3)
+                                    {
+                                        double val;
+                                        if (double.TryParse(parts[2], System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out val))
+                                        {
+                                            res.Add(val);
+                                        }
+                                    }
+                                }
+                                if (res.Count != nx * ny)
+                                {
+                                    MessageBox.Show($"从 result.dat 读取数据量 ({res.Count}) 与预期 ({nx * ny}) 不符！\n请检查算法输出。", "数据错误", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                    return;
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                MessageBox.Show("读取算法结果文件 result.dat 时出错: " + ex.Message, "文件读取失败", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                return;
+                            }
+                        }
+                        else
+                        {
+                            return;
+                        }
+                    }
+                    // 【新增】处理二次导数
+                    else if (modeStr == "二次导数")
+                    {
+                        string resultDatPath;
+                        if (ExecuteSecondDerivativeAlgorithm(_inputFilePath, ism, out resultDatPath))
+                        {
+                            try
+                            {
+                                string[] resultLines = File.ReadAllLines(resultDatPath);
+                                // 从第二行开始读取，跳过表头
+                                for (int i = 1; i < resultLines.Length; i++)
+                                {
+                                    string currentLine = resultLines[i];
+                                    if (string.IsNullOrWhiteSpace(currentLine)) continue;
+                                    string[] parts = currentLine.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+                                    if (parts.Length >= 3)
+                                    {
+                                        double val;
+                                        if (double.TryParse(parts[2], System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out val))
+                                        {
+                                            res.Add(val);
+                                        }
+                                    }
+                                }
+                                if (res.Count != nx * ny)
+                                {
+                                    MessageBox.Show($"从 result.dat 读取数据量 ({res.Count}) 与预期 ({nx * ny}) 不符！\n请检查算法输出。", "数据错误", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                    return;
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                MessageBox.Show("读取算法结果文件 result.dat 时出错: " + ex.Message, "文件读取失败", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                return;
+                            }
+                        }
+                        else
+                        {
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        // ... (为其他方法读取原始数据的代码保持不变) ...
+                        using (StreamReader sr_fallback = new StreamReader(_inputFilePath)) { /* ... */ }
+                        double[] buffer = new double[nx * ny];
+                        /* ... 填充 buffer ... */
+
+                        // 【修改】使用从界面读取的参数
+                        if (modeStr == "三角")
+                        {
+                            contin(nx, ny, intervalx, intervaly, buffer, 50, 10, elev, res.Add); // 注意：这里的oi,od还是硬编码，如果需要，也应从界面获取
+                        }
+                        else if (modeStr == "方向分量")
+                        {
+                            dircomp(nx, ny, intervalx, intervaly, buffer, 50, 10, nd, ni, res.Add);
+                        }
+                        else if (modeStr == "导数")
+                        {
+                            deriv(nx, ny, intervalx, intervaly, buffer, 50, 10, nd, ni, res.Add);
+                        }
+                        // ... (其他方法) ...
+                    }
+
+                    if (res.Count == 0) return;
+
+                    double[,] grd = ConvertListToGrd(res, ny, nx);
+                    double xllcorner = coorx0;
+                    double yllcorner = coory0;
+                    double cellsize = intervalx;
+                    double nodataValue = -9999;
+
+                    GrdWriter.SaveToAsciiGrid(grd, newfilePath, xllcorner, yllcorner, cellsize, nodataValue);
+
+                    // ... (后续的加载图层、可视化等代码保持不变) ...
+                    // 【修改】添加结果到源地图（主界面）
+                    RasterLayer raslayerForMain = new RasterLayer();
+                    raslayerForMain.URL = "file:///" + newfilePath;
+                    if (raslayerForMain.ConnectData())
+                    {
+                        raslayerForMain.Name = Path.GetFileNameWithoutExtension(newfilePath);
+                        m_SourceMap.Append(raslayerForMain);
+
+                        // 刷新主视图
+                        if (m_Hook.ActiveContentsView is IMapContentsView mapView)
+                        {
+                            mapView.MapControl.Refresh();
+                        }
+                    }
+                    else
+                    {
+                        XMessageBox.Information("加载计算结果文件到主地图失败：\n" + newfilePath);
+                    }
+
+                    // 【修改】为插件右侧面板添加结果（使用临时地图）
+                    RasterLayer raslayerForPlugin = new RasterLayer();
+                    raslayerForPlugin.URL = "file:///" + newfilePath;
+                    if (raslayerForPlugin.ConnectData())
+                    {
+                        m_Map2.RemoveAll();
+                        m_Map2.Append(raslayerForPlugin);
+                    }
+
+                    if (this.m_mtr2.ActiveMap.LayerCount != 0)
+                        this.m_mtr2.ActiveMap.get_Layer(0).State = m_ShowRasOrTin ? LayerState.Visible : LayerState.UnVisible;
+                    this.m_mtr2.Restore();
+
+                    DengZhiXianKeShiHua(m_Map2, m_mtr2);
+
+                    // 【修改】在此处调用新方法，将计算结果的可视化图层添加到主地图
+                    AddVisualizationLayersToMainMap();
+                }
+            } // using 结束，文件流自动关闭
         }
 
+
+
+        // 【新增】从参考代码中借鉴的类名生成函数
+        private string GenerateClassName(string baseName, string typeSuffix)
+        {
+            string sanitizedBase = Regex.Replace(baseName ?? "Import", @"[^\w]", "_");
+            sanitizedBase = Regex.Replace(sanitizedBase, "_+", "_").Trim('_');
+            if (string.IsNullOrWhiteSpace(sanitizedBase)) sanitizedBase = "Data";
+            string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+            string finalName = $"{sanitizedBase}_{typeSuffix}_{timestamp}";
+            if (finalName.Length > 64)
+            {
+                string prefix = $"{sanitizedBase}_{typeSuffix}_".Substring(0, Math.Min($"{sanitizedBase}_{typeSuffix}_".Length, 64 - timestamp.Length - 1));
+                finalName = prefix + timestamp;
+                if (finalName.Length > 64) finalName = finalName.Substring(0, 64);
+            }
+            if (!char.IsLetter(finalName[0]))
+            {
+                finalName = "Lyr_" + finalName.Substring(0, Math.Min(finalName.Length, 60));
+            }
+            finalName = finalName.TrimEnd('_');
+            return finalName;
+        }
+
+        // 【新增】将当前的可视化图层添加到主地图文档
+        // 【新增】将当前的可视化图层添加到主地图文档
+        private void AddVisualizationLayersToMainMap()
+        {
+            if (m_SourceMap == null) return;
+
+            if (m_Tempsfclsreg == null && m_Tempsfclslin == null && m_tempann == null) return;
+
+            string baseName = "Visualization";
+            MapLayer currentRasterLayer = m_mtr2.ActiveMap.LayerCount > 0 ? m_mtr2.ActiveMap.get_Layer(0) : (m_mtr.ActiveMap.LayerCount > 0 ? m_mtr.ActiveMap.get_Layer(0) : null);
+            if (currentRasterLayer != null)
+            {
+                baseName = Path.GetFileNameWithoutExtension(currentRasterLayer.Name) + "_Contour";
+            }
+
+            if (m_Tempsfclsreg != null && m_Tempsfclsreg.Count > 0)
+            {
+                VectorLayer regLayerForMain = new VectorLayer(VectorLayerType.SFclsLayer);
+                if (regLayerForMain.AttachData(m_Tempsfclsreg))
+                {
+                    regLayerForMain.Name = baseName + "_区";
+                    regLayerForMain.URL = m_RegClsUrl; // 【修改】设置持久化URL
+                    m_SourceMap.Append(regLayerForMain);
+                }
+            }
+
+            if (m_Tempsfclslin != null && m_Tempsfclslin.Count > 0)
+            {
+                VectorLayer lineLayerForMain = new VectorLayer(VectorLayerType.SFclsLayer);
+                if (lineLayerForMain.AttachData(m_Tempsfclslin))
+                {
+                    lineLayerForMain.Name = baseName + "_线";
+                    lineLayerForMain.URL = m_LinClsUrl; // 【修改】设置持久化URL
+                    m_SourceMap.Append(lineLayerForMain);
+                }
+            }
+
+            if (m_tempann != null && m_tempann.Count > 0)
+            {
+                VectorLayer annLayerForMain = new VectorLayer(VectorLayerType.AnnLayer);
+                if (annLayerForMain.AttachData(m_tempann))
+                {
+                    annLayerForMain.Name = baseName + "_注记";
+                    annLayerForMain.URL = m_AnnClsUrl; // 【修改】设置持久化URL
+                    m_SourceMap.Append(annLayerForMain);
+                }
+            }
+
+            // (可选) 如果需要，也可以添加坡度线图层
+            if (m_TempsfclsSlopelin != null && m_TempsfclsSlopelin.Count > 0)
+            {
+                VectorLayer slopeLineLayerForMain = new VectorLayer(VectorLayerType.SFclsLayer);
+                if (slopeLineLayerForMain.AttachData(m_TempsfclsSlopelin))
+                {
+                    slopeLineLayerForMain.Name = baseName + "_坡度线";
+                    slopeLineLayerForMain.URL = m_SlopeLinClsUrl;
+                    m_SourceMap.Append(slopeLineLayerForMain);
+                }
+            }
+
+            if (m_Hook != null && m_Hook.ActiveContentsView is IMapContentsView mapView)
+            {
+                mapView.MapControl.Refresh();
+            }
+        }
         private void buttonEdit1_ButtonClick(object sender, DevExpress.XtraEditors.Controls.ButtonPressedEventArgs e)
         {
             SaveFileDialog savefile = new SaveFileDialog();
@@ -934,9 +1578,61 @@ namespace MapGISPlugin3
             base.Dispose(disposing);
         }
 
-        private void label9_Click(object sender, EventArgs e)
+        private void label10_Click(object sender, EventArgs e)
         {
 
+        }
+
+        private void textBox3_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        // 创建一个新方法来管理UI的显示/隐藏
+        private void UpdateParameterUI()
+        {
+            // 首先隐藏所有参数面板
+            pnlPolar.Visible = false;
+            pnlContin.Visible = false;
+            pnlDircomp.Visible = false;
+            pnlDeriv.Visible = false;
+            // 【新增】隐藏二次导数面板
+            pnlSecond.Visible = false;
+            // 如果您为其他方法也创建了面板，也在这里隐藏它们
+            if (comboBox1.SelectedItem == null) return;
+            string selectedMethod = comboBox1.SelectedItem.ToString();
+            // 根据选择，只显示对应的面板
+            switch (selectedMethod)
+            {
+                case "化极":
+                    pnlPolar.Visible = true;
+                    break;
+                case "三角":
+                    pnlContin.Visible = true;
+                    break;
+                case "方向分量":
+                case "导数": // “方向分量”和“导数”使用相同的参数
+                    pnlDircomp.Visible = true;
+                    break;
+                case "方向导数":
+                    pnlDeriv.Visible = true;
+                    break;
+                // 【新增】显示二次导数面板
+                case "二次导数":
+                    pnlSecond.Visible = true;
+                    break;
+                // case "分量":
+                // 如果需要参数，也在这里显示
+                // break;
+                default:
+                    // 对于没有参数的方法，不显示任何面板
+                    break;
+            }
+        }
+
+        private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            UpdateParameterUI();
         }
     }
 }

@@ -1,6 +1,4 @@
 ﻿using MapGIS.PluginEngine;
-using System.Windows.Forms;
-
 namespace MapGISPlugin3
 {
     partial class Form1
@@ -9,14 +7,11 @@ namespace MapGISPlugin3
         /// Required designer variable.
         /// </summary>
         private System.ComponentModel.IContainer components = null;
-
         /// <summary>
         /// Clean up any resources being used.
         /// </summary>
         /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
-
         #region Windows Form Designer generated code
-
         /// <summary>
         /// Required method for Designer support - do not modify
         /// the contents of this method with the code editor.
@@ -40,21 +35,39 @@ namespace MapGISPlugin3
             this.button3 = new System.Windows.Forms.Button();
             this.radioButton4 = new System.Windows.Forms.RadioButton();
             this.label6 = new System.Windows.Forms.Label();
-            this.buttonEdit1 = new System.Windows.Forms.TextBox();
-            this.btnBrowse = new System.Windows.Forms.Button();
-            this.textBox1 = new System.Windows.Forms.TextBox();
-            this.label7 = new System.Windows.Forms.Label();
-            this.panel1 = new System.Windows.Forms.Panel();
-            this.label8 = new System.Windows.Forms.Label();
-            this.label9 = new System.Windows.Forms.Label();
-            this.textBox3 = new System.Windows.Forms.TextBox();
-            this.textBox2 = new System.Windows.Forms.TextBox();
-            this.panelTitle = new System.Windows.Forms.Panel();
-            this.labelTitle = new System.Windows.Forms.Label();
-            this.btnClose = new System.Windows.Forms.Button();
+            this.buttonEdit1 = new DevExpress.XtraEditors.ButtonEdit();
+            this.pnlPolar = new System.Windows.Forms.Panel();
+            this.txtOd = new System.Windows.Forms.TextBox();
+            this.lblOd = new System.Windows.Forms.Label();
+            this.txtOi = new System.Windows.Forms.TextBox();
+            this.lblOi = new System.Windows.Forms.Label();
+            this.pnlContin = new System.Windows.Forms.Panel();
+            this.txtElev = new System.Windows.Forms.TextBox();
+            this.lblElev = new System.Windows.Forms.Label();
+            this.pnlDircomp = new System.Windows.Forms.Panel();
+            this.txtNi = new System.Windows.Forms.TextBox();
+            this.lblNi = new System.Windows.Forms.Label();
+            this.txtNd = new System.Windows.Forms.TextBox();
+            this.lblNd = new System.Windows.Forms.Label();
+            this.pnlDeriv = new System.Windows.Forms.Panel();
+            this.txtOrd = new System.Windows.Forms.TextBox();
+            this.lblOrd = new System.Windows.Forms.Label();
+            this.txtOri = new System.Windows.Forms.TextBox();
+            this.lblOri = new System.Windows.Forms.Label();
+            // 【新增】二次导数面板
+            this.pnlSecond = new System.Windows.Forms.Panel();
+            this.txtIsm = new System.Windows.Forms.TextBox();
+            this.lblIsm = new System.Windows.Forms.Label();
+            ((System.ComponentModel.ISupportInitialize)(this.panelControl1)).BeginInit();
             this.menuStrip1.SuspendLayout();
-            this.panel1.SuspendLayout();
-            this.panelTitle.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.panelControl2)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.buttonEdit1.Properties)).BeginInit();
+            this.pnlPolar.SuspendLayout();
+            this.pnlContin.SuspendLayout();
+            this.pnlDircomp.SuspendLayout();
+            this.pnlDeriv.SuspendLayout();
+            // 【新增】SuspendLayout for pnlSecond
+            this.pnlSecond.SuspendLayout();
             this.SuspendLayout();
             // 
             // label1
@@ -97,6 +110,7 @@ namespace MapGISPlugin3
             this.comboBox1.Name = "comboBox1";
             this.comboBox1.Size = new System.Drawing.Size(236, 26);
             this.comboBox1.TabIndex = 4;
+            this.comboBox1.SelectedIndexChanged += new System.EventHandler(this.comboBox1_SelectedIndexChanged);
             // 
             // radioButton1
             // 
@@ -248,8 +262,12 @@ namespace MapGISPlugin3
             this.buttonEdit1.Location = new System.Drawing.Point(1502, 775);
             this.buttonEdit1.Margin = new System.Windows.Forms.Padding(4);
             this.buttonEdit1.Name = "buttonEdit1";
-            this.buttonEdit1.ReadOnly = true;
-            this.buttonEdit1.Size = new System.Drawing.Size(182, 28);
+            // 
+            // 
+            // 
+            this.buttonEdit1.Properties.Buttons.AddRange(new DevExpress.XtraEditors.Controls.EditorButton[] {
+            new DevExpress.XtraEditors.Controls.EditorButton()});
+            this.buttonEdit1.Size = new System.Drawing.Size(145, 20);
             this.buttonEdit1.TabIndex = 21;
             // 
             // btnBrowse
@@ -263,81 +281,189 @@ namespace MapGISPlugin3
             this.btnBrowse.UseVisualStyleBackColor = true;
             this.btnBrowse.Click += new System.EventHandler(this.btnBrowse_Click);
             // 
-            // textBox1
+            // pnlPolar
             // 
-            this.textBox1.BackColor = System.Drawing.SystemColors.Control;
-            this.textBox1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.textBox1.Location = new System.Drawing.Point(104, 66);
-            this.textBox1.Margin = new System.Windows.Forms.Padding(4);
-            this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(148, 28);
-            this.textBox1.TabIndex = 23;
+            this.pnlPolar.Controls.Add(this.txtOd);
+            this.pnlPolar.Controls.Add(this.lblOd);
+            this.pnlPolar.Controls.Add(this.txtOi);
+            this.pnlPolar.Controls.Add(this.lblOi);
+            this.pnlPolar.Location = new System.Drawing.Point(993, 181);
+            this.pnlPolar.Name = "pnlPolar";
+            this.pnlPolar.Size = new System.Drawing.Size(170, 80);
+            this.pnlPolar.TabIndex = 22;
+            this.pnlPolar.Visible = false;
             // 
-            // label7
+            // txtOd
             // 
-            this.label7.AutoSize = true;
-            this.label7.Location = new System.Drawing.Point(15, 71);
-            this.label7.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(80, 18);
-            this.label7.TabIndex = 24;
-            this.label7.Text = "延拓高度";
+            this.txtOd.Location = new System.Drawing.Point(65, 45);
+            this.txtOd.Name = "txtOd";
+            this.txtOd.Size = new System.Drawing.Size(100, 21);
+            this.txtOd.TabIndex = 0;
             // 
-            // panel1
+            // lblOd
             // 
-            this.panel1.BackColor = System.Drawing.SystemColors.Control;
-            this.panel1.Controls.Add(this.label8);
-            this.panel1.Controls.Add(this.label7);
-            this.panel1.Controls.Add(this.label9);
-            this.panel1.Controls.Add(this.textBox3);
-            this.panel1.Controls.Add(this.textBox2);
-            this.panel1.Controls.Add(this.textBox1);
-            this.panel1.Location = new System.Drawing.Point(1454, 248);
-            this.panel1.Margin = new System.Windows.Forms.Padding(4);
-            this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(272, 386);
-            this.panel1.TabIndex = 25;
+            this.lblOd.AutoSize = true;
+            this.lblOd.Location = new System.Drawing.Point(10, 48);
+            this.lblOd.Name = "lblOd";
+            this.lblOd.Size = new System.Drawing.Size(41, 12);
+            this.lblOd.TabIndex = 1;
+            this.lblOd.Text = "磁偏角";
             // 
-            // label8
+            // txtOi
             // 
-            this.label8.AutoSize = true;
-            this.label8.Location = new System.Drawing.Point(15, 291);
-            this.label8.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.label8.Name = "label8";
-            this.label8.Size = new System.Drawing.Size(80, 18);
-            this.label8.TabIndex = 26;
-            this.label8.Text = "方向偏角";
+            this.txtOi.Location = new System.Drawing.Point(65, 12);
+            this.txtOi.Name = "txtOi";
+            this.txtOi.Size = new System.Drawing.Size(100, 21);
+            this.txtOi.TabIndex = 2;
             // 
-            // label9
+            // lblOi
             // 
-            this.label9.AutoSize = true;
-            this.label9.Location = new System.Drawing.Point(15, 182);
-            this.label9.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.label9.Name = "label9";
-            this.label9.Size = new System.Drawing.Size(80, 18);
-            this.label9.TabIndex = 27;
-            this.label9.Text = "方向倾角";
-            this.label9.Click += new System.EventHandler(this.label9_Click);
+            this.lblOi.AutoSize = true;
+            this.lblOi.Location = new System.Drawing.Point(10, 15);
+            this.lblOi.Name = "lblOi";
+            this.lblOi.Size = new System.Drawing.Size(41, 12);
+            this.lblOi.TabIndex = 3;
+            this.lblOi.Text = "磁倾角";
             // 
-            // textBox3
+            // pnlContin
             // 
-            this.textBox3.BackColor = System.Drawing.SystemColors.Control;
-            this.textBox3.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.textBox3.Location = new System.Drawing.Point(104, 286);
-            this.textBox3.Margin = new System.Windows.Forms.Padding(4);
-            this.textBox3.Name = "textBox3";
-            this.textBox3.Size = new System.Drawing.Size(148, 28);
-            this.textBox3.TabIndex = 25;
+            this.pnlContin.Controls.Add(this.txtElev);
+            this.pnlContin.Controls.Add(this.lblElev);
+            this.pnlContin.Location = new System.Drawing.Point(993, 181);
+            this.pnlContin.Name = "pnlContin";
+            this.pnlContin.Size = new System.Drawing.Size(170, 50);
+            this.pnlContin.TabIndex = 23;
+            this.pnlContin.Visible = false;
             // 
-            // textBox2
+            // txtElev
             // 
-            this.textBox2.BackColor = System.Drawing.SystemColors.Control;
-            this.textBox2.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.textBox2.Location = new System.Drawing.Point(104, 177);
-            this.textBox2.Margin = new System.Windows.Forms.Padding(4);
-            this.textBox2.Name = "textBox2";
-            this.textBox2.Size = new System.Drawing.Size(148, 28);
-            this.textBox2.TabIndex = 24;
+            this.txtElev.Location = new System.Drawing.Point(65, 12);
+            this.txtElev.Name = "txtElev";
+            this.txtElev.Size = new System.Drawing.Size(100, 21);
+            this.txtElev.TabIndex = 0;
+            // 
+            // lblElev
+            // 
+            this.lblElev.AutoSize = true;
+            this.lblElev.Location = new System.Drawing.Point(3, 15);
+            this.lblElev.Name = "lblElev";
+            this.lblElev.Size = new System.Drawing.Size(53, 12);
+            this.lblElev.TabIndex = 1;
+            this.lblElev.Text = "延拓高度";
+            // 
+            // pnlDircomp
+            // 
+            this.pnlDircomp.Controls.Add(this.txtNi);
+            this.pnlDircomp.Controls.Add(this.lblNi);
+            this.pnlDircomp.Controls.Add(this.txtNd);
+            this.pnlDircomp.Controls.Add(this.lblNd);
+            this.pnlDircomp.Location = new System.Drawing.Point(993, 163);
+            this.pnlDircomp.Name = "pnlDircomp";
+            this.pnlDircomp.Size = new System.Drawing.Size(170, 80);
+            this.pnlDircomp.TabIndex = 24;
+            this.pnlDircomp.Visible = false;
+            // 
+            // txtNi
+            // 
+            this.txtNi.Location = new System.Drawing.Point(65, 45);
+            this.txtNi.Name = "txtNi";
+            this.txtNi.Size = new System.Drawing.Size(100, 21);
+            this.txtNi.TabIndex = 0;
+            // 
+            // lblNi
+            // 
+            this.lblNi.AutoSize = true;
+            this.lblNi.Location = new System.Drawing.Point(3, 48);
+            this.lblNi.Name = "lblNi";
+            this.lblNi.Size = new System.Drawing.Size(53, 12);
+            this.lblNi.TabIndex = 1;
+            this.lblNi.Text = "方向偏角";
+            // 
+            // txtNd
+            // 
+            this.txtNd.Location = new System.Drawing.Point(65, 12);
+            this.txtNd.Name = "txtNd";
+            this.txtNd.Size = new System.Drawing.Size(100, 21);
+            this.txtNd.TabIndex = 2;
+            // 
+            // lblNd
+            // 
+            this.lblNd.AutoSize = true;
+            this.lblNd.Location = new System.Drawing.Point(3, 15);
+            this.lblNd.Name = "lblNd";
+            this.lblNd.Size = new System.Drawing.Size(53, 12);
+            this.lblNd.TabIndex = 3;
+            this.lblNd.Text = "方向倾角";
+            // 
+            // pnlDeriv
+            // 
+            this.pnlDeriv.Controls.Add(this.txtOrd);
+            this.pnlDeriv.Controls.Add(this.lblOrd);
+            this.pnlDeriv.Controls.Add(this.txtOri);
+            this.pnlDeriv.Controls.Add(this.lblOri);
+            this.pnlDeriv.Location = new System.Drawing.Point(993, 163);
+            this.pnlDeriv.Name = "pnlDeriv";
+            this.pnlDeriv.Size = new System.Drawing.Size(170, 80);
+            this.pnlDeriv.TabIndex = 25;
+            this.pnlDeriv.Visible = false;
+            // 
+            // txtOrd
+            // 
+            this.txtOrd.Location = new System.Drawing.Point(65, 45);
+            this.txtOrd.Name = "txtOrd";
+            this.txtOrd.Size = new System.Drawing.Size(100, 21);
+            this.txtOrd.TabIndex = 0;
+            // 
+            // lblOrd
+            // 
+            this.lblOrd.AutoSize = true;
+            this.lblOrd.Location = new System.Drawing.Point(3, 48);
+            this.lblOrd.Name = "lblOrd";
+            this.lblOrd.Size = new System.Drawing.Size(53, 12);
+            this.lblOrd.TabIndex = 1;
+            this.lblOrd.Text = "阶数";
+            // 
+            // txtOri
+            // 
+            this.txtOri.Location = new System.Drawing.Point(65, 12);
+            this.txtOri.Name = "txtOri";
+            this.txtOri.Size = new System.Drawing.Size(100, 21);
+            this.txtOri.TabIndex = 2;
+            // 
+            // lblOri
+            // 
+            this.lblOri.AutoSize = true;
+            this.lblOri.Location = new System.Drawing.Point(3, 15);
+            this.lblOri.Name = "lblOri";
+            this.lblOri.Size = new System.Drawing.Size(53, 12);
+            this.lblOri.TabIndex = 3;
+            this.lblOri.Text = "方位角";
+            // 
+            // 【新增】pnlSecond
+            // 
+            this.pnlSecond.Controls.Add(this.txtIsm);
+            this.pnlSecond.Controls.Add(this.lblIsm);
+            this.pnlSecond.Location = new System.Drawing.Point(993, 163);  // 与pnlDeriv位置一致
+            this.pnlSecond.Name = "pnlSecond";
+            this.pnlSecond.Size = new System.Drawing.Size(170, 50);  // 只有一个参数，高度减小
+            this.pnlSecond.TabIndex = 26;  // 递增TabIndex
+            this.pnlSecond.Visible = false;
+            // 
+            // 【新增】txtIsm
+            // 
+            this.txtIsm.Location = new System.Drawing.Point(65, 12);
+            this.txtIsm.Name = "txtIsm";
+            this.txtIsm.Size = new System.Drawing.Size(100, 21);
+            this.txtIsm.TabIndex = 0;
+            // 
+            // 【新增】lblIsm
+            // 
+            this.lblIsm.AutoSize = true;
+            this.lblIsm.Location = new System.Drawing.Point(3, 15);
+            this.lblIsm.Name = "lblIsm";
+            this.lblIsm.Size = new System.Drawing.Size(53, 12);
+            this.lblIsm.TabIndex = 1;
+            this.lblIsm.Text = "计算模式";
             // 
             // panelTitle
             // 
@@ -379,9 +505,12 @@ namespace MapGISPlugin3
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 18F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackColor = System.Drawing.SystemColors.Control;
-            this.ClientSize = new System.Drawing.Size(1764, 902);
-            this.Controls.Add(this.btnBrowse);
+            this.ClientSize = new System.Drawing.Size(1176, 601);
+            this.Controls.Add(this.pnlSecond);  // 【新增】添加pnlSecond到Form控件
+            this.Controls.Add(this.pnlDeriv);
+            this.Controls.Add(this.pnlDircomp);
+            this.Controls.Add(this.pnlContin);
+            this.Controls.Add(this.pnlPolar);
             this.Controls.Add(this.buttonEdit1);
             this.Controls.Add(this.label6);
             this.Controls.Add(this.radioButton4);
@@ -399,26 +528,29 @@ namespace MapGISPlugin3
             this.Controls.Add(this.label2);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.menuStrip1);
-            this.Controls.Add(this.panel1);
-            this.Controls.Add(this.panelTitle);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
-            this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "Form1";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "数据处理";
             this.Load += new System.EventHandler(this.Form1_Load);
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
-            this.panel1.ResumeLayout(false);
-            this.panel1.PerformLayout();
-            this.panelTitle.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.panelControl2)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.buttonEdit1.Properties)).EndInit();
+            this.pnlPolar.ResumeLayout(false);
+            this.pnlPolar.PerformLayout();
+            this.pnlContin.ResumeLayout(false);
+            this.pnlContin.PerformLayout();
+            this.pnlDircomp.ResumeLayout(false);
+            this.pnlDircomp.PerformLayout();
+            this.pnlDeriv.ResumeLayout(false);
+            this.pnlDeriv.PerformLayout();
+            // 【新增】ResumeLayout for pnlSecond
+            this.pnlSecond.ResumeLayout(false);
+            this.pnlSecond.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
-
         }
-
         #endregion
-
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label label3;
@@ -436,18 +568,33 @@ namespace MapGISPlugin3
         private System.Windows.Forms.Button button3;
         private System.Windows.Forms.RadioButton radioButton4;
         private System.Windows.Forms.Label label6;
-        private System.Windows.Forms.TextBox buttonEdit1;
-        private System.Windows.Forms.Button btnBrowse;
-        private System.Windows.Forms.TextBox textBox1;
-        private System.Windows.Forms.Label label7;
-        private System.Windows.Forms.Panel panel1;
-        private System.Windows.Forms.Label label8;
-        private System.Windows.Forms.Label label9;
-        private System.Windows.Forms.TextBox textBox3;
-        private System.Windows.Forms.TextBox textBox2;
-        private System.Windows.Forms.Panel panelTitle;
-        private System.Windows.Forms.Label labelTitle;
-        private System.Windows.Forms.Button btnClose;
+        private DevExpress.XtraEditors.ButtonEdit buttonEdit1;
         private IApplication hook;
+        // --- 化极面板的控件 ---
+        private System.Windows.Forms.Panel pnlPolar;
+        private System.Windows.Forms.Label lblOi; // 磁倾角 标签
+        private System.Windows.Forms.TextBox txtOi; // 磁倾角 输入框
+        private System.Windows.Forms.Label lblOd; // 磁偏角 标签
+        private System.Windows.Forms.TextBox txtOd; // 磁偏角 输入框
+        // --- 三角(延拓)面板的控件 ---
+        private System.Windows.Forms.Panel pnlContin;
+        private System.Windows.Forms.Label lblElev; // 延拓高度 标签
+        private System.Windows.Forms.TextBox txtElev; // 延拓高度 输入框
+        // --- 方向分量面板的控件 ---
+        private System.Windows.Forms.Panel pnlDircomp;
+        private System.Windows.Forms.Label lblNd; // 方向倾角 标签
+        private System.Windows.Forms.TextBox txtNd; // 方向倾角 输入框
+        private System.Windows.Forms.Label lblNi; // 方向偏角 标签
+        private System.Windows.Forms.TextBox txtNi; // 方向偏角 输入框
+        // --- 方向导数面板的控件 ---
+        private System.Windows.Forms.Panel pnlDeriv;
+        private System.Windows.Forms.Label lblOri; // 方位角 标签
+        private System.Windows.Forms.TextBox txtOri; // 方位角 输入框
+        private System.Windows.Forms.Label lblOrd; // 阶数 标签
+        private System.Windows.Forms.TextBox txtOrd; // 阶数 输入框
+        // 【新增】二次导数面板的控件
+        private System.Windows.Forms.Panel pnlSecond;
+        private System.Windows.Forms.Label lblIsm; // 计算模式 标签
+        private System.Windows.Forms.TextBox txtIsm; // 计算模式 输入框
     }
 }
