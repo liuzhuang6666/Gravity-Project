@@ -143,6 +143,7 @@ namespace MapGISPlugin3
             // 
             // nudIterationCount
             // 
+            this.nudIterationCount.BackColor = System.Drawing.SystemColors.Control;
             this.nudIterationCount.Location = new System.Drawing.Point(377, 38);
             this.nudIterationCount.Name = "nudIterationCount";
             this.nudIterationCount.Size = new System.Drawing.Size(198, 28);
@@ -216,6 +217,7 @@ namespace MapGISPlugin3
             this.chartProfileView.TabIndex = 0;
             this.chartProfileView.Text = "chart1";
             this.chartProfileView.MouseClick += new System.Windows.Forms.MouseEventHandler(this.chartProfileView_MouseClick);
+            legend1.BackColor = System.Drawing.SystemColors.Control;
             // 
             // tabPage2
             // 
@@ -281,6 +283,7 @@ namespace MapGISPlugin3
             // 
             // cmbLineName
             // 
+            this.cmbLineName.BackColor = System.Drawing.SystemColors.Control;
             this.cmbLineName.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbLineName.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.cmbLineName.FormattingEnabled = true;
@@ -292,6 +295,7 @@ namespace MapGISPlugin3
             // 
             // cmbStationLayer
             // 
+            this.cmbStationLayer.BackColor = System.Drawing.SystemColors.Control;
             this.cmbStationLayer.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbStationLayer.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.cmbStationLayer.FormattingEnabled = true;
@@ -318,6 +322,7 @@ namespace MapGISPlugin3
             this.chartPhase.Size = new System.Drawing.Size(609, 378);
             this.chartPhase.TabIndex = 2;
             this.chartPhase.Text = "chart3";
+            legend2.BackColor = System.Drawing.SystemColors.Control;
             // 
             // chartResistivity
             // 
@@ -336,6 +341,7 @@ namespace MapGISPlugin3
             this.chartResistivity.Size = new System.Drawing.Size(609, 370);
             this.chartResistivity.TabIndex = 1;
             this.chartResistivity.Text = "chart2";
+            legend3.BackColor = System.Drawing.SystemColors.Control;
             // 
             // tabControl2
             // 
@@ -388,7 +394,7 @@ namespace MapGISPlugin3
             this.labelTitle.Name = "labelTitle";
             this.labelTitle.Size = new System.Drawing.Size(150, 48);
             this.labelTitle.TabIndex = 1;
-            this.labelTitle.Text = "MT数据1D分析";
+            this.labelTitle.Text = "MT一维反演";
             this.labelTitle.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // btnClose

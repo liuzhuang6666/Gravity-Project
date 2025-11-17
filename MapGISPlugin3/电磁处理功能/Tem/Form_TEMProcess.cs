@@ -71,6 +71,31 @@ namespace MapGISPlugin3
         {
             LoadLayersFromMap();
             timerProgress.Interval = 1000;
+            // 初始化两个图表的图例
+            InitChartLegend(chartProfileView, "ProfileLegend"); // 小地图图例
+            InitChartLegend(chartVoltage, "VoltageLegend");     // 电压曲线图例
+        }
+        /// <summary>
+        /// 初始化单个图表的图例样式
+        /// </summary>
+        private void InitChartLegend(Chart chart, string legendName)
+        {
+            // 清除默认图例
+            chart.Legends.Clear();
+
+            // 创建新图例
+            Legend legend = new Legend(legendName)
+            {
+                Docking = Docking.Right, // 图例停靠在右侧
+                Alignment = StringAlignment.Center, // 文本居中
+                LegendStyle = LegendStyle.Table, // 表格样式（更整齐）
+                BorderColor = System.Drawing.Color.LightGray, // 边框颜色
+                BorderWidth = 1,
+                BackColor = System.Drawing.Color.Transparent // 透明背景，与图表融合
+            };
+
+            // 添加到图表
+            chart.Legends.Add(legend);
         }
         /// <summary>
         /// 标题栏鼠标按下：记录鼠标相对窗口的位置
@@ -1142,12 +1167,32 @@ namespace MapGISPlugin3
             if (chartProfileView == null) return;
             chartProfileView.Series.Clear();
 
-            Series s = chartProfileView.Series.Add("Stations");
-            s.ChartType = SeriesChartType.Point;
-            s.MarkerStyle = MarkerStyle.Circle;
-            s.MarkerSize = 8;
-            s.MarkerColor = System.Drawing.Color.Red;
-            s.IsValueShownAsLabel = true;
+            // 【新增】初始化图例（若不存在则创建）
+            if (chartProfileView.Legends.Count == 0)
+            {
+                Legend legend = new Legend("ProfileLegend")
+                {
+                    Docking = Docking.Right, // 图例停靠在右侧
+                    Alignment = StringAlignment.Center, // 文本居中
+                    LegendStyle = LegendStyle.Table, // 表格样式更整齐
+                    BorderColor = System.Drawing.Color.LightGray, // 边框颜色
+                    BorderWidth = 1,
+                    BackColor = System.Drawing.Color.Transparent // 透明背景，融入图表
+                };
+                chartProfileView.Legends.Add(legend);
+            }
+
+            // 1. 绘制测点系列，并绑定图例
+            Series stationSeries = chartProfileView.Series.Add("Stations");
+            stationSeries.ChartType = SeriesChartType.Point;
+            stationSeries.MarkerStyle = MarkerStyle.Circle;
+            stationSeries.MarkerSize = 8;
+            stationSeries.MarkerColor = System.Drawing.Color.Blue;
+            stationSeries.IsValueShownAsLabel = true;
+            // 【新增】绑定图例（关联到当前图表的第一个图例）
+            stationSeries.Legend = chartProfileView.Legends[0].Name;
+            // 【新增】图例中显示的文本（用户可见的标签）
+            stationSeries.LegendText = "测点";
 
             if (m_CurrentLineStations == null || m_CurrentLineStations.Count == 0)
             {
@@ -1167,9 +1212,9 @@ namespace MapGISPlugin3
                 minY = Math.Min(minY, station.Y);
                 maxY = Math.Max(maxY, station.Y);
 
-                int pointIndex = s.Points.AddXY(station.X, station.Y);
-                s.Points[pointIndex].Label = station.StationName;
-                s.Points[pointIndex].Tag = station.StationName;
+                int pointIndex = stationSeries.Points.AddXY(station.X, station.Y);
+                stationSeries.Points[pointIndex].Label = station.StationName;
+                stationSeries.Points[pointIndex].Tag = station.StationName;
             }
 
             // 遍历发射源，更新坐标范围
@@ -1195,6 +1240,7 @@ namespace MapGISPlugin3
                 minY = Math.Min(minY, m_TransmitterInfo.PointD_Y);
                 maxY = Math.Max(maxY, m_TransmitterInfo.PointD_Y);
 
+                // 2. 绘制发射源系列，并绑定图例
                 Series tranSeries = chartProfileView.Series.Add("Transmitter");
                 tranSeries.ChartType = SeriesChartType.Line;
                 tranSeries.MarkerStyle = MarkerStyle.Square;
@@ -1202,6 +1248,10 @@ namespace MapGISPlugin3
                 tranSeries.MarkerColor = System.Drawing.Color.Blue;
                 tranSeries.Color = System.Drawing.Color.Blue;
                 tranSeries.BorderWidth = 2;
+                // 【新增】绑定图例（关联到当前图表的第一个图例）
+                tranSeries.Legend = chartProfileView.Legends[0].Name;
+                // 【新增】图例中显示的文本（用户可见的标签）
+                tranSeries.LegendText = "发射源";
 
                 // 绘制矩形：A-B-C-D-A
                 tranSeries.Points.AddXY(m_TransmitterInfo.PointA_X, m_TransmitterInfo.PointA_Y);
@@ -1355,6 +1405,21 @@ namespace MapGISPlugin3
             Console.WriteLine("=== 开始更新感应电压曲线 ===");
             chartVoltage.Series.Clear();
 
+            // 【新增】初始化图例（若不存在则创建）
+            if (chartVoltage.Legends.Count == 0)
+            {
+                Legend legend = new Legend("VoltageLegend")
+                {
+                    Docking = Docking.Right, // 图例停靠在右侧
+                    Alignment = StringAlignment.Center, // 文本居中
+                    LegendStyle = LegendStyle.Table, // 表格样式更整齐
+                    BorderColor = System.Drawing.Color.LightGray, // 边框颜色
+                    BorderWidth = 1,
+                    BackColor = System.Drawing.Color.Transparent // 透明背景，融入图表
+                };
+                chartVoltage.Legends.Add(legend);
+            }
+
             if (string.IsNullOrEmpty(m_CurrentSelectedStationName) || m_CurrentLineData == null)
             {
                 return;
@@ -1377,11 +1442,16 @@ namespace MapGISPlugin3
                 return;
             }
 
+            // 绘制感应电压系列，并绑定图例
             var voltageSeries = chartVoltage.Series.Add("感应电压");
             voltageSeries.ChartType = SeriesChartType.Spline;
             voltageSeries.MarkerStyle = MarkerStyle.Circle;
             voltageSeries.MarkerSize = 5;
             voltageSeries.BorderWidth = 2;
+            // 【新增】绑定图例（关联到当前图表的第一个图例）
+            voltageSeries.Legend = chartVoltage.Legends[0].Name;
+            // 【新增】图例中显示的文本（包含单位，更清晰）
+            voltageSeries.LegendText = $"感应电压 ({m_CurrentSelectedStationName})";
 
             List<double> times = new List<double>();
             List<double> voltages = new List<double>();

@@ -1,4 +1,6 @@
-﻿namespace MapGISPlugin3
+﻿using System.Windows.Forms.DataVisualization.Charting;
+
+namespace MapGISPlugin3
 {
     partial class Form_TEMProcess
     {
@@ -30,6 +32,7 @@
         {
             this.components = new System.ComponentModel.Container();
             System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea1 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.Legend legend1 = new System.Windows.Forms.DataVisualization.Charting.Legend();
             System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea2 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
             this.timerProgress = new System.Windows.Forms.Timer(this.components);
             this.panel1 = new System.Windows.Forms.Panel();
@@ -79,7 +82,7 @@
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(132, 48);
             this.label7.TabIndex = 1;
-            this.label7.Text = "TEM数据处理";
+            this.label7.Text = "TEM一维反演";
             this.label7.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // button2
@@ -173,6 +176,9 @@
             // 
             chartArea1.Name = "ChartArea1";
             this.chartVoltage.ChartAreas.Add(chartArea1);
+            legend1.BackColor = System.Drawing.SystemColors.Control;
+            legend1.Name = "LegendVoltage";
+            this.chartVoltage.Legends.Add(legend1);
             this.chartVoltage.Location = new System.Drawing.Point(692, 52);
             this.chartVoltage.Margin = new System.Windows.Forms.Padding(4);
             this.chartVoltage.Name = "chartVoltage";

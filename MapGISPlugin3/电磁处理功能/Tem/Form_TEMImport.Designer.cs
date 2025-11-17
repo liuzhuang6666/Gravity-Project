@@ -50,7 +50,7 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(80, 67);
+            this.label1.Location = new System.Drawing.Point(62, 68);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(134, 18);
             this.label1.TabIndex = 0;
@@ -60,7 +60,7 @@
             // 
             this.txtKnowedFile.BackColor = System.Drawing.SystemColors.Control;
             this.txtKnowedFile.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.txtKnowedFile.Location = new System.Drawing.Point(242, 63);
+            this.txtKnowedFile.Location = new System.Drawing.Point(224, 64);
             this.txtKnowedFile.Name = "txtKnowedFile";
             this.txtKnowedFile.Size = new System.Drawing.Size(311, 28);
             this.txtKnowedFile.TabIndex = 1;
@@ -68,7 +68,7 @@
             // btnSelectKnowedFile
             // 
             this.btnSelectKnowedFile.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.btnSelectKnowedFile.Location = new System.Drawing.Point(560, 65);
+            this.btnSelectKnowedFile.Location = new System.Drawing.Point(542, 66);
             this.btnSelectKnowedFile.Name = "btnSelectKnowedFile";
             this.btnSelectKnowedFile.Size = new System.Drawing.Size(50, 28);
             this.btnSelectKnowedFile.TabIndex = 2;
@@ -79,7 +79,7 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(80, 173);
+            this.label2.Location = new System.Drawing.Point(62, 174);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(143, 18);
             this.label2.TabIndex = 3;
@@ -89,7 +89,7 @@
             // 
             this.txtGdbPathDisplay.BackColor = System.Drawing.SystemColors.Control;
             this.txtGdbPathDisplay.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.txtGdbPathDisplay.Location = new System.Drawing.Point(242, 168);
+            this.txtGdbPathDisplay.Location = new System.Drawing.Point(224, 169);
             this.txtGdbPathDisplay.Name = "txtGdbPathDisplay";
             this.txtGdbPathDisplay.ReadOnly = true;
             this.txtGdbPathDisplay.Size = new System.Drawing.Size(311, 28);
@@ -98,7 +98,7 @@
             // btnSelectGdbLocation
             // 
             this.btnSelectGdbLocation.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.btnSelectGdbLocation.Location = new System.Drawing.Point(560, 169);
+            this.btnSelectGdbLocation.Location = new System.Drawing.Point(542, 170);
             this.btnSelectGdbLocation.Name = "btnSelectGdbLocation";
             this.btnSelectGdbLocation.Size = new System.Drawing.Size(50, 28);
             this.btnSelectGdbLocation.TabIndex = 5;
@@ -140,9 +140,9 @@
             this.groupBox1.Controls.Add(this.txtKnowedFile);
             this.groupBox1.Controls.Add(this.label1);
             this.groupBox1.Location = new System.Drawing.Point(32, 87);
-            this.groupBox1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox1.Margin = new System.Windows.Forms.Padding(4);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox1.Padding = new System.Windows.Forms.Padding(4);
             this.groupBox1.Size = new System.Drawing.Size(690, 248);
             this.groupBox1.TabIndex = 8;
             this.groupBox1.TabStop = false;
@@ -151,7 +151,7 @@
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(80, 120);
+            this.label3.Location = new System.Drawing.Point(62, 121);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(116, 18);
             this.label3.TabIndex = 8;
@@ -161,7 +161,7 @@
             // 
             this.txtTranFile.BackColor = System.Drawing.SystemColors.Control;
             this.txtTranFile.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.txtTranFile.Location = new System.Drawing.Point(242, 115);
+            this.txtTranFile.Location = new System.Drawing.Point(224, 116);
             this.txtTranFile.Name = "txtTranFile";
             this.txtTranFile.Size = new System.Drawing.Size(311, 28);
             this.txtTranFile.TabIndex = 9;
@@ -169,7 +169,7 @@
             // btnSelectTranFile
             // 
             this.btnSelectTranFile.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.btnSelectTranFile.Location = new System.Drawing.Point(560, 117);
+            this.btnSelectTranFile.Location = new System.Drawing.Point(542, 118);
             this.btnSelectTranFile.Name = "btnSelectTranFile";
             this.btnSelectTranFile.Size = new System.Drawing.Size(50, 28);
             this.btnSelectTranFile.TabIndex = 10;
@@ -184,7 +184,7 @@
             this.panel1.Controls.Add(this.button2);
             this.panel1.Dock = System.Windows.Forms.DockStyle.Top;
             this.panel1.Location = new System.Drawing.Point(0, 0);
-            this.panel1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.panel1.Margin = new System.Windows.Forms.Padding(4);
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(765, 48);
             this.panel1.TabIndex = 20;
@@ -196,9 +196,9 @@
             this.label7.Location = new System.Drawing.Point(0, 0);
             this.label7.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(111, 48);
+            this.label7.Size = new System.Drawing.Size(141, 48);
             this.label7.TabIndex = 1;
-            this.label7.Text = "导入TEM数据";
+            this.label7.Text = "发射源信息导入";
             this.label7.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // button2
@@ -208,7 +208,7 @@
             this.button2.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button2.Font = new System.Drawing.Font("宋体", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.button2.Location = new System.Drawing.Point(721, 0);
-            this.button2.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.button2.Margin = new System.Windows.Forms.Padding(4);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(44, 48);
             this.button2.TabIndex = 0;

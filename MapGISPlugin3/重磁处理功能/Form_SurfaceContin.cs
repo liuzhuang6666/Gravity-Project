@@ -67,11 +67,14 @@ namespace MapGISPlugin3
 
         private int[] Imc = {601,603,498,500,436,408,391,233,190,184,154,122,106,33,31,
              127,391,128,392,393,136,149,150,442,443,186,444,179,180,445,189,190};
+        private Point _mouseDownPoint = new Point(); // 用于记录鼠标按下时的位置
 
         // 【修改】构造函数名
         public Form_SurfaceContin(IApplication hook)
         {
             InitializeComponent();
+            // 初始化拖动事件（绑定标题栏panelTitle）
+            InitDragEvents();
             m_Hook = hook;
             if (m_Hook != null)
             {
@@ -100,20 +103,54 @@ namespace MapGISPlugin3
             this.dataTable.Columns.Add("线层数据", typeof(LinInfo));
             this.dataTable.Columns.Add("区层数据", typeof(RegInfo));
         }
+        /// <summary>
+        /// 初始化标题栏拖动事件
+        /// </summary>
+        private void InitDragEvents()
+        {
+            // 鼠标按下时记录位置
+            panel1.MouseDown += PanelTitle_MouseDown;
+            // 鼠标移动时拖动窗口
+            panel1.MouseMove += PanelTitle_MouseMove;
+        }
+        /// <summary>
+        /// 标题栏鼠标按下：记录鼠标相对窗口的位置
+        /// </summary>
+        private void PanelTitle_MouseDown(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left) // 仅响应左键
+            {
+                // 记录鼠标在窗口内的坐标（相对于标题栏）
+                _mouseDownPoint.X = e.X;
+                _mouseDownPoint.Y = e.Y;
+            }
+        }
+
+        /// <summary>
+        /// 标题栏鼠标移动：计算窗口新位置
+        /// </summary>
+        private void PanelTitle_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left) // 左键按住时才拖动
+            {
+                // 窗口新位置 = 鼠标当前屏幕位置 - 按下时的相对位置
+                this.Left = Control.MousePosition.X - _mouseDownPoint.X;
+                this.Top = Control.MousePosition.Y - _mouseDownPoint.Y;
+            }
+        }
 
         // 【修改】Load 事件名
         private void Form_SurfaceContin_Load(object sender, EventArgs e)
         {
-            this.buttonEdit1.Properties.ReadOnly = true;
-            this.buttonEdit1.Properties.Buttons[0].Enabled = false;
-            this.buttonEdit1.BackColor = System.Drawing.SystemColors.ControlLight;
+            // 初始化输出路径文本框（替换buttonEdit1的设置）
+            this.textBoxSavePath.ReadOnly = true;
+            this.textBoxSavePath.BackColor = System.Drawing.SystemColors.ControlLight;
 
             this.m_mtr.ActiveMap = m_Map;
             this.m_mtr2.ActiveMap = m_Map2;
             this.m_mtr.ShowRuler = true;
             this.m_mtr2.ShowRuler = true;
 
-            // 【移除】 comboBox1 的所有设置
         }
 
         // "数据导入" 菜单项的点击事件 (逻辑不变)
@@ -162,12 +199,12 @@ namespace MapGISPlugin3
                             // 自动生成输出文件名
                             string newFileName = $"{inputFileNameWithoutExt}_contin_{timestamp}.grd";
                             string newfilePath = Path.Combine(inputDirectory, newFileName);
-                            this.buttonEdit1.Text = newfilePath;
+                            this.textBoxSavePath.Text = newfilePath;  // 替换buttonEdit1为textBoxSavePath
                         }
                         catch (Exception ex)
                         {
                             MessageBox.Show($"自动生成输出路径时出错: {ex.Message}", "路径错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                            this.buttonEdit1.Text = "";
+                            this.textBoxSavePath.Text = "";
                             _inputFilePath = null;
                         }
 
@@ -194,9 +231,9 @@ namespace MapGISPlugin3
         }
 
         // "计算" 按钮的点击事件
-        private void button1_Click(object sender, EventArgs e)
+        private void btnCalculate_Click(object sender, EventArgs e)
         {
-            string newfilePath = this.buttonEdit1.Text.Trim(); // 这是最终 .grd 的输出路径
+            string newfilePath = this.textBoxSavePath.Text.Trim();  // 替换buttonEdit1为textBoxSavePath
             if (string.IsNullOrEmpty(newfilePath) || _inputFilePath == null || m_SourceMap == null)
             {
                 MessageBox.Show("请先通过“数据导入”加载数据，并指定结果输出路径。", "操作提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -421,20 +458,7 @@ namespace MapGISPlugin3
         #region 保留的辅助函数 (LayerSelectDialog, GrdWriter, ConvertListToGrd, Init, DengZhiXian)
 
         // "选择输出文件" 按钮 (逻辑不变)
-        private void buttonEdit1_ButtonClick(object sender, DevExpress.XtraEditors.Controls.ButtonPressedEventArgs e)
-        {
-            SaveFileDialog savefile = new SaveFileDialog();
-            savefile.Filter = "Surfer 6 Grid File (*.grd)|*.grd|All files (*.*)|*.*";
-            savefile.FilterIndex = 1;
-            savefile.RestoreDirectory = true;
-            savefile.Title = "请选择计算结果(.grd)的保存位置";
-
-            if (savefile.ShowDialog() == DialogResult.OK)
-            {
-                this.buttonEdit1.Text = savefile.FileName;
-            }
-            savefile.Dispose();
-        }
+       
 
         // LayerSelectDialog 内部类 (逻辑不变)
         private class LayerSelectDialog : Form
@@ -925,6 +949,28 @@ namespace MapGISPlugin3
                 m_Map2 = null;
             }
             base.Dispose(disposing);
+        }
+        // 浏览输出路径的事件处理方法
+        private void btnBrowseOutput_Click(object sender, EventArgs e)
+        {
+            // 这里放入选择输出路径的逻辑（例如文件保存对话框）
+            using (SaveFileDialog saveFileDialog = new SaveFileDialog())
+            {
+                // 设置对话框标题
+                saveFileDialog.Title = "选择输出文件路径";
+                // 设置文件筛选器（根据你的需求修改）
+                saveFileDialog.Filter = "所有文件 (*.*)|*.*";
+                // 如果用户点击了确定按钮
+                if (saveFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    // 将选择的路径显示在文本框中
+                    this.textBoxSavePath.Text = saveFileDialog.FileName;
+                }
+            }
+        }
+        private void button1_Click(object sender, EventArgs e)
+        {
+            this.Close();
         }
 
         #endregion

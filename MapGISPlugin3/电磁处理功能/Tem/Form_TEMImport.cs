@@ -845,5 +845,6 @@ namespace MapGISPlugin3
             this.Close();
         }
         #endregion
+
     }
 }
