@@ -28,10 +28,10 @@ namespace MapGISPlugin3
             this.label4 = new System.Windows.Forms.Label();
             this.label5 = new System.Windows.Forms.Label();
             this.button1 = new System.Windows.Forms.Button();
-            this.panelControl1 = new System.Windows.Forms.Panel();
+            this.panelControl1 = new DevExpress.XtraEditors.PanelControl();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.数据导入ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.panelControl2 = new System.Windows.Forms.Panel();
+            this.panelControl2 = new DevExpress.XtraEditors.PanelControl();
             this.button3 = new System.Windows.Forms.Button();
             this.radioButton4 = new System.Windows.Forms.RadioButton();
             this.label6 = new System.Windows.Forms.Label();
@@ -73,52 +73,45 @@ namespace MapGISPlugin3
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(302, 150);
-            this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label1.Location = new System.Drawing.Point(201, 100);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(80, 18);
+            this.label1.Size = new System.Drawing.Size(53, 12);
             this.label1.TabIndex = 0;
             this.label1.Text = "实测数据";
             // 
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(1022, 150);
-            this.label2.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label2.Location = new System.Drawing.Point(681, 100);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(80, 18);
+            this.label2.Size = new System.Drawing.Size(53, 12);
             this.label2.TabIndex = 2;
             this.label2.Text = "转换结果";
             // 
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(1552, 150);
-            this.label3.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label3.Location = new System.Drawing.Point(1035, 100);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(80, 18);
+            this.label3.Size = new System.Drawing.Size(53, 12);
             this.label3.TabIndex = 3;
             this.label3.Text = "处理方法";
             // 
             // comboBox1
             // 
-            this.comboBox1.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboBox1.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.comboBox1.FormattingEnabled = true;
-            this.comboBox1.Location = new System.Drawing.Point(1490, 178);
-            this.comboBox1.Margin = new System.Windows.Forms.Padding(4);
+            this.comboBox1.Location = new System.Drawing.Point(993, 119);
             this.comboBox1.Name = "comboBox1";
-            this.comboBox1.Size = new System.Drawing.Size(236, 26);
+            this.comboBox1.Size = new System.Drawing.Size(159, 20);
             this.comboBox1.TabIndex = 4;
             this.comboBox1.SelectedIndexChanged += new System.EventHandler(this.comboBox1_SelectedIndexChanged);
             // 
             // radioButton1
             // 
             this.radioButton1.AutoSize = true;
-            this.radioButton1.Location = new System.Drawing.Point(1326, 562);
-            this.radioButton1.Margin = new System.Windows.Forms.Padding(4);
+            this.radioButton1.Location = new System.Drawing.Point(884, 375);
             this.radioButton1.Name = "radioButton1";
-            this.radioButton1.Size = new System.Drawing.Size(42, 22);
+            this.radioButton1.Size = new System.Drawing.Size(29, 16);
             this.radioButton1.TabIndex = 6;
             this.radioButton1.TabStop = true;
             this.radioButton1.Text = "X";
@@ -127,10 +120,9 @@ namespace MapGISPlugin3
             // radioButton2
             // 
             this.radioButton2.AutoSize = true;
-            this.radioButton2.Location = new System.Drawing.Point(1558, 724);
-            this.radioButton2.Margin = new System.Windows.Forms.Padding(4);
+            this.radioButton2.Location = new System.Drawing.Point(1059, 486);
             this.radioButton2.Name = "radioButton2";
-            this.radioButton2.Size = new System.Drawing.Size(42, 22);
+            this.radioButton2.Size = new System.Drawing.Size(29, 16);
             this.radioButton2.TabIndex = 7;
             this.radioButton2.TabStop = true;
             this.radioButton2.Text = "Y";
@@ -139,10 +131,9 @@ namespace MapGISPlugin3
             // radioButton3
             // 
             this.radioButton3.AutoSize = true;
-            this.radioButton3.Location = new System.Drawing.Point(1630, 724);
-            this.radioButton3.Margin = new System.Windows.Forms.Padding(4);
+            this.radioButton3.Location = new System.Drawing.Point(1123, 486);
             this.radioButton3.Name = "radioButton3";
-            this.radioButton3.Size = new System.Drawing.Size(42, 22);
+            this.radioButton3.Size = new System.Drawing.Size(29, 16);
             this.radioButton3.TabIndex = 8;
             this.radioButton3.TabStop = true;
             this.radioButton3.Text = "Z";
@@ -151,30 +142,26 @@ namespace MapGISPlugin3
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(1323, 540);
-            this.label4.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label4.Location = new System.Drawing.Point(882, 360);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(80, 18);
+            this.label4.Size = new System.Drawing.Size(53, 12);
             this.label4.TabIndex = 9;
             this.label4.Text = "文本选择";
             // 
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(1323, 626);
-            this.label5.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label5.Location = new System.Drawing.Point(882, 417);
             this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(80, 18);
+            this.label5.Size = new System.Drawing.Size(53, 12);
             this.label5.TabIndex = 10;
             this.label5.Text = "滤波参数";
             // 
             // button1
             // 
-            this.button1.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.button1.Location = new System.Drawing.Point(1502, 810);
-            this.button1.Margin = new System.Windows.Forms.Padding(4);
+            this.button1.Location = new System.Drawing.Point(1007, 543);
             this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(242, 39);
+            this.button1.Size = new System.Drawing.Size(145, 26);
             this.button1.TabIndex = 12;
             this.button1.Text = "计算";
             this.button1.UseVisualStyleBackColor = true;
@@ -182,52 +169,41 @@ namespace MapGISPlugin3
             // 
             // panelControl1
             // 
-            this.panelControl1.BackColor = System.Drawing.SystemColors.Control;
-            this.panelControl1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.panelControl1.Location = new System.Drawing.Point(33, 178);
-            this.panelControl1.Margin = new System.Windows.Forms.Padding(4);
+            this.panelControl1.Location = new System.Drawing.Point(22, 119);
             this.panelControl1.Name = "panelControl1";
-            this.panelControl1.Size = new System.Drawing.Size(675, 675);
+            this.panelControl1.Size = new System.Drawing.Size(450, 450);
             this.panelControl1.TabIndex = 15;
             // 
             // menuStrip1
             // 
-            this.menuStrip1.GripMargin = new System.Windows.Forms.Padding(2, 2, 0, 2);
-            this.menuStrip1.ImageScalingSize = new System.Drawing.Size(24, 24);
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.数据导入ToolStripMenuItem});
-            this.menuStrip1.Location = new System.Drawing.Point(0, 48);
+            this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Padding = new System.Windows.Forms.Padding(8, 3, 0, 3);
-            this.menuStrip1.Size = new System.Drawing.Size(1764, 28);
+            this.menuStrip1.Padding = new System.Windows.Forms.Padding(5, 2, 0, 2);
+            this.menuStrip1.Size = new System.Drawing.Size(1176, 25);
             this.menuStrip1.TabIndex = 16;
             this.menuStrip1.Text = "menuStrip1";
             // 
             // 数据导入ToolStripMenuItem
             // 
-            this.数据导入ToolStripMenuItem.Font = new System.Drawing.Font("宋体", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
             this.数据导入ToolStripMenuItem.Name = "数据导入ToolStripMenuItem";
-            this.数据导入ToolStripMenuItem.Size = new System.Drawing.Size(96, 22);
+            this.数据导入ToolStripMenuItem.Size = new System.Drawing.Size(68, 21);
             this.数据导入ToolStripMenuItem.Text = "数据导入";
             this.数据导入ToolStripMenuItem.Click += new System.EventHandler(this.数据导入ToolStripMenuItem_Click);
             // 
             // panelControl2
             // 
-            this.panelControl2.BackColor = System.Drawing.SystemColors.Control;
-            this.panelControl2.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.panelControl2.Location = new System.Drawing.Point(732, 178);
-            this.panelControl2.Margin = new System.Windows.Forms.Padding(4);
+            this.panelControl2.Location = new System.Drawing.Point(488, 119);
             this.panelControl2.Name = "panelControl2";
-            this.panelControl2.Size = new System.Drawing.Size(675, 675);
+            this.panelControl2.Size = new System.Drawing.Size(450, 450);
             this.panelControl2.TabIndex = 17;
             // 
             // button3
             // 
-            this.button3.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.button3.Location = new System.Drawing.Point(1295, 142);
-            this.button3.Margin = new System.Windows.Forms.Padding(4);
+            this.button3.Location = new System.Drawing.Point(863, 95);
             this.button3.Name = "button3";
-            this.button3.Size = new System.Drawing.Size(112, 34);
+            this.button3.Size = new System.Drawing.Size(75, 23);
             this.button3.TabIndex = 18;
             this.button3.Text = "可视化";
             this.button3.UseVisualStyleBackColor = true;
@@ -236,10 +212,9 @@ namespace MapGISPlugin3
             // radioButton4
             // 
             this.radioButton4.AutoSize = true;
-            this.radioButton4.Location = new System.Drawing.Point(1480, 724);
-            this.radioButton4.Margin = new System.Windows.Forms.Padding(4);
+            this.radioButton4.Location = new System.Drawing.Point(1007, 486);
             this.radioButton4.Name = "radioButton4";
-            this.radioButton4.Size = new System.Drawing.Size(42, 22);
+            this.radioButton4.Size = new System.Drawing.Size(29, 16);
             this.radioButton4.TabIndex = 19;
             this.radioButton4.TabStop = true;
             this.radioButton4.Text = "X";
@@ -248,19 +223,16 @@ namespace MapGISPlugin3
             // label6
             // 
             this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(1414, 779);
-            this.label6.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label6.Location = new System.Drawing.Point(948, 520);
             this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(80, 18);
+            this.label6.Size = new System.Drawing.Size(53, 12);
             this.label6.TabIndex = 20;
             this.label6.Text = "结果输出";
             // 
             // buttonEdit1
             // 
-            this.buttonEdit1.BackColor = System.Drawing.SystemColors.Control;
-            this.buttonEdit1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.buttonEdit1.Location = new System.Drawing.Point(1502, 775);
-            this.buttonEdit1.Margin = new System.Windows.Forms.Padding(4);
+            this.buttonEdit1.EditValue = "";
+            this.buttonEdit1.Location = new System.Drawing.Point(1007, 517);
             this.buttonEdit1.Name = "buttonEdit1";
             // 
             // 
@@ -269,17 +241,7 @@ namespace MapGISPlugin3
             new DevExpress.XtraEditors.Controls.EditorButton()});
             this.buttonEdit1.Size = new System.Drawing.Size(145, 20);
             this.buttonEdit1.TabIndex = 21;
-            // 
-            // btnBrowse
-            // 
-            this.btnBrowse.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.btnBrowse.Location = new System.Drawing.Point(1682, 775);
-            this.btnBrowse.Name = "btnBrowse";
-            this.btnBrowse.Size = new System.Drawing.Size(62, 28);
-            this.btnBrowse.TabIndex = 22;
-            this.btnBrowse.Text = "...";
-            this.btnBrowse.UseVisualStyleBackColor = true;
-            this.btnBrowse.Click += new System.EventHandler(this.btnBrowse_Click);
+            this.buttonEdit1.ButtonClick += new DevExpress.XtraEditors.Controls.ButtonPressedEventHandler(this.buttonEdit1_ButtonClick);
             // 
             // pnlPolar
             // 
@@ -465,45 +427,9 @@ namespace MapGISPlugin3
             this.lblIsm.TabIndex = 1;
             this.lblIsm.Text = "计算模式";
             // 
-            // panelTitle
-            // 
-            this.panelTitle.BackColor = System.Drawing.SystemColors.Control;
-            this.panelTitle.Controls.Add(this.labelTitle);
-            this.panelTitle.Controls.Add(this.btnClose);
-            this.panelTitle.Dock = System.Windows.Forms.DockStyle.Top;
-            this.panelTitle.Location = new System.Drawing.Point(0, 0);
-            this.panelTitle.Name = "panelTitle";
-            this.panelTitle.Size = new System.Drawing.Size(1764, 48);
-            this.panelTitle.TabIndex = 26;
-            // 
-            // labelTitle
-            // 
-            this.labelTitle.Dock = System.Windows.Forms.DockStyle.Left;
-            this.labelTitle.ForeColor = System.Drawing.SystemColors.ControlText;
-            this.labelTitle.Location = new System.Drawing.Point(0, 0);
-            this.labelTitle.Name = "labelTitle";
-            this.labelTitle.Size = new System.Drawing.Size(150, 48);
-            this.labelTitle.TabIndex = 1;
-            this.labelTitle.Text = "数据处理";
-            this.labelTitle.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
-            // btnClose
-            // 
-            this.btnClose.Dock = System.Windows.Forms.DockStyle.Right;
-            this.btnClose.FlatAppearance.BorderColor = System.Drawing.SystemColors.ControlLight;
-            this.btnClose.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnClose.Font = new System.Drawing.Font("宋体", 6.75F);
-            this.btnClose.Location = new System.Drawing.Point(1720, 0);
-            this.btnClose.Name = "btnClose";
-            this.btnClose.Size = new System.Drawing.Size(44, 48);
-            this.btnClose.TabIndex = 0;
-            this.btnClose.Text = "X";
-            this.btnClose.UseVisualStyleBackColor = true;
-            this.btnClose.Click += new System.EventHandler(this.btnClose_Click);
-            // 
             // Form1
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 18F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1176, 601);
             this.Controls.Add(this.pnlSecond);  // 【新增】添加pnlSecond到Form控件
@@ -529,9 +455,9 @@ namespace MapGISPlugin3
             this.Controls.Add(this.label1);
             this.Controls.Add(this.menuStrip1);
             this.Name = "Form1";
-            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "数据处理";
+            this.Text = "位场转换处理";
             this.Load += new System.EventHandler(this.Form1_Load);
+            ((System.ComponentModel.ISupportInitialize)(this.panelControl1)).EndInit();
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.panelControl2)).EndInit();
@@ -561,10 +487,10 @@ namespace MapGISPlugin3
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.Button button1;
-        private System.Windows.Forms.Panel panelControl1;
+        private DevExpress.XtraEditors.PanelControl panelControl1;
         private System.Windows.Forms.MenuStrip menuStrip1;
         private System.Windows.Forms.ToolStripMenuItem 数据导入ToolStripMenuItem;
-        private System.Windows.Forms.Panel panelControl2;
+        private DevExpress.XtraEditors.PanelControl panelControl2;
         private System.Windows.Forms.Button button3;
         private System.Windows.Forms.RadioButton radioButton4;
         private System.Windows.Forms.Label label6;
