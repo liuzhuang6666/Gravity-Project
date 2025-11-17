@@ -12,9 +12,6 @@ namespace MapGISPlugin3
     {
         // 新增：窗口拖动与边框拉伸所需字段
         private Point mousePoint = new Point();
-        private int lastWidth = 0;
-        private int lastHeight = 0;
-        private Label[] borderLabels = new Label[4];
         private IApplication _hook = null;
         private Map _map = null;
         
@@ -25,7 +22,6 @@ namespace MapGISPlugin3
             // InitializeComponent() 必须是第一行，它会创建你在设计器里看到的所有控件
             InitializeComponent();
             // 新增：初始化拖动和边框拉伸功能
-            InitCustomBorder();
             InitTitleDrag();
 
             // *** 修正点 1: 动态填充下拉框内容 ***
@@ -146,42 +142,6 @@ namespace MapGISPlugin3
             this.Close();
         }
         #region --- 新增：窗口拖动与边框拉伸逻辑 ---
-        /// <summary>
-        /// 初始化自定义边框（左、上、右、下）
-        /// </summary>
-        private void InitCustomBorder()
-        {
-            // 1. 创建4个边框Label
-            for (int i = 0; i < 4; i++)
-            {
-                borderLabels[i] = new Label();
-                borderLabels[i].BackColor = System.Drawing.Color.FromArgb(188, 182, 211); // 与其他表单统一边框颜色
-                borderLabels[i].Size = new Size(2, 2); // 边框宽度/高度
-                this.Controls.Add(borderLabels[i]);
-                this.Controls.SetChildIndex(borderLabels[i], 0); // 边框置于底层，不遮挡控件
-            }
-
-            // 2. 设置边框停靠与拉伸光标
-            borderLabels[0].Dock = DockStyle.Left;     // 左边框
-            borderLabels[1].Dock = DockStyle.Top;      // 上边框
-            borderLabels[2].Dock = DockStyle.Right;    // 右边框
-            borderLabels[3].Dock = DockStyle.Bottom;   // 下边框
-
-            borderLabels[0].Cursor = Cursors.SizeWE;   // 左右拉伸光标
-            borderLabels[2].Cursor = Cursors.SizeWE;
-            borderLabels[1].Cursor = Cursors.SizeNS;   // 上下拉伸光标
-            borderLabels[3].Cursor = Cursors.SizeNS;
-
-            // 3. 绑定边框事件（按下+移动）
-            foreach (var label in borderLabels)
-            {
-                label.MouseDown += Border_MouseDown;
-            }
-            borderLabels[0].MouseMove += LeftBorder_MouseMove;
-            borderLabels[1].MouseMove += TopBorder_MouseMove;
-            borderLabels[2].MouseMove += RightBorder_MouseMove;
-            borderLabels[3].MouseMove += BottomBorder_MouseMove;
-        }
 
         /// <summary>
         /// 初始化标题栏（panel1）拖动事件
@@ -216,80 +176,6 @@ namespace MapGISPlugin3
             }
         }
 
-        /// <summary>
-        /// 边框按下：记录窗口初始尺寸与鼠标位置
-        /// </summary>
-        private void Border_MouseDown(object sender, MouseEventArgs e)
-        {
-            if (e.Button == MouseButtons.Left)
-            {
-                lastWidth = this.Width;
-                lastHeight = this.Height;
-                mousePoint = Control.MousePosition;
-            }
-        }
-
-        /// <summary>
-        /// 左边框拉伸（限制最小宽度，避免控件拥挤）
-        /// </summary>
-        private void LeftBorder_MouseMove(object sender, MouseEventArgs e)
-        {
-            if (e.Button == MouseButtons.Left)
-            {
-                int newWidth = lastWidth - (Control.MousePosition.X - mousePoint.X);
-                if (newWidth >= 350) // 适配表单控件的最小宽度
-                {
-                    this.Width = newWidth;
-                    this.Left = Control.MousePosition.X;
-                }
-            }
-        }
-
-        /// <summary>
-        /// 右边框拉伸
-        /// </summary>
-        private void RightBorder_MouseMove(object sender, MouseEventArgs e)
-        {
-            if (e.Button == MouseButtons.Left)
-            {
-                int newWidth = lastWidth + (Control.MousePosition.X - mousePoint.X);
-                if (newWidth >= 350)
-                {
-                    this.Width = newWidth;
-                }
-            }
-        }
-
-        /// <summary>
-        /// 上边框拉伸（限制最小高度）
-        /// </summary>
-        private void TopBorder_MouseMove(object sender, MouseEventArgs e)
-        {
-            if (e.Button == MouseButtons.Left)
-            {
-                int newHeight = lastHeight - (Control.MousePosition.Y - mousePoint.Y);
-                if (newHeight >= 180) // 适配表单内容的最小高度
-                {
-                    this.Height = newHeight;
-                    this.Top = Control.MousePosition.Y;
-                }
-            }
-        }
-
-        /// <summary>
-        /// 下边框拉伸
-        /// </summary>
-        private void BottomBorder_MouseMove(object sender, MouseEventArgs e)
-        {
-            if (e.Button == MouseButtons.Left)
-            {
-                int newHeight = lastHeight + (Control.MousePosition.Y - mousePoint.Y);
-                if (newHeight >= 180)
-                {
-                    this.Height = newHeight;
-                }
-            }
-        }
         #endregion
     }
 }

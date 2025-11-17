@@ -21,11 +21,14 @@ using MapGIS.G3DAttModeling; // 建模引擎
 using MapGIS.Geologic.Model.VolumeModel; // GeoVolModelingParam
 using MapGIS.GeoObjects.Geometry3D; // Dot3D, Rect3D
 using MapGIS.G3DWorkSpace;
+using System.Drawing;
 #endregion
 namespace MapGISPlugin3
 {
     public partial class Form_GravityCorrelationImaging : Form
     {
+        // 窗口拖动相关字段
+        private Point mousePoint = new Point();
         #region 2. 成员变量与公共属性
         private IApplication m_Hook;
         // 使用 RasterLayer 类型存储，避免重复转换
@@ -36,6 +39,7 @@ namespace MapGISPlugin3
         public Form_GravityCorrelationImaging(IApplication hook)
         {
             InitializeComponent();
+            InitTitleDrag();
             m_Hook = hook;
         }
         private void Form_MagCorrelationImaging_Load(object sender, EventArgs e)
@@ -468,9 +472,38 @@ namespace MapGISPlugin3
             catch (Exception ex) { ShowError("导出到 GRD 文件时发生未知错误: " + ex.Message, "导出失败"); Console.WriteLine($"[ExportRasterToGrd] 未知错误: {ex.ToString()}"); return false; }
             finally
             {
-                if (writer != null) { try { writer.Close(); writer.Dispose(); } catch { } } // 确保关闭和释放
-                if (band != null) { try { Marshal.ReleaseComObject(band); } catch { } band = null; }
-                if (rds != null) { try { Marshal.ReleaseComObject(rds); } catch { } rds = null; }
+                // 释放 StreamWriter 资源（使用 using 语句更推荐，若必须手动释放则用 Dispose）
+                if (writer != null)
+                {
+                    try
+                    {
+                        writer.Close(); // 关闭流
+                        writer.Dispose(); // 释放资源（Close 内部会调用 Dispose，但显式调用更保险）
+                    }
+                    catch { } // 忽略关闭/释放时的异常
+                }
+
+                // 释放 COM 对象（需确保是真正的 COM 对象，避免对非 COM 对象调用）
+                if (band != null)
+                {
+                    try
+                    {
+                        Marshal.ReleaseComObject(band); // 释放 COM 引用
+                    }
+                    catch { }
+                    band = null; // 置空，帮助 GC 回收
+                }
+
+                if (rds != null)
+                {
+                    try
+                    {
+                        Marshal.ReleaseComObject(rds); // 释放 COM 引用
+                    }
+                    catch { }
+                    rds = null; // 置空，帮助 GC 回收
+                }
+
                 Console.WriteLine("[ExportRasterToGrd] finally 块执行完毕。");
             }
         }
@@ -1173,6 +1206,46 @@ namespace MapGISPlugin3
         {
 
         }
+        /// <summary>
+        /// 关闭按钮点击事件
+        /// </summary>
+        private void button1_Click(object sender, EventArgs e)
+        {
+            this.Close();
+        }
+        /// <summary>
+        /// 初始化标题栏拖动事件
+        /// </summary>
+        private void InitTitleDrag()
+        {
+            panel1.MouseDown += TitlePanel_MouseDown;
+            panel1.MouseMove += TitlePanel_MouseMove;
+        }
+
+        /// <summary>
+        /// 标题栏按下：记录鼠标相对位置
+        /// </summary>
+        private void TitlePanel_MouseDown(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                mousePoint.X = e.X;
+                mousePoint.Y = e.Y;
+            }
+        }
+
+        /// <summary>
+        /// 标题栏移动：计算窗口新位置
+        /// </summary>
+        private void TitlePanel_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                this.Left = Control.MousePosition.X - mousePoint.X;
+                this.Top = Control.MousePosition.Y - mousePoint.Y;
+            }
+        }
+
     } // End Class
 }
 #endregion

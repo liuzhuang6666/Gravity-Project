@@ -224,12 +224,23 @@
     </Compile>
     <Compile Include="电磁处理功能\Mt\MT1diCommand.cs" />
     <Compile Include="电磁处理功能\Mt\MTAddDataCommand.cs" />
-    <Compile Include="目录树\CreatePorjectForm.cs">
+    <Compile Include="电磁处理功能\Tem\Form_TEMImport.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="目录树\CreatePorjectForm.Designer.cs">
-      <DependentUpon>CreatePorjectForm.cs</DependentUpon>
+    <Compile Include="电磁处理功能\Tem\Form_TEMImport.Designer.cs">
+      <DependentUpon>Form_TEMImport.cs</DependentUpon>
     </Compile>
+    <Compile Include="电磁处理功能\Tem\Form_TEMProcess.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="电磁处理功能\Tem\Form_TEMProcess.Designer.cs">
+      <DependentUpon>Form_TEMProcess.cs</DependentUpon>
+    </Compile>
+    <Compile Include="电磁处理功能\Tem\TEMCalculator.cs" />
+    <Compile Include="电磁处理功能\Tem\TEMDataClasses.cs" />
+    <Compile Include="电磁处理功能\Tem\TEMDataParser.cs" />
+    <Compile Include="电磁处理功能\Tem\TemImportCommand.cs" />
+    <Compile Include="电磁处理功能\Tem\TemProcessCommand.cs" />
     <Compile Include="目录树\CreatePrjectForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -318,8 +329,11 @@
     <EmbeddedResource Include="电磁处理功能\Mt\Form_MTAddData.resx">
       <DependentUpon>Form_MTAddData.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="目录树\CreatePorjectForm.resx">
-      <DependentUpon>CreatePorjectForm.cs</DependentUpon>
+    <EmbeddedResource Include="电磁处理功能\Tem\Form_TEMImport.resx">
+      <DependentUpon>Form_TEMImport.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="电磁处理功能\Tem\Form_TEMProcess.resx">
+      <DependentUpon>Form_TEMProcess.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="目录树\CreatePrjectForm.resx">
       <DependentUpon>CreatePrjectForm.cs</DependentUpon>
@@ -358,7 +372,6 @@
     <Folder Include="Processor\" />
     <Folder Include="电磁处理功能\Sip\" />
     <Folder Include="电磁处理功能\Tdip\" />
-    <Folder Include="电磁处理功能\Tem\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Algorithm\CSAMT1di\a.exe">
@@ -460,11 +473,38 @@
     <Content Include="Algorithm\TEM1di\a.exe">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Algorithm\TEM1di\iconv.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Algorithm\TEM1di\libbz2-1.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Algorithm\TEM1di\libfreetype-6.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="Algorithm\TEM1di\libgcc_s_seh-1.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Algorithm\TEM1di\libgfortran-5.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Algorithm\TEM1di\libglib-2.0-0.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Algorithm\TEM1di\libharfbuzz-0.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Algorithm\TEM1di\libintl-8.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Algorithm\TEM1di\libpcre-1.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Algorithm\TEM1di\libpcre2-16-0.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Algorithm\TEM1di\libpng16-16.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="Algorithm\TEM1di\libquadmath-0.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -478,9 +518,18 @@
     <Content Include="Algorithm\TEM1di\libwinpthread-1.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Algorithm\TEM1di\Qt5Core.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Algorithm\TEM1di\Qt5Gui.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="Algorithm\TEM1di\tem1dicore.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <EmbeddedResource Include="Algorithm\TEM1di\zlib1.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <None Include="Algorithm\GravityCorrelationImaging\magdpicore.lib">

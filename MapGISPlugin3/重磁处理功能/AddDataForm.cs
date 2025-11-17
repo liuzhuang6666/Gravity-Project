@@ -20,7 +20,8 @@ namespace MapGISPlugin3
     public partial class AddDataForm : DevExpress.XtraEditors.XtraForm
     {
         Map m_Map = null;
-        
+        private Point mousePoint = new Point();
+
         private string m_Url;// 数据URL
 
         /// <summary>
@@ -39,6 +40,7 @@ namespace MapGISPlugin3
         {
             this.layerSelectComboBoxRas = new LayerSelectComboBox();
             InitializeComponent();
+            InitTitleDrag();
 
             Maps maps = doc.GetMaps();
             m_Map = maps.GetMap(0);
@@ -80,6 +82,38 @@ namespace MapGISPlugin3
             
 
 
+        }
+        /// <summary>
+        /// 初始化标题栏拖动事件
+        /// </summary>
+        private void InitTitleDrag()
+        {
+            panel1.MouseDown += TitlePanel_MouseDown;
+            panel1.MouseMove += TitlePanel_MouseMove;
+        }
+
+        /// <summary>
+        /// 标题栏按下：记录鼠标相对位置
+        /// </summary>
+        private void TitlePanel_MouseDown(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                mousePoint.X = e.X;
+                mousePoint.Y = e.Y;
+            }
+        }
+
+        /// <summary>
+        /// 标题栏移动：计算窗口新位置
+        /// </summary>
+        private void TitlePanel_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                this.Left = Control.MousePosition.X - mousePoint.X;
+                this.Top = Control.MousePosition.Y - mousePoint.Y;
+            }
         }
 
         private bool layerSelectComboBoxRas_PreAddLayerEvent(object sender, object layer)
@@ -164,8 +198,11 @@ namespace MapGISPlugin3
             }
         }
 
-        
+        private void buttonClose_Click(object sender, EventArgs e)
+        {
+            this.Close();
+        }
 
-        
+
     }
 }

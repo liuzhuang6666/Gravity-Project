@@ -96,10 +96,12 @@ namespace MapGISPlugin3
 
         private int[] Imc = {601,603,498,500,436,408,391,233,190,184,154,122,106,33,31,
                127,391,128,392,393,136,149,150,442,443,186,444,179,180,445,189,190};
+        private Point mousePoint = new Point();
 
         public Form1(IApplication hook)
         {
             InitializeComponent();
+            InitTitleDrag();
             m_Hook = hook;
             if (m_Hook != null)
             {
@@ -129,11 +131,67 @@ namespace MapGISPlugin3
             this.dataTable.Columns.Add("线层数据", typeof(LinInfo));
             this.dataTable.Columns.Add("区层数据", typeof(RegInfo));
         }
+        /// <summary>
+        /// 初始化标题栏拖动事件
+        /// </summary>
+        private void InitTitleDrag()
+        {
+            panelTitle.MouseDown += TitlePanel_MouseDown;
+            panelTitle.MouseMove += TitlePanel_MouseMove;
+        }
 
+        /// <summary>
+        /// 标题栏按下：记录鼠标相对位置
+        /// </summary>
+        private void TitlePanel_MouseDown(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                mousePoint.X = e.X;
+                mousePoint.Y = e.Y;
+            }
+        }
+
+        /// <summary>
+        /// 标题栏移动：计算窗口新位置
+        /// </summary>
+        private void TitlePanel_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                this.Left = Control.MousePosition.X - mousePoint.X;
+                this.Top = Control.MousePosition.Y - mousePoint.Y;
+            }
+        }
+
+        /// <summary>
+        /// 关闭按钮点击事件
+        /// </summary>
+        private void btnClose_Click(object sender, EventArgs e)
+        {
+            this.Close();
+        }
+
+        /// <summary>
+        /// 浏览按钮点击事件（替代原ButtonEdit功能）
+        /// </summary>
+        private void btnBrowse_Click(object sender, EventArgs e)
+        {
+            // 这里添加原buttonEdit1的浏览功能代码
+            using (SaveFileDialog saveFileDialog = new SaveFileDialog())
+            {
+                // 设置对话框属性
+                saveFileDialog.Title = "选择结果输出路径";
+                saveFileDialog.Filter = "所有文件|*.*";
+                if (saveFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    buttonEdit1.Text = saveFileDialog.FileName;
+                }
+            }
+        }
         private void Form1_Load(object sender, EventArgs e)
         {
-            this.buttonEdit1.Properties.ReadOnly = true;
-            this.buttonEdit1.Properties.Buttons[0].Enabled = false;
+            this.buttonEdit1.ReadOnly = true;  // 标准 TextBox 的 ReadOnly 属性
             this.buttonEdit1.BackColor = System.Drawing.SystemColors.ControlLight;
 
             this.m_mtr.ActiveMap = m_Map;
@@ -342,7 +400,7 @@ namespace MapGISPlugin3
                 InitializeComponents();
                 PopulateTreeView();
             }
-
+            
             private void InitializeComponents()
             {
                 this.Text = "选择栅格图层";
@@ -372,7 +430,6 @@ namespace MapGISPlugin3
                 this.Controls.Add(treeViewLayers);
                 this.Controls.Add(buttonPanel);
             }
-
             private void PopulateTreeView()
             {
                 treeViewLayers.Nodes.Clear();
@@ -875,6 +932,11 @@ namespace MapGISPlugin3
                 m_Map2 = null;
             }
             base.Dispose(disposing);
+        }
+
+        private void label9_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }

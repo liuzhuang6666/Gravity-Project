@@ -58,20 +58,18 @@
             // 
             this.textBoxInclination.BackColor = System.Drawing.SystemColors.Control;
             this.textBoxInclination.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.textBoxInclination.Location = new System.Drawing.Point(67, 67);
-            this.textBoxInclination.Margin = new System.Windows.Forms.Padding(2);
+            this.textBoxInclination.Location = new System.Drawing.Point(100, 100);
             this.textBoxInclination.Name = "textBoxInclination";
-            this.textBoxInclination.Size = new System.Drawing.Size(44, 21);
+            this.textBoxInclination.Size = new System.Drawing.Size(65, 28);
             this.textBoxInclination.TabIndex = 1;
             // 
             // textBoxDeclination
             // 
             this.textBoxDeclination.BackColor = System.Drawing.SystemColors.Control;
             this.textBoxDeclination.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.textBoxDeclination.Location = new System.Drawing.Point(207, 67);
-            this.textBoxDeclination.Margin = new System.Windows.Forms.Padding(2);
+            this.textBoxDeclination.Location = new System.Drawing.Point(310, 100);
             this.textBoxDeclination.Name = "textBoxDeclination";
-            this.textBoxDeclination.Size = new System.Drawing.Size(41, 21);
+            this.textBoxDeclination.Size = new System.Drawing.Size(60, 28);
             this.textBoxDeclination.TabIndex = 2;
             this.textBoxDeclination.TextChanged += new System.EventHandler(this.textBoxDeclination_TextChanged);
             // 
@@ -80,10 +78,9 @@
             this.btnOK.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnOK.AutoSize = true;
             this.btnOK.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.btnOK.Location = new System.Drawing.Point(282, 239);
-            this.btnOK.Margin = new System.Windows.Forms.Padding(2);
+            this.btnOK.Location = new System.Drawing.Point(423, 358);
             this.btnOK.Name = "btnOK";
-            this.btnOK.Size = new System.Drawing.Size(65, 23);
+            this.btnOK.Size = new System.Drawing.Size(98, 34);
             this.btnOK.TabIndex = 3;
             this.btnOK.Text = "确认";
             this.btnOK.UseVisualStyleBackColor = true;
@@ -94,10 +91,9 @@
             this.btnCancel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.btnCancel.AutoSize = true;
             this.btnCancel.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.btnCancel.Location = new System.Drawing.Point(415, 239);
-            this.btnCancel.Margin = new System.Windows.Forms.Padding(2);
+            this.btnCancel.Location = new System.Drawing.Point(622, 358);
             this.btnCancel.Name = "btnCancel";
-            this.btnCancel.Size = new System.Drawing.Size(65, 23);
+            this.btnCancel.Size = new System.Drawing.Size(98, 34);
             this.btnCancel.TabIndex = 4;
             this.btnCancel.Text = "取消";
             this.btnCancel.UseVisualStyleBackColor = true;
@@ -108,20 +104,18 @@
             this.treeViewLayers.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left)));
             this.treeViewLayers.BackColor = System.Drawing.SystemColors.Control;
-            this.treeViewLayers.Location = new System.Drawing.Point(28, 19);
-            this.treeViewLayers.Margin = new System.Windows.Forms.Padding(2);
+            this.treeViewLayers.Location = new System.Drawing.Point(42, 28);
             this.treeViewLayers.Name = "treeViewLayers";
-            this.treeViewLayers.Size = new System.Drawing.Size(145, 228);
+            this.treeViewLayers.Size = new System.Drawing.Size(216, 340);
             this.treeViewLayers.TabIndex = 5;
             this.treeViewLayers.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.treeViewLayers_AfterSelect);
             // 
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(16, 70);
-            this.label1.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.label1.Location = new System.Drawing.Point(24, 105);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(47, 12);
+            this.label1.Size = new System.Drawing.Size(71, 18);
             this.label1.TabIndex = 6;
             this.label1.Text = "磁倾角:";
             this.label1.Click += new System.EventHandler(this.label1_Click);
@@ -129,10 +123,9 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(160, 70);
-            this.label2.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.label2.Location = new System.Drawing.Point(239, 105);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(47, 12);
+            this.label2.Size = new System.Drawing.Size(71, 18);
             this.label2.TabIndex = 7;
             this.label2.Text = "磁偏角:";
             this.label2.Click += new System.EventHandler(this.label2_Click);
@@ -144,21 +137,19 @@
             this.textBoxSavePath.BackColor = System.Drawing.SystemColors.Control;
             this.textBoxSavePath.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.textBoxSavePath.ForeColor = System.Drawing.SystemColors.WindowText;
-            this.textBoxSavePath.Location = new System.Drawing.Point(103, 105);
-            this.textBoxSavePath.Margin = new System.Windows.Forms.Padding(2);
+            this.textBoxSavePath.Location = new System.Drawing.Point(154, 158);
             this.textBoxSavePath.Name = "textBoxSavePath";
             this.textBoxSavePath.ReadOnly = true;
-            this.textBoxSavePath.Size = new System.Drawing.Size(142, 21);
+            this.textBoxSavePath.Size = new System.Drawing.Size(212, 28);
             this.textBoxSavePath.TabIndex = 8;
             this.textBoxSavePath.TextChanged += new System.EventHandler(this.textBoxGdbDirectory_TextChanged);
             // 
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(16, 108);
-            this.label3.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.label3.Location = new System.Drawing.Point(24, 162);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(83, 12);
+            this.label3.Size = new System.Drawing.Size(125, 18);
             this.label3.TabIndex = 9;
             this.label3.Text = "结果输出命名:";
             // 
@@ -168,39 +159,35 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.textBoxGdbDirectory.BackColor = System.Drawing.SystemColors.Control;
             this.textBoxGdbDirectory.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.textBoxGdbDirectory.Location = new System.Drawing.Point(85, 34);
-            this.textBoxGdbDirectory.Margin = new System.Windows.Forms.Padding(2);
+            this.textBoxGdbDirectory.Location = new System.Drawing.Point(128, 51);
             this.textBoxGdbDirectory.Name = "textBoxGdbDirectory";
-            this.textBoxGdbDirectory.Size = new System.Drawing.Size(160, 21);
+            this.textBoxGdbDirectory.Size = new System.Drawing.Size(239, 28);
             this.textBoxGdbDirectory.TabIndex = 11;
             // 
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(16, 37);
-            this.label4.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.label4.Location = new System.Drawing.Point(24, 56);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(65, 12);
+            this.label4.Size = new System.Drawing.Size(98, 18);
             this.label4.TabIndex = 12;
             this.label4.Text = "GDB文件夹:";
             // 
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(112, 67);
-            this.label5.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.label5.Location = new System.Drawing.Point(168, 100);
             this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(17, 12);
+            this.label5.Size = new System.Drawing.Size(26, 18);
             this.label5.TabIndex = 13;
             this.label5.Text = "°";
             // 
             // label6
             // 
             this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(251, 67);
-            this.label6.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.label6.Location = new System.Drawing.Point(376, 100);
             this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(17, 12);
+            this.label6.Size = new System.Drawing.Size(26, 18);
             this.label6.TabIndex = 14;
             this.label6.Text = "°";
             // 
@@ -210,9 +197,11 @@
             | System.Windows.Forms.AnchorStyles.Left)));
             this.groupBox1.AutoSize = true;
             this.groupBox1.Controls.Add(this.treeViewLayers);
-            this.groupBox1.Location = new System.Drawing.Point(12, 30);
+            this.groupBox1.Location = new System.Drawing.Point(18, 45);
+            this.groupBox1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(198, 262);
+            this.groupBox1.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox1.Size = new System.Drawing.Size(297, 393);
             this.groupBox1.TabIndex = 15;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "结果显示";
@@ -233,9 +222,11 @@
             this.groupBox2.Controls.Add(this.label1);
             this.groupBox2.Controls.Add(this.textBoxDeclination);
             this.groupBox2.Controls.Add(this.textBoxInclination);
-            this.groupBox2.Location = new System.Drawing.Point(238, 74);
+            this.groupBox2.Location = new System.Drawing.Point(357, 111);
+            this.groupBox2.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(286, 145);
+            this.groupBox2.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox2.Size = new System.Drawing.Size(429, 218);
             this.groupBox2.TabIndex = 16;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "基本信息";
@@ -248,16 +239,18 @@
             this.panel1.Controls.Add(this.button1);
             this.panel1.Dock = System.Windows.Forms.DockStyle.Top;
             this.panel1.Location = new System.Drawing.Point(0, 0);
+            this.panel1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(580, 20);
+            this.panel1.Size = new System.Drawing.Size(870, 30);
             this.panel1.TabIndex = 17;
             // 
             // label7
             // 
             this.label7.ForeColor = System.Drawing.SystemColors.ControlText;
-            this.label7.Location = new System.Drawing.Point(-1, 0);
+            this.label7.Location = new System.Drawing.Point(-2, 0);
+            this.label7.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(65, 20);
+            this.label7.Size = new System.Drawing.Size(98, 30);
             this.label7.TabIndex = 1;
             this.label7.Text = "磁相关成像";
             this.label7.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -268,9 +261,10 @@
             this.button1.FlatAppearance.BorderColor = System.Drawing.SystemColors.ControlLight;
             this.button1.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button1.Font = new System.Drawing.Font("宋体", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.button1.Location = new System.Drawing.Point(560, 0);
+            this.button1.Location = new System.Drawing.Point(840, 0);
+            this.button1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(20, 20);
+            this.button1.Size = new System.Drawing.Size(30, 30);
             this.button1.TabIndex = 0;
             this.button1.Text = "X";
             this.button1.UseVisualStyleBackColor = true;
@@ -278,20 +272,19 @@
             // 
             // Form_MagCorrelationImaging
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 18F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.AutoSize = true;
             this.BackColor = System.Drawing.SystemColors.Control;
-            this.ClientSize = new System.Drawing.Size(580, 320);
+            this.ClientSize = new System.Drawing.Size(870, 480);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.btnOK);
             this.Controls.Add(this.btnCancel);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
-            this.Margin = new System.Windows.Forms.Padding(2);
-            this.MaximumSize = new System.Drawing.Size(580, 320);
-            this.MinimumSize = new System.Drawing.Size(580, 320);
+            this.MaximumSize = new System.Drawing.Size(870, 480);
+            this.MinimumSize = new System.Drawing.Size(870, 480);
             this.Name = "Form_MagCorrelationImaging";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "磁相关成像";

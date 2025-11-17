@@ -1,8 +1,5 @@
 ﻿namespace MapGISPlugin3
 {
-    // **************************************************
-    // 4. Designer 文件中的 partial class 名已修改
-    // **************************************************
     partial class Form_GravityCorrelationImaging
     {
         /// <summary>
@@ -38,11 +35,22 @@
             this.label3 = new System.Windows.Forms.Label();
             this.textBoxGdbDirectory = new System.Windows.Forms.TextBox();
             this.label4 = new System.Windows.Forms.Label();
+            this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.panel1 = new System.Windows.Forms.Panel();
+            this.label7 = new System.Windows.Forms.Label();
+            this.button1 = new System.Windows.Forms.Button();
+            this.groupBox1.SuspendLayout();
+            this.groupBox2.SuspendLayout();
+            this.panel1.SuspendLayout();
             this.SuspendLayout();
             // 
             // btnOK
             // 
-            this.btnOK.Location = new System.Drawing.Point(402, 338);
+            this.btnOK.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnOK.AutoSize = true;
+            this.btnOK.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.btnOK.Location = new System.Drawing.Point(423, 358);
             this.btnOK.Name = "btnOK";
             this.btnOK.Size = new System.Drawing.Size(98, 34);
             this.btnOK.TabIndex = 3;
@@ -52,7 +60,10 @@
             // 
             // btnCancel
             // 
-            this.btnCancel.Location = new System.Drawing.Point(614, 338);
+            this.btnCancel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnCancel.AutoSize = true;
+            this.btnCancel.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.btnCancel.Location = new System.Drawing.Point(622, 358);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(98, 34);
             this.btnCancel.TabIndex = 4;
@@ -61,65 +72,156 @@
             // 
             // treeViewLayers
             // 
-            this.treeViewLayers.Location = new System.Drawing.Point(68, 22);
+            this.treeViewLayers.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left)));
+            this.treeViewLayers.BackColor = System.Drawing.SystemColors.Control;
+            this.treeViewLayers.Location = new System.Drawing.Point(42, 28);
             this.treeViewLayers.Name = "treeViewLayers";
-            this.treeViewLayers.Size = new System.Drawing.Size(216, 349);
+            this.treeViewLayers.Size = new System.Drawing.Size(216, 340);
             this.treeViewLayers.TabIndex = 5;
             this.treeViewLayers.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.treeViewLayers_AfterSelect);
             // 
             // textBoxSavePath
             // 
-            this.textBoxSavePath.BackColor = System.Drawing.SystemColors.Window;
+            this.textBoxSavePath.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.textBoxSavePath.BackColor = System.Drawing.SystemColors.Control;
+            this.textBoxSavePath.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.textBoxSavePath.ForeColor = System.Drawing.SystemColors.WindowText;
-            this.textBoxSavePath.Location = new System.Drawing.Point(478, 272);
+            this.textBoxSavePath.Location = new System.Drawing.Point(149, 139);
             this.textBoxSavePath.Name = "textBoxSavePath";
             this.textBoxSavePath.ReadOnly = true;
-            this.textBoxSavePath.Size = new System.Drawing.Size(234, 28);
+            this.textBoxSavePath.Size = new System.Drawing.Size(239, 28);
             this.textBoxSavePath.TabIndex = 8;
             this.textBoxSavePath.TextChanged += new System.EventHandler(this.textBoxGdbDirectory_TextChanged);
             // 
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(334, 276);
+            this.label3.Location = new System.Drawing.Point(19, 144);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(116, 18);
+            this.label3.Size = new System.Drawing.Size(125, 18);
             this.label3.TabIndex = 9;
-            this.label3.Text = "结果输出命名";
+            this.label3.Text = "结果输出命名:";
             this.label3.Click += new System.EventHandler(this.label3_Click);
             // 
             // textBoxGdbDirectory
             // 
-            this.textBoxGdbDirectory.Location = new System.Drawing.Point(470, 224);
+            this.textBoxGdbDirectory.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.textBoxGdbDirectory.BackColor = System.Drawing.SystemColors.Control;
+            this.textBoxGdbDirectory.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.textBoxGdbDirectory.Location = new System.Drawing.Point(149, 84);
             this.textBoxGdbDirectory.Name = "textBoxGdbDirectory";
-            this.textBoxGdbDirectory.Size = new System.Drawing.Size(242, 28);
+            this.textBoxGdbDirectory.Size = new System.Drawing.Size(239, 28);
             this.textBoxGdbDirectory.TabIndex = 11;
             // 
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(336, 229);
+            this.label4.Location = new System.Drawing.Point(45, 89);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(89, 18);
+            this.label4.Size = new System.Drawing.Size(98, 18);
             this.label4.TabIndex = 12;
-            this.label4.Text = "GDB文件夹";
+            this.label4.Text = "GDB文件夹:";
             this.label4.Click += new System.EventHandler(this.label4_Click);
+            // 
+            // groupBox1
+            // 
+            this.groupBox1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left)));
+            this.groupBox1.AutoSize = true;
+            this.groupBox1.Controls.Add(this.treeViewLayers);
+            this.groupBox1.Location = new System.Drawing.Point(18, 45);
+            this.groupBox1.Margin = new System.Windows.Forms.Padding(4);
+            this.groupBox1.Name = "groupBox1";
+            this.groupBox1.Padding = new System.Windows.Forms.Padding(4);
+            this.groupBox1.Size = new System.Drawing.Size(297, 393);
+            this.groupBox1.TabIndex = 15;
+            this.groupBox1.TabStop = false;
+            this.groupBox1.Text = "结果显示";
+            // 
+            // groupBox2
+            // 
+            this.groupBox2.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.groupBox2.AutoSize = true;
+            this.groupBox2.Controls.Add(this.label4);
+            this.groupBox2.Controls.Add(this.textBoxGdbDirectory);
+            this.groupBox2.Controls.Add(this.label3);
+            this.groupBox2.Controls.Add(this.textBoxSavePath);
+            this.groupBox2.Location = new System.Drawing.Point(357, 111);
+            this.groupBox2.Margin = new System.Windows.Forms.Padding(4);
+            this.groupBox2.Name = "groupBox2";
+            this.groupBox2.Padding = new System.Windows.Forms.Padding(4);
+            this.groupBox2.Size = new System.Drawing.Size(429, 218);
+            this.groupBox2.TabIndex = 16;
+            this.groupBox2.TabStop = false;
+            this.groupBox2.Text = "基本信息";
+            // 
+            // panel1
+            // 
+            this.panel1.AutoSize = true;
+            this.panel1.BackColor = System.Drawing.SystemColors.Control;
+            this.panel1.Controls.Add(this.label7);
+            this.panel1.Controls.Add(this.button1);
+            this.panel1.Dock = System.Windows.Forms.DockStyle.Top;
+            this.panel1.Location = new System.Drawing.Point(0, 0);
+            this.panel1.Margin = new System.Windows.Forms.Padding(4);
+            this.panel1.Name = "panel1";
+            this.panel1.Size = new System.Drawing.Size(870, 30);
+            this.panel1.TabIndex = 17;
+            // 
+            // label7
+            // 
+            this.label7.ForeColor = System.Drawing.SystemColors.ControlText;
+            this.label7.Location = new System.Drawing.Point(-2, 0);
+            this.label7.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(116, 30);
+            this.label7.TabIndex = 1;
+            this.label7.Text = "重力相关成像";
+            this.label7.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // button1
+            // 
+            this.button1.Dock = System.Windows.Forms.DockStyle.Right;
+            this.button1.FlatAppearance.BorderColor = System.Drawing.SystemColors.ControlLight;
+            this.button1.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.button1.Font = new System.Drawing.Font("宋体", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.button1.Location = new System.Drawing.Point(840, 0);
+            this.button1.Margin = new System.Windows.Forms.Padding(4);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(30, 30);
+            this.button1.TabIndex = 0;
+            this.button1.Text = "X";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
             // Form_GravityCorrelationImaging
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 18F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(800, 450);
-            this.Controls.Add(this.label4);
-            this.Controls.Add(this.textBoxGdbDirectory);
-            this.Controls.Add(this.label3);
-            this.Controls.Add(this.textBoxSavePath);
-            this.Controls.Add(this.treeViewLayers);
-            this.Controls.Add(this.btnCancel);
+            this.AutoSize = true;
+            this.BackColor = System.Drawing.SystemColors.Control;
+            this.ClientSize = new System.Drawing.Size(870, 480);
+            this.Controls.Add(this.panel1);
+            this.Controls.Add(this.groupBox2);
+            this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.btnOK);
+            this.Controls.Add(this.btnCancel);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
+            this.MaximumSize = new System.Drawing.Size(870, 480);
+            this.MinimumSize = new System.Drawing.Size(870, 480);
             this.Name = "Form_GravityCorrelationImaging";
-            this.Text = "磁相关成像";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+            this.Text = "重力相关成像";
             this.Load += new System.EventHandler(this.Form_MagCorrelationImaging_Load);
+            this.groupBox1.ResumeLayout(false);
+            this.groupBox2.ResumeLayout(false);
+            this.groupBox2.PerformLayout();
+            this.panel1.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -133,5 +235,10 @@
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.TextBox textBoxGdbDirectory;
         private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.GroupBox groupBox1;
+        private System.Windows.Forms.GroupBox groupBox2;
+        private System.Windows.Forms.Panel panel1;
+        private System.Windows.Forms.Label label7;
+        private System.Windows.Forms.Button button1;
     }
 }

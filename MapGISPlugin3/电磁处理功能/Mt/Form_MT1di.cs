@@ -52,6 +52,33 @@ namespace MapGISPlugin3
         /// <summary>
         /// (辅助函数) 从 "电法数据" 地图加载图层列表 (已移除弹窗调试)
         /// </summary>
+        #region 窗口拖动逻辑（与Form_MTAddData保持一致）
+        private Point mousePoint = new Point();
+
+        private void InitDragEvent()
+        {
+            panelTitle.MouseDown += TitlePanel_MouseDown;
+            panelTitle.MouseMove += TitlePanel_MouseMove;
+        }
+
+        private void TitlePanel_MouseDown(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                mousePoint.X = e.X;
+                mousePoint.Y = e.Y;
+            }
+        }
+
+        private void TitlePanel_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                this.Left = Control.MousePosition.X - mousePoint.X;
+                this.Top = Control.MousePosition.Y - mousePoint.Y;
+            }
+        }
+        #endregion
         private void LoadLayersFromMap()
         {
             m_allPointLayers.Clear();
@@ -1539,10 +1566,14 @@ namespace MapGISPlugin3
         private void Form_MT1di_Load(object sender, EventArgs e)
         {
             LoadLayersFromMap();
+            InitDragEvent();
+        }
+        private void btnClose_Click(object sender, EventArgs e)
+        {
+            this.Close();
         }
 
-        
 
-        
+
     } // End Class
 } // End Namespace

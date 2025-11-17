@@ -29,9 +29,6 @@ namespace MapGISPlugin3
     {
         // 新增：窗口拖动与边框拉伸所需字段
         private Point mousePoint = new Point();
-        private int lastWidth = 0;
-        private int lastHeight = 0;
-        private System.Windows.Forms.Label[] borderLabels = new System.Windows.Forms.Label[4];
 
         #region 2. 成员变量与公共属性
         private IApplication m_Hook;
@@ -47,7 +44,6 @@ namespace MapGISPlugin3
             InitializeComponent();
             m_Hook = hook;
             // 新增：初始化拖动和边框拉伸功能（在控件初始化后执行）
-            InitCustomBorder();
             InitTitleDrag();
         }
         private void Form_MagCorrelationImaging_Load(object sender, EventArgs e)
@@ -1181,43 +1177,6 @@ namespace MapGISPlugin3
         }
         #region --- 新增：窗口拖动与边框拉伸逻辑 ---
         /// <summary>
-        /// 初始化自定义边框（左、上、右、下）
-        /// </summary>
-        private void InitCustomBorder()
-        {
-            // 1. 创建4个边框Label（左、上、右、下）
-            for (int i = 0; i < 4; i++)
-            {
-                borderLabels[i] = new System.Windows.Forms.Label();
-                borderLabels[i].BackColor = System.Drawing.Color.FromArgb(188, 182, 211); // 与其他表单统一边框颜色
-                borderLabels[i].Size = new Size(2, 2); // 边框宽度/高度（2px）
-                this.Controls.Add(borderLabels[i]);
-                this.Controls.SetChildIndex(borderLabels[i], 0); // 边框置于底层，不遮挡TreeView、输入框等控件
-            }
-
-            // 2. 设置边框停靠方式和拉伸光标
-            borderLabels[0].Dock = DockStyle.Left;     // 左边框
-            borderLabels[1].Dock = DockStyle.Top;      // 上边框
-            borderLabels[2].Dock = DockStyle.Right;    // 右边框
-            borderLabels[3].Dock = DockStyle.Bottom;   // 下边框
-
-            borderLabels[0].Cursor = Cursors.SizeWE;   // 左右拉伸光标（水平方向）
-            borderLabels[2].Cursor = Cursors.SizeWE;
-            borderLabels[1].Cursor = Cursors.SizeNS;   // 上下拉伸光标（垂直方向）
-            borderLabels[3].Cursor = Cursors.SizeNS;
-
-            // 3. 绑定边框事件（按下+移动）
-            foreach (var label in borderLabels)
-            {
-                label.MouseDown += Border_MouseDown;
-            }
-            borderLabels[0].MouseMove += LeftBorder_MouseMove;
-            borderLabels[1].MouseMove += TopBorder_MouseMove;
-            borderLabels[2].MouseMove += RightBorder_MouseMove;
-            borderLabels[3].MouseMove += BottomBorder_MouseMove;
-        }
-
-        /// <summary>
         /// 初始化标题栏（panel1）拖动事件
         /// </summary>
         private void InitTitleDrag()
@@ -1248,87 +1207,6 @@ namespace MapGISPlugin3
                 // 窗口新位置 = 鼠标当前屏幕坐标 - 鼠标相对标题栏的位置
                 this.Left = Control.MousePosition.X - mousePoint.X;
                 this.Top = Control.MousePosition.Y - mousePoint.Y;
-            }
-        }
-
-        /// <summary>
-        /// 边框按下：记录当前窗口尺寸和鼠标屏幕位置
-        /// </summary>
-        private void Border_MouseDown(object sender, MouseEventArgs e)
-        {
-            if (e.Button == MouseButtons.Left)
-            {
-                lastWidth = this.Width;   // 记录拉伸前的窗口宽度
-                lastHeight = this.Height; // 记录拉伸前的窗口高度
-                mousePoint = Control.MousePosition; // 记录拉伸前的鼠标屏幕位置
-            }
-        }
-
-        /// <summary>
-        /// 左边框拉伸：左移增大宽度，右移减小宽度（限制最小宽度）
-        /// </summary>
-        private void LeftBorder_MouseMove(object sender, MouseEventArgs e)
-        {
-            if (e.Button == MouseButtons.Left)
-            {
-                // 计算新宽度 = 原始宽度 - 鼠标水平移动距离（左移距离为正，宽度增大）
-                int newWidth = lastWidth - (Control.MousePosition.X - mousePoint.X);
-                // 最小宽度500px：确保TreeView和右侧输入框不拥挤
-                if (newWidth >= 500)
-                {
-                    this.Width = newWidth;
-                    this.Left = Control.MousePosition.X; // 同步左移窗口，避免拉伸时窗口偏移
-                }
-            }
-        }
-
-        /// <summary>
-        /// 右边框拉伸：右移增大宽度（限制最小宽度）
-        /// </summary>
-        private void RightBorder_MouseMove(object sender, MouseEventArgs e)
-        {
-            if (e.Button == MouseButtons.Left)
-            {
-                // 计算新宽度 = 原始宽度 + 鼠标水平移动距离（右移距离为正，宽度增大）
-                int newWidth = lastWidth + (Control.MousePosition.X - mousePoint.X);
-                if (newWidth >= 500)
-                {
-                    this.Width = newWidth;
-                }
-            }
-        }
-
-        /// <summary>
-        /// 上边框拉伸：上移增大高度（限制最小高度）
-        /// </summary>
-        private void TopBorder_MouseMove(object sender, MouseEventArgs e)
-        {
-            if (e.Button == MouseButtons.Left)
-            {
-                // 计算新高度 = 原始高度 - 鼠标垂直移动距离（上移距离为正，高度增大）
-                int newHeight = lastHeight - (Control.MousePosition.Y - mousePoint.Y);
-                // 最小高度280px：确保底部确定/取消按钮不被遮挡
-                if (newHeight >= 280)
-                {
-                    this.Height = newHeight;
-                    this.Top = Control.MousePosition.Y; // 同步上移窗口，避免拉伸时窗口偏移
-                }
-            }
-        }
-
-        /// <summary>
-        /// 下边框拉伸：下移增大高度（限制最小高度）
-        /// </summary>
-        private void BottomBorder_MouseMove(object sender, MouseEventArgs e)
-        {
-            if (e.Button == MouseButtons.Left)
-            {
-                // 计算新高度 = 原始高度 + 鼠标垂直移动距离（下移距离为正，高度增大）
-                int newHeight = lastHeight + (Control.MousePosition.Y - mousePoint.Y);
-                if (newHeight >= 280)
-                {
-                    this.Height = newHeight;
-                }
             }
         }
         #endregion
