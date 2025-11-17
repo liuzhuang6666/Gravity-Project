@@ -328,10 +328,12 @@ namespace MapGISPlugin3
                         m_tempann = null;
                         m_LfZstep = 10;
                         Init();
-                        DengZhiXianKeShiHua(m_Map, m_mtr);
+                        // 【修改】在这里调用时，传入原始数据的文件名
+                        string sourceBaseName = Path.GetFileNameWithoutExtension(newLayerForPlugin.Name);
+                        DengZhiXianKeShiHua(m_Map, m_mtr, sourceBaseName);
 
                         // 【修改】在此处调用新方法，将导入数据的可视化结果添加到主地图
-                        AddVisualizationLayersToMainMap();
+                        AddVisualizationLayersToMainMap(sourceBaseName);
                     }
                     else
                     {
@@ -838,7 +840,7 @@ namespace MapGISPlugin3
             }
         }
 
-        private void DengZhiXianKeShiHua(Map mapToUse, MapControl mtrToUse)
+        private void DengZhiXianKeShiHua(Map mapToUse, MapControl mtrToUse, string desiredBaseName = null)
         {
             if (m_ContourParamStrcT == null) return;
 
@@ -849,12 +851,26 @@ namespace MapGISPlugin3
             }
 
             RasTraceContour traceContour;
-            string rasterLayerName = "DataSource";
+
+            // 【修改】使用新的命名逻辑
+            string rasterLayerName;
+            if (!string.IsNullOrEmpty(desiredBaseName))
+            {
+                rasterLayerName = desiredBaseName; // 优先使用传入的名称
+            }
+            else if (mtrToUse.ActiveMap.LayerCount > 0 && mtrToUse.ActiveMap.get_Layer(0) is RasterLayer)
+            {
+                // 如果没有传入名称，则使用旧的逻辑作为备用方案
+                rasterLayerName = Path.GetFileNameWithoutExtension(mtrToUse.ActiveMap.get_Layer(0).Name);
+            }
+            else
+            {
+                rasterLayerName = "DataSource"; // 最后的备用方案
+            }
+
             if (mtrToUse.ActiveMap.get_Layer(0) is RasterLayer)
             {
-                RasterLayer rasLayer = mtrToUse.ActiveMap.get_Layer(0) as RasterLayer;
-                rasterLayerName = Path.GetFileNameWithoutExtension(rasLayer.Name);
-                RasterDataSet rasdataset = rasLayer.GetData() as RasterDataSet;
+                RasterDataSet rasdataset = (mtrToUse.ActiveMap.get_Layer(0) as RasterLayer).GetData() as RasterDataSet;
                 traceContour = new RasTraceContour(rasdataset, m_BandNum);
             }
             else
@@ -891,6 +907,7 @@ namespace MapGISPlugin3
                 return;
             }
 
+            // 【修改】这里使用我们刚刚确定的 rasterLayerName 来生成要素类名
             string baseName = GenerateClassName(rasterLayerName, "Contour");
 
             // 2. 在这个数据库对象中创建要素类，并获取其URL
@@ -1002,10 +1019,10 @@ namespace MapGISPlugin3
         }
         private void button1_Click(object sender, EventArgs e)
         {
-            string newfilePath = this.buttonEdit1.Text.Trim();
-            if (string.IsNullOrEmpty(newfilePath) || _inputFilePath == null || m_SourceMap == null)
+            // --- 【第1步：校验输入】 ---
+            if (string.IsNullOrEmpty(_inputFilePath) || m_SourceMap == null)
             {
-                MessageBox.Show("请先通过“数据导入”加载数据，并指定结果输出路径。", "操作提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("请先通过“数据导入”加载数据。", "操作提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
             if (comboBox1.SelectedItem == null)
@@ -1013,13 +1030,33 @@ namespace MapGISPlugin3
                 MessageBox.Show("请选择一个处理方法。", "操作提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
+
+            // --- 【第2步：为本次计算生成唯一的输出路径】 ---
+            string originalOutputPath = this.buttonEdit1.Text.Trim();
+            if (string.IsNullOrEmpty(originalOutputPath))
+            {
+                MessageBox.Show("请先指定一个基础的结果输出路径。", "操作提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
             string modeStr = comboBox1.SelectedItem.ToString();
+            string directory = Path.GetDirectoryName(originalOutputPath);
+            string baseFileName = Path.GetFileNameWithoutExtension(_inputFilePath); // 使用输入文件名作为基础
+            string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+            // 创建一个包含算法名称和时间戳的新文件名，确保唯一性
+            string uniqueFileName = $"{baseFileName}_{modeStr}_{timestamp}.grd";
+            string finalOutputFilePath = Path.Combine(directory, uniqueFileName);
+
+            // （可选）更新界面上的路径，让用户知道实际保存位置
+            this.buttonEdit1.Text = finalOutputFilePath;
+            System.Windows.Forms.Application.DoEvents(); // 强制UI刷新
+
+            // --- 【第3步：参数校验和读取（您的原始代码）】 ---
             double od = 0, oi = 0, elev = 0, nd = 0, ni = 0, ori = 0, ord = 0;
-            // 【新增】二次导数参数
             int ism = 0;
 
             #region 参数校验和读取
-            // 根据当前选择的方法，校验并读取参数
+            // ... (您原来的参数校验代码保持不变) ...
             switch (modeStr)
             {
                 case "化极":
@@ -1073,7 +1110,6 @@ namespace MapGISPlugin3
                         return;
                     }
                     break;
-                // 【新增】二次导数参数校验
                 case "二次导数":
                     if (string.IsNullOrWhiteSpace(txtIsm.Text) || !int.TryParse(txtIsm.Text, out ism))
                     {
@@ -1112,8 +1148,8 @@ namespace MapGISPlugin3
                     double.TryParse(words[1], out coory2);
                     intervalx = (nx > 1) ? (coorx2 - coorx0) / (nx - 1) : 100.0;
                     intervaly = (ny > 1) ? (coory2 - coory0) / (ny - 1) : 100.0;
-                    sr.Close();
-                    fs.Close();
+                    /*                    sr.Close();
+                                        fs.Close();*/
 
                     // 【修改】这里的 buffer 数组不再需要，因为我们不再直接调用 DLL
                     // double[] buffer = new double[nx * ny];
@@ -1276,18 +1312,31 @@ namespace MapGISPlugin3
                     double cellsize = intervalx;
                     double nodataValue = -9999;
 
-                    GrdWriter.SaveToAsciiGrid(grd, newfilePath, xllcorner, yllcorner, cellsize, nodataValue);
+                    // --- 【第4步：使用新的唯一路径来保存文件】 ---
+                    try
+                    {
+                        // 将 newfilePath 替换为 finalOutputFilePath
+                        GrdWriter.SaveToAsciiGrid(grd, finalOutputFilePath, xllcorner, yllcorner, cellsize, nodataValue);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"保存结果文件时出错：\n路径：{finalOutputFilePath}\n错误：{ex.Message}", "文件写入失败", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return; // 如果保存失败，则终止后续操作
+                    }
 
-                    // ... (后续的加载图层、可视化等代码保持不变) ...
-                    // 【修改】添加结果到源地图（主界面）
+                    // 【修改】在加载图层前，先获取基础名称
+                    string resultBaseName = Path.GetFileNameWithoutExtension(finalOutputFilePath);
+
+                    // --- 【第5步：加载新生成的文件到地图】 ---
+                    // 添加结果到源地图（主界面）
                     RasterLayer raslayerForMain = new RasterLayer();
-                    raslayerForMain.URL = "file:///" + newfilePath;
+                    // 使用 finalOutputFilePath
+                    raslayerForMain.URL = "file:///" + finalOutputFilePath;
                     if (raslayerForMain.ConnectData())
                     {
-                        raslayerForMain.Name = Path.GetFileNameWithoutExtension(newfilePath);
+                        raslayerForMain.Name = resultBaseName; // 名称已设置
                         m_SourceMap.Append(raslayerForMain);
 
-                        // 刷新主视图
                         if (m_Hook.ActiveContentsView is IMapContentsView mapView)
                         {
                             mapView.MapControl.Refresh();
@@ -1295,14 +1344,16 @@ namespace MapGISPlugin3
                     }
                     else
                     {
-                        XMessageBox.Information("加载计算结果文件到主地图失败：\n" + newfilePath);
+                        XMessageBox.Information("加载计算结果文件到主地图失败：\n" + finalOutputFilePath);
                     }
 
-                    // 【修改】为插件右侧面板添加结果（使用临时地图）
+                    // 为插件右侧面板添加结果
                     RasterLayer raslayerForPlugin = new RasterLayer();
-                    raslayerForPlugin.URL = "file:///" + newfilePath;
+                    // 使用 finalOutputFilePath
+                    raslayerForPlugin.URL = "file:///" + finalOutputFilePath;
                     if (raslayerForPlugin.ConnectData())
                     {
+                        raslayerForPlugin.Name = resultBaseName;
                         m_Map2.RemoveAll();
                         m_Map2.Append(raslayerForPlugin);
                     }
@@ -1311,12 +1362,10 @@ namespace MapGISPlugin3
                         this.m_mtr2.ActiveMap.get_Layer(0).State = m_ShowRasOrTin ? LayerState.Visible : LayerState.UnVisible;
                     this.m_mtr2.Restore();
 
-                    DengZhiXianKeShiHua(m_Map2, m_mtr2);
-
-                    // 【修改】在此处调用新方法，将计算结果的可视化图层添加到主地图
-                    AddVisualizationLayersToMainMap();
+                    DengZhiXianKeShiHua(m_Map2, m_mtr2, resultBaseName);
+                    AddVisualizationLayersToMainMap(resultBaseName);
                 }
-            } // using 结束，文件流自动关闭
+            }
         }
 
 
@@ -1344,27 +1393,39 @@ namespace MapGISPlugin3
         }
 
         // 【新增】将当前的可视化图层添加到主地图文档
-        // 【新增】将当前的可视化图层添加到主地图文档
-        private void AddVisualizationLayersToMainMap()
+        private void AddVisualizationLayersToMainMap(string desiredBaseName = null)
         {
             if (m_SourceMap == null) return;
-
             if (m_Tempsfclsreg == null && m_Tempsfclslin == null && m_tempann == null) return;
 
-            string baseName = "Visualization";
-            MapLayer currentRasterLayer = m_mtr2.ActiveMap.LayerCount > 0 ? m_mtr2.ActiveMap.get_Layer(0) : (m_mtr.ActiveMap.LayerCount > 0 ? m_mtr.ActiveMap.get_Layer(0) : null);
-            if (currentRasterLayer != null)
+            // 【修改】直接使用传入的名称，不再从临时图层猜测
+            string baseName;
+            if (!string.IsNullOrEmpty(desiredBaseName))
             {
-                baseName = Path.GetFileNameWithoutExtension(currentRasterLayer.Name) + "_Contour";
+                baseName = desiredBaseName + "_Contour";
             }
+            else
+            {
+                // 备用逻辑
+                MapLayer currentRasterLayer = m_mtr2.ActiveMap.LayerCount > 0 ? m_mtr2.ActiveMap.get_Layer(0) : (m_mtr.ActiveMap.LayerCount > 0 ? m_mtr.ActiveMap.get_Layer(0) : null);
+                if (currentRasterLayer != null)
+                {
+                    baseName = Path.GetFileNameWithoutExtension(currentRasterLayer.Name) + "_Contour";
+                }
+                else
+                {
+                    baseName = "Visualization_Contour";
+                }
+            }
+
 
             if (m_Tempsfclsreg != null && m_Tempsfclsreg.Count > 0)
             {
                 VectorLayer regLayerForMain = new VectorLayer(VectorLayerType.SFclsLayer);
                 if (regLayerForMain.AttachData(m_Tempsfclsreg))
                 {
-                    regLayerForMain.Name = baseName + "_区";
-                    regLayerForMain.URL = m_RegClsUrl; // 【修改】设置持久化URL
+                    regLayerForMain.Name = baseName + "_区"; // 现在名称是唯一的了
+                    regLayerForMain.URL = m_RegClsUrl;
                     m_SourceMap.Append(regLayerForMain);
                 }
             }
@@ -1374,8 +1435,8 @@ namespace MapGISPlugin3
                 VectorLayer lineLayerForMain = new VectorLayer(VectorLayerType.SFclsLayer);
                 if (lineLayerForMain.AttachData(m_Tempsfclslin))
                 {
-                    lineLayerForMain.Name = baseName + "_线";
-                    lineLayerForMain.URL = m_LinClsUrl; // 【修改】设置持久化URL
+                    lineLayerForMain.Name = baseName + "_线"; // 现在名称是唯一的了
+                    lineLayerForMain.URL = m_LinClsUrl;
                     m_SourceMap.Append(lineLayerForMain);
                 }
             }
@@ -1385,8 +1446,8 @@ namespace MapGISPlugin3
                 VectorLayer annLayerForMain = new VectorLayer(VectorLayerType.AnnLayer);
                 if (annLayerForMain.AttachData(m_tempann))
                 {
-                    annLayerForMain.Name = baseName + "_注记";
-                    annLayerForMain.URL = m_AnnClsUrl; // 【修改】设置持久化URL
+                    annLayerForMain.Name = baseName + "_注记"; // 现在名称是唯一的了
+                    annLayerForMain.URL = m_AnnClsUrl;
                     m_SourceMap.Append(annLayerForMain);
                 }
             }
