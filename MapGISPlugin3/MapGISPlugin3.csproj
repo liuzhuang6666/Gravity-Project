@@ -206,6 +206,18 @@
       <DependentUpon>GeophysicalPreviewControl.cs</DependentUpon>
     </Compile>
     <Compile Include="查看属性\GeophysicalPreviewContentsView.cs" />
+    <Compile Include="查看属性\Preview_MT.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="查看属性\Preview_MT.Designer.cs">
+      <DependentUpon>Preview_MT.cs</DependentUpon>
+    </Compile>
+    <Compile Include="查看属性\Preview_Table.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="查看属性\Preview_Table.Designer.cs">
+      <DependentUpon>Preview_Table.cs</DependentUpon>
+    </Compile>
     <Compile Include="添加数据\Form_AddData.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -360,6 +372,12 @@
     <Compile Include="重磁处理功能\SurfaceContinCommand.cs" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="查看属性\Preview_MT.resx">
+      <DependentUpon>Preview_MT.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="查看属性\Preview_Table.resx">
+      <DependentUpon>Preview_Table.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="添加数据\Form_AddData.resx">
       <DependentUpon>Form_AddData.cs</DependentUpon>
     </EmbeddedResource>
