@@ -23,8 +23,6 @@ namespace MapGISPlugin3
             this.label3 = new System.Windows.Forms.Label();
             this.comboBox1 = new System.Windows.Forms.ComboBox();
             this.radioButton1 = new System.Windows.Forms.RadioButton();
-            this.radioButton2 = new System.Windows.Forms.RadioButton();
-            this.radioButton3 = new System.Windows.Forms.RadioButton();
             this.label4 = new System.Windows.Forms.Label();
             this.label5 = new System.Windows.Forms.Label();
             this.button1 = new System.Windows.Forms.Button();
@@ -32,8 +30,6 @@ namespace MapGISPlugin3
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.数据导入ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.panelControl2 = new DevExpress.XtraEditors.PanelControl();
-            this.button3 = new System.Windows.Forms.Button();
-            this.radioButton4 = new System.Windows.Forms.RadioButton();
             this.label6 = new System.Windows.Forms.Label();
             this.buttonEdit1 = new DevExpress.XtraEditors.ButtonEdit();
             this.pnlPolar = new System.Windows.Forms.Panel();
@@ -54,7 +50,6 @@ namespace MapGISPlugin3
             this.lblOrd = new System.Windows.Forms.Label();
             this.txtOri = new System.Windows.Forms.TextBox();
             this.lblOri = new System.Windows.Forms.Label();
-            // 【新增】二次导数面板
             this.pnlSecond = new System.Windows.Forms.Panel();
             this.txtIsm = new System.Windows.Forms.TextBox();
             this.lblIsm = new System.Windows.Forms.Label();
@@ -66,7 +61,6 @@ namespace MapGISPlugin3
             this.pnlContin.SuspendLayout();
             this.pnlDircomp.SuspendLayout();
             this.pnlDeriv.SuspendLayout();
-            // 【新增】SuspendLayout for pnlSecond
             this.pnlSecond.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -116,28 +110,6 @@ namespace MapGISPlugin3
             this.radioButton1.TabStop = true;
             this.radioButton1.Text = "X";
             this.radioButton1.UseVisualStyleBackColor = true;
-            // 
-            // radioButton2
-            // 
-            this.radioButton2.AutoSize = true;
-            this.radioButton2.Location = new System.Drawing.Point(1059, 486);
-            this.radioButton2.Name = "radioButton2";
-            this.radioButton2.Size = new System.Drawing.Size(29, 16);
-            this.radioButton2.TabIndex = 7;
-            this.radioButton2.TabStop = true;
-            this.radioButton2.Text = "Y";
-            this.radioButton2.UseVisualStyleBackColor = true;
-            // 
-            // radioButton3
-            // 
-            this.radioButton3.AutoSize = true;
-            this.radioButton3.Location = new System.Drawing.Point(1123, 486);
-            this.radioButton3.Name = "radioButton3";
-            this.radioButton3.Size = new System.Drawing.Size(29, 16);
-            this.radioButton3.TabIndex = 8;
-            this.radioButton3.TabStop = true;
-            this.radioButton3.Text = "Z";
-            this.radioButton3.UseVisualStyleBackColor = true;
             // 
             // label4
             // 
@@ -198,27 +170,6 @@ namespace MapGISPlugin3
             this.panelControl2.Name = "panelControl2";
             this.panelControl2.Size = new System.Drawing.Size(450, 450);
             this.panelControl2.TabIndex = 17;
-            // 
-            // button3
-            // 
-            this.button3.Location = new System.Drawing.Point(863, 95);
-            this.button3.Name = "button3";
-            this.button3.Size = new System.Drawing.Size(75, 23);
-            this.button3.TabIndex = 18;
-            this.button3.Text = "可视化";
-            this.button3.UseVisualStyleBackColor = true;
-            this.button3.Click += new System.EventHandler(this.button3_Click);
-            // 
-            // radioButton4
-            // 
-            this.radioButton4.AutoSize = true;
-            this.radioButton4.Location = new System.Drawing.Point(1007, 486);
-            this.radioButton4.Name = "radioButton4";
-            this.radioButton4.Size = new System.Drawing.Size(29, 16);
-            this.radioButton4.TabIndex = 19;
-            this.radioButton4.TabStop = true;
-            this.radioButton4.Text = "X";
-            this.radioButton4.UseVisualStyleBackColor = true;
             // 
             // label6
             // 
@@ -381,7 +332,7 @@ namespace MapGISPlugin3
             this.lblOrd.AutoSize = true;
             this.lblOrd.Location = new System.Drawing.Point(3, 48);
             this.lblOrd.Name = "lblOrd";
-            this.lblOrd.Size = new System.Drawing.Size(53, 12);
+            this.lblOrd.Size = new System.Drawing.Size(29, 12);
             this.lblOrd.TabIndex = 1;
             this.lblOrd.Text = "阶数";
             // 
@@ -397,28 +348,28 @@ namespace MapGISPlugin3
             this.lblOri.AutoSize = true;
             this.lblOri.Location = new System.Drawing.Point(3, 15);
             this.lblOri.Name = "lblOri";
-            this.lblOri.Size = new System.Drawing.Size(53, 12);
+            this.lblOri.Size = new System.Drawing.Size(41, 12);
             this.lblOri.TabIndex = 3;
             this.lblOri.Text = "方位角";
             // 
-            // 【新增】pnlSecond
+            // pnlSecond
             // 
             this.pnlSecond.Controls.Add(this.txtIsm);
             this.pnlSecond.Controls.Add(this.lblIsm);
-            this.pnlSecond.Location = new System.Drawing.Point(993, 163);  // 与pnlDeriv位置一致
+            this.pnlSecond.Location = new System.Drawing.Point(993, 163);
             this.pnlSecond.Name = "pnlSecond";
-            this.pnlSecond.Size = new System.Drawing.Size(170, 50);  // 只有一个参数，高度减小
-            this.pnlSecond.TabIndex = 26;  // 递增TabIndex
+            this.pnlSecond.Size = new System.Drawing.Size(170, 50);
+            this.pnlSecond.TabIndex = 26;
             this.pnlSecond.Visible = false;
             // 
-            // 【新增】txtIsm
+            // txtIsm
             // 
             this.txtIsm.Location = new System.Drawing.Point(65, 12);
             this.txtIsm.Name = "txtIsm";
             this.txtIsm.Size = new System.Drawing.Size(100, 21);
             this.txtIsm.TabIndex = 0;
             // 
-            // 【新增】lblIsm
+            // lblIsm
             // 
             this.lblIsm.AutoSize = true;
             this.lblIsm.Location = new System.Drawing.Point(3, 15);
@@ -432,22 +383,18 @@ namespace MapGISPlugin3
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1176, 601);
-            this.Controls.Add(this.pnlSecond);  // 【新增】添加pnlSecond到Form控件
+            this.Controls.Add(this.pnlSecond);
             this.Controls.Add(this.pnlDeriv);
             this.Controls.Add(this.pnlDircomp);
             this.Controls.Add(this.pnlContin);
             this.Controls.Add(this.pnlPolar);
             this.Controls.Add(this.buttonEdit1);
             this.Controls.Add(this.label6);
-            this.Controls.Add(this.radioButton4);
-            this.Controls.Add(this.button3);
             this.Controls.Add(this.panelControl2);
             this.Controls.Add(this.panelControl1);
             this.Controls.Add(this.button1);
             this.Controls.Add(this.label5);
             this.Controls.Add(this.label4);
-            this.Controls.Add(this.radioButton3);
-            this.Controls.Add(this.radioButton2);
             this.Controls.Add(this.radioButton1);
             this.Controls.Add(this.comboBox1);
             this.Controls.Add(this.label3);
@@ -470,11 +417,11 @@ namespace MapGISPlugin3
             this.pnlDircomp.PerformLayout();
             this.pnlDeriv.ResumeLayout(false);
             this.pnlDeriv.PerformLayout();
-            // 【新增】ResumeLayout for pnlSecond
             this.pnlSecond.ResumeLayout(false);
             this.pnlSecond.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
+
         }
         #endregion
         private System.Windows.Forms.Label label1;
@@ -482,8 +429,6 @@ namespace MapGISPlugin3
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.ComboBox comboBox1;
         private System.Windows.Forms.RadioButton radioButton1;
-        private System.Windows.Forms.RadioButton radioButton2;
-        private System.Windows.Forms.RadioButton radioButton3;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.Button button1;
@@ -491,8 +436,6 @@ namespace MapGISPlugin3
         private System.Windows.Forms.MenuStrip menuStrip1;
         private System.Windows.Forms.ToolStripMenuItem 数据导入ToolStripMenuItem;
         private DevExpress.XtraEditors.PanelControl panelControl2;
-        private System.Windows.Forms.Button button3;
-        private System.Windows.Forms.RadioButton radioButton4;
         private System.Windows.Forms.Label label6;
         private DevExpress.XtraEditors.ButtonEdit buttonEdit1;
         private IApplication hook;
