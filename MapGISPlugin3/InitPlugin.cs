@@ -239,6 +239,17 @@ namespace MapGISPlugin3
                         appendMenuItems.Add(previewCommand);
                     }
                 }
+
+                IMenuExtander imeObjLayer = workSpace.GetMenuExtand(typeof(MapGIS.GeoMap.ObjectLayer));
+                if (imeObjLayer != null)
+                {
+                    imeObjLayer.AddItem(previewCommand);
+                    if (!appendMenuItems.Contains(previewCommand))
+                    {
+                        appendMenuItems.Add(previewCommand);
+                    }
+                }
+
             }
         }
     }

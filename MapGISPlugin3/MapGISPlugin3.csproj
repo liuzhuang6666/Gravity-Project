@@ -206,6 +206,18 @@
       <DependentUpon>GeophysicalPreviewControl.cs</DependentUpon>
     </Compile>
     <Compile Include="查看属性\GeophysicalPreviewContentsView.cs" />
+    <Compile Include="查看属性\Preview_MT.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="查看属性\Preview_MT.Designer.cs">
+      <DependentUpon>Preview_MT.cs</DependentUpon>
+    </Compile>
+    <Compile Include="查看属性\Preview_Table.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="查看属性\Preview_Table.Designer.cs">
+      <DependentUpon>Preview_Table.cs</DependentUpon>
+    </Compile>
     <Compile Include="添加数据\Form_AddData.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -237,6 +249,13 @@
     <Compile Include="电磁处理功能\Csamt\Form_CSAMTAddData.Designer.cs">
       <DependentUpon>Form_CSAMTAddData.cs</DependentUpon>
     </Compile>
+    <Compile Include="电磁处理功能\三维反演\Form_Magnetic3DInversion.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="电磁处理功能\三维反演\Form_Magnetic3DInversion.Designer.cs">
+      <DependentUpon>Form_Magnetic3DInversion.cs</DependentUpon>
+    </Compile>
+    <Compile Include="电磁处理功能\三维反演\Magnetic3DInversionCommand.cs" />
     <Compile Include="电磁处理功能\Mt\Form_MT1di.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -295,6 +314,12 @@
     <Compile Include="重磁处理功能\AddDataForm.Designer.cs">
       <DependentUpon>AddDataForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="重磁处理功能\三维反演\Form_Gravity3DInversion.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="重磁处理功能\三维反演\Form_Gravity3DInversion.Designer.cs">
+      <DependentUpon>Form_Gravity3DInversion.cs</DependentUpon>
+    </Compile>
     <Compile Include="重磁处理功能\Form_GravityCorrelationImaging.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -307,6 +332,7 @@
     <Compile Include="重磁处理功能\Form_SurfaceContin.Designer.cs">
       <DependentUpon>Form_SurfaceContin.cs</DependentUpon>
     </Compile>
+    <Compile Include="重磁处理功能\三维反演\Gravity3DInversionCommand.cs" />
     <Compile Include="重磁处理功能\GravityCorrelationImagingCommand.cs" />
     <Compile Include="重磁处理功能\MagCorrelationImagingCommand.cs" />
     <Compile Include="重磁处理功能\FieldTransformCommand.cs" />
@@ -360,6 +386,12 @@
     <Compile Include="重磁处理功能\SurfaceContinCommand.cs" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="查看属性\Preview_MT.resx">
+      <DependentUpon>Preview_MT.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="查看属性\Preview_Table.resx">
+      <DependentUpon>Preview_Table.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="添加数据\Form_AddData.resx">
       <DependentUpon>Form_AddData.cs</DependentUpon>
     </EmbeddedResource>
@@ -430,6 +462,21 @@
     <Folder Include="电磁处理功能\Tdip\" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Algorithm\3DInversion\a.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Algorithm\3DInversion\libgcc_s_seh-1.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Algorithm\3DInversion\libstdc++-6.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Algorithm\3DInversion\libwinpthread-1.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Algorithm\3DInversion\mag3dicore.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Algorithm\CSAMT1di\a.exe">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -648,6 +695,9 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
+    <None Include="Algorithm\3DInversion\mag3dicore.lib">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="Algorithm\DirectionalDerivative\Makefile.EXEED">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
