@@ -15,10 +15,12 @@
         private void InitializeComponent()
         {
             this.panel1 = new System.Windows.Forms.Panel();
+            this.btnClose = new System.Windows.Forms.Button();
             this.labelTitle = new System.Windows.Forms.Label();
             this.groupBoxData = new System.Windows.Forms.GroupBox();
             this.treeViewLayers = new System.Windows.Forms.TreeView();
             this.groupBoxSettings = new System.Windows.Forms.GroupBox();
+            this.btnBrowseTerrain = new System.Windows.Forms.Button();
             this.labelTerrain = new System.Windows.Forms.Label();
             this.textBoxTerrainPath = new System.Windows.Forms.TextBox();
             this.labelGDB = new System.Windows.Forms.Label();
@@ -27,8 +29,6 @@
             this.textBoxSavePath = new System.Windows.Forms.TextBox();
             this.btnOK = new System.Windows.Forms.Button();
             this.btnCancel = new System.Windows.Forms.Button();
-            this.btnClose = new System.Windows.Forms.Button();
-            this.btnBrowseTerrain = new System.Windows.Forms.Button();
             this.panel1.SuspendLayout();
             this.groupBoxData.SuspendLayout();
             this.groupBoxSettings.SuspendLayout();
@@ -44,6 +44,20 @@
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(794, 30);
             this.panel1.TabIndex = 0;
+            // 
+            // btnClose
+            // 
+            this.btnClose.Dock = System.Windows.Forms.DockStyle.Right;
+            this.btnClose.FlatAppearance.BorderColor = System.Drawing.SystemColors.ControlLight;
+            this.btnClose.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnClose.Font = new System.Drawing.Font("宋体", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.btnClose.Location = new System.Drawing.Point(761, 0);
+            this.btnClose.Name = "btnClose";
+            this.btnClose.Size = new System.Drawing.Size(33, 30);
+            this.btnClose.TabIndex = 2;
+            this.btnClose.Text = "X";
+            this.btnClose.UseVisualStyleBackColor = true;
+            this.btnClose.Click += new System.EventHandler(this.btnClose_Click);
             // 
             // labelTitle
             // 
@@ -88,6 +102,18 @@
             this.groupBoxSettings.TabIndex = 2;
             this.groupBoxSettings.TabStop = false;
             this.groupBoxSettings.Text = "参数设置";
+            // 
+            // btnBrowseTerrain
+            // 
+            this.btnBrowseTerrain.FlatAppearance.BorderColor = System.Drawing.Color.Black;
+            this.btnBrowseTerrain.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.btnBrowseTerrain.Location = new System.Drawing.Point(365, 35);
+            this.btnBrowseTerrain.Name = "btnBrowseTerrain";
+            this.btnBrowseTerrain.Size = new System.Drawing.Size(35, 21);
+            this.btnBrowseTerrain.TabIndex = 7;
+            this.btnBrowseTerrain.Text = "...";
+            this.btnBrowseTerrain.UseVisualStyleBackColor = true;
+            this.btnBrowseTerrain.Click += new System.EventHandler(this.btnBrowseTerrain_Click);
             // 
             // labelTerrain
             // 
@@ -165,30 +191,6 @@
             this.btnCancel.Text = "取消";
             this.btnCancel.UseVisualStyleBackColor = true;
             this.btnCancel.Click += new System.EventHandler(this.btnCancel_Click);
-            // 
-            // btnClose
-            // 
-            this.btnClose.Dock = System.Windows.Forms.DockStyle.Right;
-            this.btnClose.FlatAppearance.BorderColor = System.Drawing.SystemColors.ControlLight;
-            this.btnClose.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnClose.Font = new System.Drawing.Font("宋体", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
-            this.btnClose.Location = new System.Drawing.Point(761, 0);
-            this.btnClose.Name = "btnClose";
-            this.btnClose.Size = new System.Drawing.Size(33, 30);
-            this.btnClose.TabIndex = 2;
-            this.btnClose.Text = "X";
-            this.btnClose.UseVisualStyleBackColor = true;
-            // 
-            // btnBrowseTerrain
-            // 
-            this.btnBrowseTerrain.FlatAppearance.BorderColor = System.Drawing.Color.Black;
-            this.btnBrowseTerrain.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.btnBrowseTerrain.Location = new System.Drawing.Point(365, 35);
-            this.btnBrowseTerrain.Name = "btnBrowseTerrain";
-            this.btnBrowseTerrain.Size = new System.Drawing.Size(35, 21);
-            this.btnBrowseTerrain.TabIndex = 7;
-            this.btnBrowseTerrain.Text = "...";
-            this.btnBrowseTerrain.UseVisualStyleBackColor = true;
             // 
             // Form_Gravity3DInversion
             // 

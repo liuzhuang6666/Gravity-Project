@@ -360,7 +360,7 @@ namespace MapGISPlugin3
             panel1.MouseMove += (s, e) => { if (e.Button == MouseButtons.Left) { Left = Control.MousePosition.X - mousePoint.X; Top = Control.MousePosition.Y - mousePoint.Y; } };
         }
 
-        private void button1_Click(object sender, EventArgs e) => Close();
+        private void btnClose_Click(object sender, EventArgs e) => Close();
         private void btnCancel_Click(object sender, EventArgs e) => Close();
     }
 }
