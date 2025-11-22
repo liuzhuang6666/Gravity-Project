@@ -29,14 +29,8 @@
         private void InitializeComponent()
         {
             System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea1 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.Legend legend1 = new System.Windows.Forms.DataVisualization.Charting.Legend();
-            System.Windows.Forms.DataVisualization.Charting.Series series1 = new System.Windows.Forms.DataVisualization.Charting.Series();
             System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea2 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.Legend legend2 = new System.Windows.Forms.DataVisualization.Charting.Legend();
-            System.Windows.Forms.DataVisualization.Charting.Series series2 = new System.Windows.Forms.DataVisualization.Charting.Series();
             System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea3 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.Legend legend3 = new System.Windows.Forms.DataVisualization.Charting.Legend();
-            System.Windows.Forms.DataVisualization.Charting.Series series3 = new System.Windows.Forms.DataVisualization.Charting.Series();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
@@ -103,8 +97,8 @@
             this.splitContainer1.Panel2.Controls.Add(this.chartPhase);
             this.splitContainer1.Panel2.Controls.Add(this.chartResistivity);
             this.splitContainer1.Panel2.Controls.Add(this.tabControl2);
-            this.splitContainer1.Size = new System.Drawing.Size(1434, 776);
-            this.splitContainer1.SplitterDistance = 821;
+            this.splitContainer1.Size = new System.Drawing.Size(1434, 789);
+            this.splitContainer1.SplitterDistance = 820;
             this.splitContainer1.TabIndex = 0;
             // 
             // tabControl1
@@ -113,10 +107,10 @@
             this.tabControl1.Controls.Add(this.tabPage2);
             this.tabControl1.Controls.Add(this.tabPage3);
             this.tabControl1.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.tabControl1.Location = new System.Drawing.Point(0, 51);
+            this.tabControl1.Location = new System.Drawing.Point(0, 65);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(821, 725);
+            this.tabControl1.Size = new System.Drawing.Size(820, 724);
             this.tabControl1.TabIndex = 5;
             // 
             // tabPage1
@@ -127,7 +121,7 @@
             this.tabPage1.Location = new System.Drawing.Point(4, 28);
             this.tabPage1.Name = "tabPage1";
             this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage1.Size = new System.Drawing.Size(813, 693);
+            this.tabPage1.Size = new System.Drawing.Size(812, 692);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "计算";
             // 
@@ -142,7 +136,7 @@
             this.groupBoxParams.Controls.Add(this.btnCalculate);
             this.groupBoxParams.Location = new System.Drawing.Point(14, 15);
             this.groupBoxParams.Name = "groupBoxParams";
-            this.groupBoxParams.Size = new System.Drawing.Size(778, 120);
+            this.groupBoxParams.Size = new System.Drawing.Size(778, 102);
             this.groupBoxParams.TabIndex = 1;
             this.groupBoxParams.TabStop = false;
             this.groupBoxParams.Text = "计算参数";
@@ -151,9 +145,9 @@
             // 
             this.rbInversionTETM.AutoSize = true;
             this.rbInversionTETM.Checked = true;
-            this.rbInversionTETM.Location = new System.Drawing.Point(151, 27);
+            this.rbInversionTETM.Location = new System.Drawing.Point(155, 17);
             this.rbInversionTETM.Name = "rbInversionTETM";
-            this.rbInversionTETM.Size = new System.Drawing.Size(78, 22);
+            this.rbInversionTETM.Size = new System.Drawing.Size(71, 22);
             this.rbInversionTETM.TabIndex = 6;
             this.rbInversionTETM.TabStop = true;
             this.rbInversionTETM.Text = "TE/TM";
@@ -162,7 +156,7 @@
             // nudIterationCount
             // 
             this.nudIterationCount.BackColor = System.Drawing.SystemColors.Control;
-            this.nudIterationCount.Location = new System.Drawing.Point(377, 38);
+            this.nudIterationCount.Location = new System.Drawing.Point(379, 28);
             this.nudIterationCount.Name = "nudIterationCount";
             this.nudIterationCount.Size = new System.Drawing.Size(198, 28);
             this.nudIterationCount.TabIndex = 5;
@@ -170,7 +164,7 @@
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(284, 43);
+            this.label4.Location = new System.Drawing.Point(287, 34);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(98, 18);
             this.label4.TabIndex = 4;
@@ -179,7 +173,7 @@
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(38, 43);
+            this.label3.Location = new System.Drawing.Point(41, 34);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(98, 18);
             this.label3.TabIndex = 3;
@@ -188,9 +182,9 @@
             // rbInversionTM
             // 
             this.rbInversionTM.AutoSize = true;
-            this.rbInversionTM.Location = new System.Drawing.Point(151, 56);
+            this.rbInversionTM.Location = new System.Drawing.Point(155, 46);
             this.rbInversionTM.Name = "rbInversionTM";
-            this.rbInversionTM.Size = new System.Drawing.Size(51, 22);
+            this.rbInversionTM.Size = new System.Drawing.Size(44, 22);
             this.rbInversionTM.TabIndex = 2;
             this.rbInversionTM.Text = "TM";
             this.rbInversionTM.UseVisualStyleBackColor = true;
@@ -198,9 +192,9 @@
             // rbInversionTE
             // 
             this.rbInversionTE.AutoSize = true;
-            this.rbInversionTE.Location = new System.Drawing.Point(151, 84);
+            this.rbInversionTE.Location = new System.Drawing.Point(155, 74);
             this.rbInversionTE.Name = "rbInversionTE";
-            this.rbInversionTE.Size = new System.Drawing.Size(51, 22);
+            this.rbInversionTE.Size = new System.Drawing.Size(44, 22);
             this.rbInversionTE.TabIndex = 1;
             this.rbInversionTE.Text = "TE";
             this.rbInversionTE.UseVisualStyleBackColor = true;
@@ -209,7 +203,7 @@
             // btnCalculate
             // 
             this.btnCalculate.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.btnCalculate.Location = new System.Drawing.Point(635, 32);
+            this.btnCalculate.Location = new System.Drawing.Point(637, 22);
             this.btnCalculate.Name = "btnCalculate";
             this.btnCalculate.Size = new System.Drawing.Size(78, 40);
             this.btnCalculate.TabIndex = 0;
@@ -222,16 +216,9 @@
             this.chartProfileView.BackColor = System.Drawing.SystemColors.Control;
             chartArea1.Name = "ChartArea1";
             this.chartProfileView.ChartAreas.Add(chartArea1);
-            legend1.BackColor = System.Drawing.SystemColors.Control;
-            legend1.Name = "Legend1";
-            this.chartProfileView.Legends.Add(legend1);
-            this.chartProfileView.Location = new System.Drawing.Point(11, 141);
+            this.chartProfileView.Location = new System.Drawing.Point(10, 117);
             this.chartProfileView.Name = "chartProfileView";
-            series1.ChartArea = "ChartArea1";
-            series1.Legend = "Legend1";
-            series1.Name = "Series1";
-            this.chartProfileView.Series.Add(series1);
-            this.chartProfileView.Size = new System.Drawing.Size(782, 519);
+            this.chartProfileView.Size = new System.Drawing.Size(782, 576);
             this.chartProfileView.TabIndex = 0;
             this.chartProfileView.Text = "chart1";
             this.chartProfileView.MouseClick += new System.Windows.Forms.MouseEventHandler(this.chartProfileView_MouseClick);
@@ -242,7 +229,7 @@
             this.tabPage2.Location = new System.Drawing.Point(4, 28);
             this.tabPage2.Name = "tabPage2";
             this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage2.Size = new System.Drawing.Size(813, 693);
+            this.tabPage2.Size = new System.Drawing.Size(812, 692);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "TE";
             this.tabPage2.UseVisualStyleBackColor = true;
@@ -255,7 +242,7 @@
             this.gridTE.Name = "gridTE";
             this.gridTE.RowHeadersWidth = 62;
             this.gridTE.RowTemplate.Height = 30;
-            this.gridTE.Size = new System.Drawing.Size(807, 687);
+            this.gridTE.Size = new System.Drawing.Size(806, 686);
             this.gridTE.TabIndex = 0;
             // 
             // tabPage3
@@ -264,7 +251,7 @@
             this.tabPage3.Location = new System.Drawing.Point(4, 28);
             this.tabPage3.Name = "tabPage3";
             this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage3.Size = new System.Drawing.Size(813, 693);
+            this.tabPage3.Size = new System.Drawing.Size(812, 692);
             this.tabPage3.TabIndex = 2;
             this.tabPage3.Text = "TM";
             this.tabPage3.UseVisualStyleBackColor = true;
@@ -277,7 +264,7 @@
             this.gridTM.Name = "gridTM";
             this.gridTM.RowHeadersWidth = 62;
             this.gridTM.RowTemplate.Height = 30;
-            this.gridTM.Size = new System.Drawing.Size(807, 687);
+            this.gridTM.Size = new System.Drawing.Size(806, 686);
             this.gridTM.TabIndex = 0;
             // 
             // label1
@@ -304,7 +291,7 @@
             this.cmbLineName.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbLineName.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.cmbLineName.FormattingEnabled = true;
-            this.cmbLineName.Location = new System.Drawing.Point(551, 19);
+            this.cmbLineName.Location = new System.Drawing.Point(550, 20);
             this.cmbLineName.Name = "cmbLineName";
             this.cmbLineName.Size = new System.Drawing.Size(236, 26);
             this.cmbLineName.TabIndex = 1;
@@ -316,7 +303,7 @@
             this.cmbStationLayer.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbStationLayer.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.cmbStationLayer.FormattingEnabled = true;
-            this.cmbStationLayer.Location = new System.Drawing.Point(147, 19);
+            this.cmbStationLayer.Location = new System.Drawing.Point(147, 20);
             this.cmbStationLayer.Name = "cmbStationLayer";
             this.cmbStationLayer.Size = new System.Drawing.Size(236, 26);
             this.cmbStationLayer.TabIndex = 0;
@@ -324,20 +311,13 @@
             // 
             // chartPhase
             // 
+            this.chartPhase.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.chartPhase.BackColor = System.Drawing.SystemColors.Control;
             chartArea2.Name = "ChartArea1";
             this.chartPhase.ChartAreas.Add(chartArea2);
-            this.chartPhase.Dock = System.Windows.Forms.DockStyle.Fill;
-            legend2.BackColor = System.Drawing.SystemColors.Control;
-            legend2.Name = "Legend1";
-            this.chartPhase.Legends.Add(legend2);
-            this.chartPhase.Location = new System.Drawing.Point(0, 398);
+            this.chartPhase.Location = new System.Drawing.Point(-2, 387);
             this.chartPhase.Name = "chartPhase";
-            series2.ChartArea = "ChartArea1";
-            series2.Legend = "Legend1";
-            series2.Name = "Series1";
-            this.chartPhase.Series.Add(series2);
-            this.chartPhase.Size = new System.Drawing.Size(609, 378);
+            this.chartPhase.Size = new System.Drawing.Size(602, 387);
             this.chartPhase.TabIndex = 2;
             this.chartPhase.Text = "chart3";
             // 
@@ -346,17 +326,9 @@
             this.chartResistivity.BackColor = System.Drawing.SystemColors.Control;
             chartArea3.Name = "ChartArea1";
             this.chartResistivity.ChartAreas.Add(chartArea3);
-            this.chartResistivity.Dock = System.Windows.Forms.DockStyle.Top;
-            legend3.BackColor = System.Drawing.SystemColors.Control;
-            legend3.Name = "Legend1";
-            this.chartResistivity.Legends.Add(legend3);
-            this.chartResistivity.Location = new System.Drawing.Point(0, 28);
+            this.chartResistivity.Location = new System.Drawing.Point(-2, 28);
             this.chartResistivity.Name = "chartResistivity";
-            series3.ChartArea = "ChartArea1";
-            series3.Legend = "Legend1";
-            series3.Name = "Series1";
-            this.chartResistivity.Series.Add(series3);
-            this.chartResistivity.Size = new System.Drawing.Size(609, 370);
+            this.chartResistivity.Size = new System.Drawing.Size(602, 364);
             this.chartResistivity.TabIndex = 1;
             this.chartResistivity.Text = "chart2";
             // 
@@ -368,7 +340,7 @@
             this.tabControl2.Location = new System.Drawing.Point(0, 0);
             this.tabControl2.Name = "tabControl2";
             this.tabControl2.SelectedIndex = 0;
-            this.tabControl2.Size = new System.Drawing.Size(609, 28);
+            this.tabControl2.Size = new System.Drawing.Size(610, 28);
             this.tabControl2.TabIndex = 0;
             this.tabControl2.SelectedIndexChanged += new System.EventHandler(this.tabControl2_SelectedIndexChanged);
             // 
@@ -377,7 +349,7 @@
             this.tabPageDisplayTE.Location = new System.Drawing.Point(4, 28);
             this.tabPageDisplayTE.Name = "tabPageDisplayTE";
             this.tabPageDisplayTE.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPageDisplayTE.Size = new System.Drawing.Size(601, 0);
+            this.tabPageDisplayTE.Size = new System.Drawing.Size(602, 0);
             this.tabPageDisplayTE.TabIndex = 0;
             this.tabPageDisplayTE.Text = "TE";
             this.tabPageDisplayTE.UseVisualStyleBackColor = true;
@@ -387,7 +359,7 @@
             this.tabPageDisplayTM.Location = new System.Drawing.Point(4, 28);
             this.tabPageDisplayTM.Name = "tabPageDisplayTM";
             this.tabPageDisplayTM.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPageDisplayTM.Size = new System.Drawing.Size(601, 0);
+            this.tabPageDisplayTM.Size = new System.Drawing.Size(602, 0);
             this.tabPageDisplayTM.TabIndex = 1;
             this.tabPageDisplayTM.Text = "TM";
             this.tabPageDisplayTM.UseVisualStyleBackColor = true;
@@ -432,7 +404,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 18F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1434, 824);
+            this.ClientSize = new System.Drawing.Size(1434, 837);
             this.Controls.Add(this.splitContainer1);
             this.Controls.Add(this.panelTitle);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;

@@ -116,8 +116,6 @@ namespace MapGISPlugin3
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"MapGIS COM 组件引用异常：{ex.Message}\n可能导致功能运行失败，请检查组件版本和引用。",
-                    "COM 组件检查", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
         #endregion

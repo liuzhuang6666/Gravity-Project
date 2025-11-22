@@ -10,23 +10,23 @@ namespace MapGISPlugin3
     public partial class VisualizationForm : Form
     {
         private IApplication m_Hook;
+        private Point mousePoint = new Point();
 
         // 公共属性，用于从外部获取用户选择的结果
         public RasterLayer SelectedRasterLayer { get; private set; }
         public Map SelectedMap { get; private set; }
-
-        // 【新增】一个公共属性，用于向外部传递用户设置的间隔值
         public decimal ContourInterval { get; private set; }
 
         public VisualizationForm(IApplication hook)
         {
             m_Hook = hook;
             InitializeComponent();
+
             PopulateTreeView();
+            // 新增：初始化拖动和边框功能
+            InitDragEvent();
         }
 
-        // ... (此处省略了PopulateTreeView等方法的代码，因为它们与上一个回答中完全相同，为了简洁)
-        // ... (请将上一个回答中 VisualizationForm.cs 的完整代码粘贴到这里)
         private void PopulateTreeView()
         {
             treeViewLayers.Nodes.Clear();
@@ -125,5 +125,46 @@ namespace MapGISPlugin3
             this.DialogResult = DialogResult.Cancel;
             this.Close();
         }
+
+        private void ButtonClose_Click(object sender, EventArgs e)
+        {
+            this.DialogResult = DialogResult.Cancel;
+            this.Close();
+        }
+        #region --- 新增：窗口拖动与边框拉伸核心逻辑 ---
+
+        /// <summary>
+        /// 初始化标题栏拖动事件（绑定panel1）
+        /// </summary>
+        private void InitDragEvent()
+        {
+            panel1.MouseDown += TitlePanel_MouseDown;
+            panel1.MouseMove += TitlePanel_MouseMove;
+        }
+
+        /// <summary>
+        /// 标题栏按下：记录鼠标相对位置
+        /// </summary>
+        private void TitlePanel_MouseDown(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                mousePoint.X = e.X;
+                mousePoint.Y = e.Y;
+            }
+        }
+
+        /// <summary>
+        /// 标题栏移动：计算窗口新位置
+        /// </summary>
+        private void TitlePanel_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                this.Left = Control.MousePosition.X - mousePoint.X;
+                this.Top = Control.MousePosition.Y - mousePoint.Y;
+            }
+        }
+        #endregion
     }
 }

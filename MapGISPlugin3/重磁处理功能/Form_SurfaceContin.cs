@@ -60,6 +60,7 @@ namespace MapGISPlugin3
         private float m_FSlopeYEps = 0;
         private float m_Length = 0;
         private SlopLinParam_Stru m_SlopLineParam = null;
+        private Point mousePoint = new Point();
 
         private int[] Imc = {601,603,498,500,436,408,391,233,190,184,154,122,106,33,31,
              127,391,128,392,393,136,149,150,442,443,186,444,179,180,445,189,190};
@@ -67,6 +68,8 @@ namespace MapGISPlugin3
         public Form_SurfaceContin(IApplication hook)
         {
             InitializeComponent();
+            // 新增：初始化拖动和边框功能
+            InitDragEvent();
             m_Hook = hook;
             if (m_Hook != null)
             {
@@ -905,6 +908,41 @@ namespace MapGISPlugin3
         private void btnClose_Click(object sender, EventArgs e)
         {
             this.Close();
+        }
+        #endregion
+        #region --- 新增：窗口拖动与边框拉伸核心逻辑 ---
+
+        /// <summary>
+        /// 初始化标题栏拖动事件（绑定panel1）
+        /// </summary>
+        private void InitDragEvent()
+        {
+            panel1.MouseDown += TitlePanel_MouseDown;
+            panel1.MouseMove += TitlePanel_MouseMove;
+        }
+
+        /// <summary>
+        /// 标题栏按下：记录鼠标相对位置
+        /// </summary>
+        private void TitlePanel_MouseDown(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                mousePoint.X = e.X;
+                mousePoint.Y = e.Y;
+            }
+        }
+
+        /// <summary>
+        /// 标题栏移动：计算窗口新位置
+        /// </summary>
+        private void TitlePanel_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                this.Left = Control.MousePosition.X - mousePoint.X;
+                this.Top = Control.MousePosition.Y - mousePoint.Y;
+            }
         }
         #endregion
     }

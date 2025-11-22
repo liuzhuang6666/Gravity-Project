@@ -71,31 +71,6 @@ namespace MapGISPlugin3
         {
             LoadLayersFromMap();
             timerProgress.Interval = 1000;
-            // 初始化两个图表的图例
-            InitChartLegend(chartProfileView, "ProfileLegend"); // 小地图图例
-            InitChartLegend(chartVoltage, "VoltageLegend");     // 电压曲线图例
-        }
-        /// <summary>
-        /// 初始化单个图表的图例样式
-        /// </summary>
-        private void InitChartLegend(Chart chart, string legendName)
-        {
-            // 清除默认图例
-            chart.Legends.Clear();
-
-            // 创建新图例
-            Legend legend = new Legend(legendName)
-            {
-                Docking = Docking.Right, // 图例停靠在右侧
-                Alignment = StringAlignment.Center, // 文本居中
-                LegendStyle = LegendStyle.Table, // 表格样式（更整齐）
-                BorderColor = System.Drawing.Color.LightGray, // 边框颜色
-                BorderWidth = 1,
-                BackColor = System.Drawing.Color.Transparent // 透明背景，与图表融合
-            };
-
-            // 添加到图表
-            chart.Legends.Add(legend);
         }
         /// <summary>
         /// 标题栏鼠标按下：记录鼠标相对窗口的位置
@@ -197,26 +172,17 @@ namespace MapGISPlugin3
         }
 
         /// <summary>
-        /// 【新增】从数据库加载发射源信息（TEM 特有）
-        /// 【优化】添加详细调试日志、COM 资源释放追踪
-        /// </summary>
-        /// <summary>
-        /// 【修复】从数据库加载发射源信息 - 移除不必要的 COM 释放
+        /// 【修复】从数据库加载发射源信息 - 静默模式（移除弹窗）
         /// </summary>
         private void LoadTransmitterInfo()
         {
-            StringBuilder debugInfo = new StringBuilder();
-            debugInfo.AppendLine("发射源加载调试信息：");
-            debugInfo.AppendLine("---------------------");
-
             // 初始化发射源信息
             m_TransmitterInfo = new TEMTransmitterInfo();
 
             // 图层检查
             if (m_SelectedTransmitterLayer == null || !m_SelectedTransmitterLayer.HasOpen())
             {
-                debugInfo.AppendLine("错误：发射源图层未加载或未打开");
-                MessageBox.Show(debugInfo.ToString(), "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Console.WriteLine("LoadTransmitterInfo: 发射源图层未加载或未打开");
                 return;
             }
 
@@ -226,26 +192,20 @@ namespace MapGISPlugin3
                 rs = m_SelectedTransmitterLayer.Select(null);
                 if (rs == null)
                 {
-                    debugInfo.AppendLine("错误：RecordSet 为 null，无法读取数据");
-                    MessageBox.Show(debugInfo.ToString(), "发射源加载调试", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    Console.WriteLine("LoadTransmitterInfo: RecordSet 为 null");
                     return;
                 }
 
-                debugInfo.AppendLine("RecordSet 创建成功，开始遍历发射源记录");
-
-                int count = 0;
                 int totalRecords = rs.Count;
-                debugInfo.AppendLine($"记录总数: {totalRecords}");
-
                 if (totalRecords <= 0)
                 {
-                    debugInfo.AppendLine("错误：发射源图层无任何记录！");
-                    MessageBox.Show(debugInfo.ToString(), "发射源加载调试", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    Console.WriteLine("LoadTransmitterInfo: 发射源图层无记录");
                     return;
                 }
 
                 // 移动到第一条记录
                 rs.MoveFirst();
+                int count = 0;
 
                 do
                 {
@@ -253,28 +213,16 @@ namespace MapGISPlugin3
                     try
                     {
                         // 检查 RecordSet 状态
-                        if (rs.IsEOF)
-                        {
-                            debugInfo.AppendLine($"第 {count} 条记录：到达记录末尾，停止遍历");
-                            break;
-                        }
+                        if (rs.IsEOF) break;
 
                         // 读取属性
                         Record att = rs.Att;
-                        if (att == null)
-                        {
-                            debugInfo.AppendLine($"第 {count} 条记录：属性对象为 null，跳过");
-                            continue;
-                        }
+                        if (att == null) continue;
 
                         // 读取id
                         object nameObj = att["点名"];
                         string pointName = nameObj?.ToString()?.Trim() ?? "";
-                        if (string.IsNullOrWhiteSpace(pointName))
-                        {
-                            debugInfo.AppendLine($"第 {count} 条记录：点名为空，跳过");
-                            continue;
-                        }
+                        if (string.IsNullOrWhiteSpace(pointName)) continue;
 
                         // 读取坐标
                         double x = 0, y = 0, z = 0;
@@ -285,84 +233,57 @@ namespace MapGISPlugin3
                         if (att["Z"] != null && att["Z"] != DBNull.Value)
                             double.TryParse(att["Z"].ToString(), out z);
 
-                        // 记录调试信息
-                        debugInfo.AppendLine($"第 {count} 条记录：");
-                        debugInfo.AppendLine($"  点名：'{pointName}'");
-                        debugInfo.AppendLine($"  坐标：X={x}, Y={y}, Z={z}");
-
-                        // 匹配点名
+                        // 匹配点名并赋值
                         switch (pointName.ToUpper())
                         {
                             case "A":
                                 m_TransmitterInfo.PointA_X = x;
                                 m_TransmitterInfo.PointA_Y = y;
                                 m_TransmitterInfo.PointA_Z = z;
-                                debugInfo.AppendLine("  匹配到 A 点");
                                 break;
                             case "B":
                                 m_TransmitterInfo.PointB_X = x;
                                 m_TransmitterInfo.PointB_Y = y;
                                 m_TransmitterInfo.PointB_Z = z;
-                                debugInfo.AppendLine("  匹配到 B 点");
                                 break;
                             case "C":
                                 m_TransmitterInfo.PointC_X = x;
                                 m_TransmitterInfo.PointC_Y = y;
                                 m_TransmitterInfo.PointC_Z = z;
-                                debugInfo.AppendLine("  匹配到 C 点");
                                 break;
                             case "D":
                                 m_TransmitterInfo.PointD_X = x;
                                 m_TransmitterInfo.PointD_Y = y;
                                 m_TransmitterInfo.PointD_Z = z;
-                                debugInfo.AppendLine("  匹配到 D 点");
                                 break;
                             default:
-                                debugInfo.AppendLine($"  警告：未知点名 '{pointName}'，未匹配任何点");
+                                // 未知点名忽略
                                 break;
                         }
                     }
                     catch (Exception ex)
                     {
-                        debugInfo.AppendLine($"第 {count} 条记录处理出错：{ex.Message}");
+                        Console.WriteLine($"LoadTransmitterInfo 单条记录错误: {ex.Message}");
                     }
 
                 } while (rs.MoveNext() && count < totalRecords * 2); // 防止无限循环
-
-                debugInfo.AppendLine($"\n成功处理 {count} 条记录");
-
-                // 输出最终结果
-                debugInfo.AppendLine("\n最终加载结果：");
-                debugInfo.AppendLine($"A 点：X={m_TransmitterInfo.PointA_X:F2}, Y={m_TransmitterInfo.PointA_Y:F2}, Z={m_TransmitterInfo.PointA_Z:F2}");
-                debugInfo.AppendLine($"B 点：X={m_TransmitterInfo.PointB_X:F2}, Y={m_TransmitterInfo.PointB_Y:F2}, Z={m_TransmitterInfo.PointB_Z:F2}");
-                debugInfo.AppendLine($"C 点：X={m_TransmitterInfo.PointC_X:F2}, Y={m_TransmitterInfo.PointC_Y:F2}, Z={m_TransmitterInfo.PointC_Z:F2}");
-                debugInfo.AppendLine($"D 点：X={m_TransmitterInfo.PointD_X:F2}, Y={m_TransmitterInfo.PointD_Y:F2}, Z={m_TransmitterInfo.PointD_Z:F2}");
-
-                MessageBox.Show(debugInfo.ToString(), "发射源加载完成", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
-                string errorMessage = debugInfo.ToString();
-                errorMessage += $"\n\n加载过程中发生异常：{ex.Message}";
-                MessageBox.Show(errorMessage, "发射源加载失败", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Console.WriteLine($"LoadTransmitterInfo 总体异常: {ex.Message}");
             }
             finally
             {
-                // 简化释放逻辑 - MapGIS 会自动管理大多数 COM 对象
+                // 资源释放
                 try
                 {
-                    // 只释放主要的 RecordSet，不释放内部的 Record 对象
                     if (rs != null)
                     {
                         Marshal.ReleaseComObject(rs);
                         rs = null;
                     }
                 }
-                catch (Exception ex)
-                {
-                    // 忽略释放错误，不影响功能
-                    Console.WriteLine($"RecordSet 释放警告：{ex.Message}");
-                }
+                catch { /* 忽略释放错误 */ }
             }
         }
         #endregion
@@ -498,7 +419,7 @@ namespace MapGISPlugin3
 
             try
             {
-                MessageBox.Show("=== 开始 TEM 计算流程 ===", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                //MessageBox.Show("=== 开始 TEM 计算流程 ===", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                 // 2. 路径初始化与校验
                 pluginDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
@@ -530,7 +451,7 @@ namespace MapGISPlugin3
 
                 // 5. 异步执行 a.exe（线程安全的进程追踪）
                 string commandLine = $".\\a.exe \"{tempKnowedFile}\" \"{tempTranFile}\" {workspaceName}";
-                MessageBox.Show($"即将执行命令：\n{commandLine}", "执行命令", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                //MessageBox.Show($"即将执行命令：\n{commandLine}", "执行命令", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                 // 启动进度条定时器
                 timerProgress.Start();
@@ -573,7 +494,7 @@ namespace MapGISPlugin3
 
                         this.Invoke((Action)(() =>
                         {
-                            MessageBox.Show($"程序输出：\n{output}", "计算输出", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            //MessageBox.Show($"程序输出：\n{output}", "计算输出", MessageBoxButtons.OK, MessageBoxIcon.Information);
                             if (!string.IsNullOrEmpty(error))
                                 MessageBox.Show($"错误信息：\n{error}", "警告", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         }));
@@ -606,7 +527,7 @@ namespace MapGISPlugin3
                     }
                 }
 
-                MessageBox.Show("=== TEM 计算流程完成 ===", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                //MessageBox.Show("=== TEM 计算流程完成 ===", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
@@ -1167,21 +1088,6 @@ namespace MapGISPlugin3
             if (chartProfileView == null) return;
             chartProfileView.Series.Clear();
 
-            // 【新增】初始化图例（若不存在则创建）
-            if (chartProfileView.Legends.Count == 0)
-            {
-                Legend legend = new Legend("ProfileLegend")
-                {
-                    Docking = Docking.Right, // 图例停靠在右侧
-                    Alignment = StringAlignment.Center, // 文本居中
-                    LegendStyle = LegendStyle.Table, // 表格样式更整齐
-                    BorderColor = System.Drawing.Color.LightGray, // 边框颜色
-                    BorderWidth = 1,
-                    BackColor = System.Drawing.Color.Transparent // 透明背景，融入图表
-                };
-                chartProfileView.Legends.Add(legend);
-            }
-
             // 1. 绘制测点系列，并绑定图例
             Series stationSeries = chartProfileView.Series.Add("Stations");
             stationSeries.ChartType = SeriesChartType.Point;
@@ -1189,10 +1095,8 @@ namespace MapGISPlugin3
             stationSeries.MarkerSize = 8;
             stationSeries.MarkerColor = System.Drawing.Color.Blue;
             stationSeries.IsValueShownAsLabel = true;
-            // 【新增】绑定图例（关联到当前图表的第一个图例）
-            stationSeries.Legend = chartProfileView.Legends[0].Name;
-            // 【新增】图例中显示的文本（用户可见的标签）
             stationSeries.LegendText = "测点";
+
 
             if (m_CurrentLineStations == null || m_CurrentLineStations.Count == 0)
             {
@@ -1248,10 +1152,7 @@ namespace MapGISPlugin3
                 tranSeries.MarkerColor = System.Drawing.Color.Blue;
                 tranSeries.Color = System.Drawing.Color.Blue;
                 tranSeries.BorderWidth = 2;
-                // 【新增】绑定图例（关联到当前图表的第一个图例）
-                tranSeries.Legend = chartProfileView.Legends[0].Name;
-                // 【新增】图例中显示的文本（用户可见的标签）
-                tranSeries.LegendText = "发射源";
+                tranSeries.LegendText = "发射源框";
 
                 // 绘制矩形：A-B-C-D-A
                 tranSeries.Points.AddXY(m_TransmitterInfo.PointA_X, m_TransmitterInfo.PointA_Y);
@@ -1318,12 +1219,12 @@ namespace MapGISPlugin3
                     {
                         if (point.Tag?.ToString() == stationName)
                         {
-                            point.MarkerColor = System.Drawing.Color.Blue;
+                            point.MarkerColor = System.Drawing.Color.Red;
                             point.MarkerSize = 12;
                         }
                         else
                         {
-                            point.MarkerColor = System.Drawing.Color.Red;
+                            point.MarkerColor = System.Drawing.Color.Blue;
                             point.MarkerSize = 8;
                         }
                     }
@@ -1338,17 +1239,27 @@ namespace MapGISPlugin3
         }
 
         /// <summary>
-        /// 【新增】更新表格以显示发射源的 X、Y、Z 信息
-        /// 【优化】添加表格更新日志
+        /// 【修改】更新表格以显示发射源的 X、Y、Z 信息
+        /// 【优化】内容完全自适应控件大小，无滚动条
         /// </summary>
         private void UpdateTransmitterGrid()
         {
             Console.WriteLine("=== 开始更新发射源表格 ===");
             if (gridData == null) return;
-            gridData.DataSource = null;
-            gridData.Columns.Clear(); // 清空原有列
 
-            // 手动添加列（避免自动绑定问题）
+            // 1. 基础清理
+            gridData.DataSource = null;
+            gridData.Columns.Clear();
+            gridData.Rows.Clear(); // 确保行也清空
+
+            // 2. 设置表格样式：隐藏滚动条、列宽填充
+            gridData.ScrollBars = ScrollBars.None; // 隐藏滚动条
+            gridData.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill; // 列宽自动填充整个控件宽度
+            gridData.AllowUserToResizeRows = false; // 禁止用户调整行高
+            gridData.AllowUserToResizeColumns = false; // 禁止用户调整列宽
+            gridData.RowHeadersVisible = false; // 隐藏最左侧的行头（可选，为了更美观）
+
+            // 3. 添加列
             gridData.Columns.Add("colPointName", "点名");
             gridData.Columns.Add("colX", "X");
             gridData.Columns.Add("colY", "Y");
@@ -1356,11 +1267,11 @@ namespace MapGISPlugin3
 
             if (m_TransmitterInfo == null)
             {
-                gridData.Rows.Add("提示", "未加载发射源数据", "", "");
+                gridData.Rows.Add("提示", "未加载数据", "", "");
                 return;
             }
 
-            // 手动添加行（保留两位小数）
+            // 4. 添加数据行
             gridData.Rows.Add("A",
                 m_TransmitterInfo.PointA_X.ToString("F2"),
                 m_TransmitterInfo.PointA_Y.ToString("F2"),
@@ -1378,11 +1289,25 @@ namespace MapGISPlugin3
                 m_TransmitterInfo.PointD_Y.ToString("F2"),
                 m_TransmitterInfo.PointD_Z.ToString("F2"));
 
-            // 调整列宽
-            gridData.Columns["colPointName"].Width = 50;
-            gridData.Columns["colX"].Width = 120;
-            gridData.Columns["colY"].Width = 120;
-            gridData.Columns["colZ"].Width = 120;
+            // 5. 【核心】动态计算行高，使其填满垂直空间
+            // 计算逻辑：(控件总高度 - 标题栏高度) / 行数
+            int headerHeight = gridData.ColumnHeadersHeight;
+            int clientHeight = gridData.ClientSize.Height; // 使用 ClientSize 获取除去边框后的内部高度
+            int availableHeight = clientHeight - headerHeight;
+            int rowCount = gridData.Rows.Count;
+
+            if (rowCount > 0 && availableHeight > 0)
+            {
+                int rowHeight = availableHeight / rowCount;
+                foreach (DataGridViewRow row in gridData.Rows)
+                {
+                    row.Height = rowHeight;
+                }
+            }
+
+            // 移除之前的固定列宽代码
+            // gridData.Columns["colPointName"].Width = 50; ... (已删除)
+
             Console.WriteLine("=== 发射源表格更新完成 ===");
         }
 
@@ -1405,20 +1330,7 @@ namespace MapGISPlugin3
             Console.WriteLine("=== 开始更新感应电压曲线 ===");
             chartVoltage.Series.Clear();
 
-            // 【新增】初始化图例（若不存在则创建）
-            if (chartVoltage.Legends.Count == 0)
-            {
-                Legend legend = new Legend("VoltageLegend")
-                {
-                    Docking = Docking.Right, // 图例停靠在右侧
-                    Alignment = StringAlignment.Center, // 文本居中
-                    LegendStyle = LegendStyle.Table, // 表格样式更整齐
-                    BorderColor = System.Drawing.Color.LightGray, // 边框颜色
-                    BorderWidth = 1,
-                    BackColor = System.Drawing.Color.Transparent // 透明背景，融入图表
-                };
-                chartVoltage.Legends.Add(legend);
-            }
+            
 
             if (string.IsNullOrEmpty(m_CurrentSelectedStationName) || m_CurrentLineData == null)
             {
@@ -1448,10 +1360,7 @@ namespace MapGISPlugin3
             voltageSeries.MarkerStyle = MarkerStyle.Circle;
             voltageSeries.MarkerSize = 5;
             voltageSeries.BorderWidth = 2;
-            // 【新增】绑定图例（关联到当前图表的第一个图例）
-            voltageSeries.Legend = chartVoltage.Legends[0].Name;
-            // 【新增】图例中显示的文本（包含单位，更清晰）
-            voltageSeries.LegendText = $"感应电压 ({m_CurrentSelectedStationName})";
+            
 
             List<double> times = new List<double>();
             List<double> voltages = new List<double>();

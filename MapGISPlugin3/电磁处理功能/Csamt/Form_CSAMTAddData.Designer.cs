@@ -165,7 +165,7 @@
             this.label7.ForeColor = System.Drawing.SystemColors.ControlText;
             this.label7.Location = new System.Drawing.Point(0, 0);
             this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(74, 32);
+            this.label7.Size = new System.Drawing.Size(86, 32);
             this.label7.TabIndex = 1;
             this.label7.Text = "添加CSAMT数据";
             this.label7.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;

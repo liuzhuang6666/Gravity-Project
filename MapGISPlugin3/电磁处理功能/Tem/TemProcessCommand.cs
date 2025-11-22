@@ -20,7 +20,7 @@ namespace MapGISPlugin3
 
         public Bitmap Bitmap { get { return null; } }
 
-        public string Caption { get { return "TEM 反演处理"; } }
+        public string Caption { get { return "TEM 一维反演"; } }
 
         public string Category { get { return "天然电磁处理"; } }
 
@@ -32,7 +32,7 @@ namespace MapGISPlugin3
 
         public string Name { get { return "TEMProcessCommand"; } }
 
-        public string Tooltip { get { return "TEM 反演处理"; } }
+        public string Tooltip { get { return "TEM 一维反演"; } }
 
         /// <summary>
         /// 【复用】OnClick 逻辑与 MT1diCommand 相同

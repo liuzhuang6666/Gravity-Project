@@ -104,10 +104,13 @@ namespace MapGISPlugin3
 
         private int[] Imc = {601,603,498,500,436,408,391,233,190,184,154,122,106,33,31,
                127,391,128,392,393,136,149,150,442,443,186,444,179,180,445,189,190};
+        private Point mousePoint = new Point();
 
         public FieldTransformForm(IApplication hook)
         {
             InitializeComponent();
+            // 新增：初始化拖动和边框功能
+            InitDragEvent();
             m_Hook = hook;
             if (m_Hook != null)
             {
@@ -140,8 +143,12 @@ namespace MapGISPlugin3
 
         private void FieldTransformForm_Load(object sender, EventArgs e)
         {
+            // 移除这行有问题的代码
+            // this.buttonEdit1.Properties.Buttons[0].Enabled = false;
+
+            // 改用这种方式设置只读
             this.buttonEdit1.Properties.ReadOnly = true;
-            this.buttonEdit1.Properties.Buttons[0].Enabled = false;
+            this.buttonEdit1.Properties.TextEditStyle = DevExpress.XtraEditors.Controls.TextEditStyles.DisableTextEditor;
             this.buttonEdit1.BackColor = System.Drawing.SystemColors.ControlLight;
 
             this.m_mtr.ActiveMap = m_Map;
@@ -150,7 +157,7 @@ namespace MapGISPlugin3
             this.m_mtr2.ShowRuler = true;
 
             this.comboBox1.Items.Add("化极");
-            this.comboBox1.Items.Add("方向导数"); // 【新增】
+            this.comboBox1.Items.Add("方向导数");
             this.comboBox1.Items.Add("二次导数");
             this.comboBox1.Items.Add("三角");
             this.comboBox1.Items.Add("方向分量");
@@ -158,8 +165,6 @@ namespace MapGISPlugin3
             this.comboBox1.Items.Add("分量");
             this.comboBox1.SelectedIndex = 0;
 
-
-            // 【新增】在加载时就更新一次UI
             UpdateParameterUI();
         }
 
@@ -1638,5 +1643,60 @@ namespace MapGISPlugin3
         {
             UpdateParameterUI();
         }
+        private void button2_Click(object sender, EventArgs e)
+        {
+            this.Close();
+        }
+
+        private void btnOK_Click(object sender, EventArgs e)
+        {
+            // 可以添加确定按钮的逻辑，或者保持原有功能
+            this.Close();
+        }
+
+        private void btnCancel_Click(object sender, EventArgs e)
+        {
+            this.Close();
+        }
+
+        private void groupBox1_Enter(object sender, EventArgs e)
+        {
+
+        }
+        #region --- 新增：窗口拖动与边框拉伸核心逻辑 ---
+
+        /// <summary>
+        /// 初始化标题栏拖动事件（绑定panel1）
+        /// </summary>
+        private void InitDragEvent()
+        {
+            panel1.MouseDown += TitlePanel_MouseDown;
+            panel1.MouseMove += TitlePanel_MouseMove;
+        }
+
+        /// <summary>
+        /// 标题栏按下：记录鼠标相对位置
+        /// </summary>
+        private void TitlePanel_MouseDown(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                mousePoint.X = e.X;
+                mousePoint.Y = e.Y;
+            }
+        }
+
+        /// <summary>
+        /// 标题栏移动：计算窗口新位置
+        /// </summary>
+        private void TitlePanel_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                this.Left = Control.MousePosition.X - mousePoint.X;
+                this.Top = Control.MousePosition.Y - mousePoint.Y;
+            }
+        }
+        #endregion
     }
 }

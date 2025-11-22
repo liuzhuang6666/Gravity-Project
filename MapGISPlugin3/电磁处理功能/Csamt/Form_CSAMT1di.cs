@@ -33,6 +33,7 @@ namespace MapGISPlugin3
         private DataTable m_CurrentLineData; // 当前测线上的所有数据 (用于表格)
         private string m_CurrentSelectedStationName; // 当前选中的测点号
         private Dictionary<string, (double Offset, double Distance)> m_StationDistances; // 测点偏移和距离
+        private Point mousePoint = new Point();
 
         // 发射源位置
         private double Ax = 0, Ay = 0, Az = 0;
@@ -45,6 +46,7 @@ namespace MapGISPlugin3
         public Form_CSAMT1di(IApplication hook)
         {
             InitializeComponent();
+            InitDragEvent();
             _hook = hook;
             // 初始化列表
             m_allPointLayers = new List<MapLayer>();
@@ -449,17 +451,46 @@ namespace MapGISPlugin3
             UpdateDistances();
         }
 
-        /// <summary>
-        /// 事件: 点击 "开始计算" 按钮
-        /// </summary>
-        /// <summary>
-        /// 事件: 点击 "开始计算" 按钮
-        /// </summary>
-        /// <summary>
-        /// 事件: 点击 "开始计算" 按钮
-        /// </summary>
         private void btnCalculate_Click(object sender, EventArgs e)
         {
+            // --- 0. 检查发射源坐标 ---
+            bool allZero = true;
+
+            try
+            {
+                // 安全地检查每个坐标值
+                double ax = SafeParseDouble(txtAx.Text);
+                double ay = SafeParseDouble(txtAy.Text);
+                double az = SafeParseDouble(txtAz.Text);
+                double bx = SafeParseDouble(txtBx.Text);
+                double by = SafeParseDouble(txtBy.Text);
+                double bz = SafeParseDouble(txtBz.Text);
+
+                // 检查是否所有坐标都是0
+                allZero = (ax == 0 && ay == 0 && az == 0 && bx == 0 && by == 0 && bz == 0);
+            }
+            catch (Exception ex)
+            {
+                // 如果解析过程中出现异常，也认为是未设置
+                allZero = true;
+                Console.WriteLine($"解析坐标时出错: {ex.Message}");
+            }
+
+            if (allZero)
+            {
+                var result = MessageBox.Show("发射源坐标未设置或全部为0，请在布置图页面设置发射源坐标后再进行计算。\n\n是否立即跳转到布置图页面？",
+                    "发射源坐标未设置",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Warning);
+
+                if (result == DialogResult.Yes)
+                {
+                    // 切换到布置图标签页
+                    tabControl1.SelectedTab = tabPageLayout;
+                }
+                return; // 停止计算
+            }
+
             // --- 1. 检查数据 ---
             if (m_CurrentLineData == null || m_CurrentLineData.Rows.Count == 0)
             {
@@ -597,6 +628,21 @@ namespace MapGISPlugin3
                 this.Cursor = Cursors.Default;
             }
         }
+
+        /// <summary>
+        /// 安全地将字符串转换为double，处理空值和非数字字符
+        /// </summary>
+        private double SafeParseDouble(string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+                return 0;
+
+            if (double.TryParse(text, out double result))
+                return result;
+
+            return 0;
+        }
+
 
         /// <summary>
         /// 事件: 点击 "加载文件..." 按钮，从 tran.dat 文件加载发射源坐标
@@ -894,12 +940,15 @@ namespace MapGISPlugin3
             if (chartProfileView == null) return;
 
             chartProfileView.Series.Clear();
+            chartProfileView.BackColor = System.Drawing.Color.White;
+
             Series s = chartProfileView.Series.Add("Stations");
-            s.ChartType = SeriesChartType.Point; // 散点图
+            s.ChartType = SeriesChartType.Point;
             s.MarkerStyle = MarkerStyle.Circle;
             s.MarkerSize = 8;
-            s.MarkerColor = System.Drawing.Color.Red;
-            s.IsValueShownAsLabel = true; // 在点上显示标签
+            s.MarkerColor = System.Drawing.Color.Blue;
+            s.IsValueShownAsLabel = true;
+            s.LegendText = "测点";
 
             if (m_CurrentLineStations == null || m_CurrentLineStations.Count == 0)
             {
@@ -912,10 +961,13 @@ namespace MapGISPlugin3
                 int pointIndex = s.Points.AddXY(station.X, station.Y);
                 s.Points[pointIndex].Label = station.StationName;
                 s.Points[pointIndex].Tag = station.StationName;
+                s.Points[pointIndex].Color = System.Drawing.Color.Blue;
             }
 
             chartProfileView.ChartAreas[0].AxisX.LabelStyle.Format = "F0";
             chartProfileView.ChartAreas[0].AxisY.LabelStyle.Format = "F0";
+            chartProfileView.ChartAreas[0].AxisX.IsStartedFromZero = false;
+            chartProfileView.ChartAreas[0].AxisY.IsStartedFromZero = false;
             chartProfileView.ChartAreas[0].RecalculateAxesScale();
         }
 
@@ -927,12 +979,28 @@ namespace MapGISPlugin3
             if (chartLayout == null) return;
 
             chartLayout.Series.Clear();
+            chartLayout.BackColor = System.Drawing.Color.White;
+
+            // --- 配置 chartLayout 图例 (上方右侧) ---
+            chartLayout.Legends.Clear();
+            Legend layoutLegend = chartLayout.Legends.Add("LegendLayout");
+            layoutLegend.Docking = Docking.Top;
+            layoutLegend.Alignment = StringAlignment.Far;
+            layoutLegend.BackColor = System.Drawing.Color.White;
+            layoutLegend.BorderColor = System.Drawing.Color.LightGray;
+            layoutLegend.BorderWidth = 1;
+            layoutLegend.Font = new System.Drawing.Font("微软雅黑", 8f);
+            layoutLegend.LegendStyle = LegendStyle.Table;
+            layoutLegend.IsEquallySpacedItems = false;
+            layoutLegend.TableStyle = LegendTableStyle.Auto;
+
             Series s = chartLayout.Series.Add("Stations");
             s.ChartType = SeriesChartType.Point;
             s.MarkerStyle = MarkerStyle.Circle;
             s.MarkerSize = 8;
             s.MarkerColor = System.Drawing.Color.Red;
             s.IsValueShownAsLabel = true;
+            s.LegendText = "测点";
 
             if (m_CurrentLineStations == null || m_CurrentLineStations.Count == 0)
             {
@@ -945,10 +1013,13 @@ namespace MapGISPlugin3
                 int pointIndex = s.Points.AddXY(station.X, station.Y);
                 s.Points[pointIndex].Label = station.StationName;
                 s.Points[pointIndex].Tag = station.StationName;
+                s.Points[pointIndex].Color = System.Drawing.Color.Blue;
             }
 
             chartLayout.ChartAreas[0].AxisX.LabelStyle.Format = "F0";
             chartLayout.ChartAreas[0].AxisY.LabelStyle.Format = "F0";
+            chartLayout.ChartAreas[0].AxisX.IsStartedFromZero = false;
+            chartLayout.ChartAreas[0].AxisY.IsStartedFromZero = false;
             chartLayout.ChartAreas[0].RecalculateAxesScale();
         }
 
@@ -1028,12 +1099,12 @@ namespace MapGISPlugin3
                     {
                         if (point.Tag?.ToString() == stationName)
                         {
-                            point.MarkerColor = System.Drawing.Color.Blue;
+                            point.MarkerColor = System.Drawing.Color.Red;
                             point.MarkerSize = 12;
                         }
                         else
                         {
-                            point.MarkerColor = System.Drawing.Color.Red;
+                            point.MarkerColor = System.Drawing.Color.Blue;
                             point.MarkerSize = 8;
                         }
                     }
@@ -1052,23 +1123,54 @@ namespace MapGISPlugin3
             chartResistivity.Series.Clear();
             chartPhase.Series.Clear();
 
-            // --- (新增) 美化图例，将其嵌入图表内部 ---
-            if (chartResistivity.Legends.Count > 0)
-            {
-                Legend resLegend = chartResistivity.Legends[0];
-                resLegend.Docking = Docking.Top; // 停靠在顶部
-                resLegend.Alignment = StringAlignment.Far; // 对齐到右边
-                resLegend.BackColor = System.Drawing.Color.Transparent; // 设置透明背景
-                resLegend.LegendStyle = LegendStyle.Row; // 水平排列图例项
-            }
-            if (chartPhase.Legends.Count > 0)
-            {
-                Legend phaseLegend = chartPhase.Legends[0];
-                phaseLegend.Docking = Docking.Top; // 停靠在顶部
-                phaseLegend.Alignment = StringAlignment.Far; // 对齐到右边
-                phaseLegend.BackColor = System.Drawing.Color.Transparent; // 设置透明背景
-                phaseLegend.LegendStyle = LegendStyle.Row; // 水平排列图例项
-            }
+            // --- 为所有图表设置统一的白色背景 ---
+            chartResistivity.BackColor = System.Drawing.Color.White;
+            chartPhase.BackColor = System.Drawing.Color.White;
+            chartProfileView.BackColor = System.Drawing.Color.White;
+
+            // --- 清除现有图例并重新配置 ---
+            chartResistivity.Legends.Clear();
+            chartPhase.Legends.Clear();
+            chartProfileView.Legends.Clear();
+
+            // --- 配置 chartResistivity 图例 (上方右侧) ---
+            Legend resLegend = chartResistivity.Legends.Add("LegendResistivity");
+            resLegend.Docking = Docking.Top; // 顶部停靠
+            resLegend.Alignment = StringAlignment.Far; // 右侧对齐
+            resLegend.BackColor = System.Drawing.Color.White;
+            resLegend.BorderColor = System.Drawing.Color.LightGray;
+            resLegend.BorderWidth = 1;
+            resLegend.Font = new System.Drawing.Font("微软雅黑", 8f);
+            resLegend.LegendStyle = LegendStyle.Table;
+            resLegend.IsEquallySpacedItems = false; // 允许不等间距
+            resLegend.TableStyle = LegendTableStyle.Auto; // 自动表格样式
+
+            // --- 配置 chartPhase 图例 (上方右侧) ---
+            Legend phaseLegend = chartPhase.Legends.Add("LegendPhase");
+            phaseLegend.Docking = Docking.Top;
+            phaseLegend.Alignment = StringAlignment.Far;
+            phaseLegend.BackColor = System.Drawing.Color.White;
+            phaseLegend.BorderColor = System.Drawing.Color.LightGray;
+            phaseLegend.BorderWidth = 1;
+            phaseLegend.Font = new System.Drawing.Font("微软雅黑", 8f);
+            phaseLegend.LegendStyle = LegendStyle.Table;
+            phaseLegend.IsEquallySpacedItems = false;
+            phaseLegend.TableStyle = LegendTableStyle.Auto;
+
+            // --- 配置 chartProfileView 图例 (上方右侧) ---
+            chartProfileView.Legends.Clear(); // 先清除所有图例
+            Legend profileLegend = chartProfileView.Legends.Add("LegendProfile");
+            profileLegend.Docking = Docking.Top;
+            profileLegend.Alignment = StringAlignment.Far;
+            profileLegend.BackColor = System.Drawing.Color.White;
+            profileLegend.BorderColor = System.Drawing.Color.LightGray;
+            profileLegend.BorderWidth = 1;
+            profileLegend.Font = new System.Drawing.Font("微软雅黑", 8f);
+            profileLegend.LegendStyle = LegendStyle.Table;
+            profileLegend.IsEquallySpacedItems = false;
+            profileLegend.TableStyle = LegendTableStyle.Auto;
+
+
             // --- (新增结束) ---
 
             if (string.IsNullOrEmpty(m_CurrentSelectedStationName) || m_CurrentLineData == null)
@@ -1666,12 +1768,12 @@ namespace MapGISPlugin3
         /// <summary>
         /// (新增辅助函数) 将反演结果数据显示在剖面图上
         /// </summary>
-/// <summary>
+        /// <summary>
         /// (辅助函数) 将反演结果数据显示在剖面图上
         /// </summary>
         private void DisplayInversionResults(List<InversionResultPoint> results)
         {
-            var chart = chartResultSection; 
+            var chart = chartResultSection;
 
             chart.Series.Clear();
             chart.ChartAreas.Clear();
@@ -1682,23 +1784,23 @@ namespace MapGISPlugin3
             {
                 return;
             }
-            
+
             chart.Titles.Add("一维反演电阻率剖面图");
 
             ChartArea ca = chart.ChartAreas.Add("ResultArea");
             ca.AxisX.Title = "测点坐标 (X)";
             ca.AxisY.Title = "深度 (m)";
-            ca.AxisY.IsReversed = true; 
+            ca.AxisY.IsReversed = true;
 
             Series s = chart.Series.Add("ResistivitySection");
             s.ChartType = SeriesChartType.Point;
             s.MarkerStyle = MarkerStyle.Square;
-            s.MarkerSize = 10; 
+            s.MarkerSize = 10;
 
             var validResults = results.Where(r => r.Resistivity > 0).ToList();
             if (validResults.Count == 0)
             {
-                 MessageBox.Show("结果文件中没有有效的（>0）电阻率值。", "警告", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("结果文件中没有有效的（>0）电阻率值。", "警告", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
@@ -1719,13 +1821,13 @@ namespace MapGISPlugin3
                 double val = minLogRes + (maxLogRes - minLogRes) * i / legendSteps;
                 // (修改) 明确指定 System.Windows.Forms.DataVisualization.Charting.LegendItem
                 System.Windows.Forms.DataVisualization.Charting.LegendItem item = new System.Windows.Forms.DataVisualization.Charting.LegendItem();
-                item.Name = Math.Pow(10, val).ToString("0.#"); 
+                item.Name = Math.Pow(10, val).ToString("0.#");
                 item.Color = GetColorForValue(val, minLogRes, maxLogRes);
                 item.MarkerStyle = MarkerStyle.Square;
                 item.MarkerSize = 12;
                 legend.CustomItems.Add(item);
             }
-            
+
             foreach (var point in validResults)
             {
                 double logRes = Math.Log10(point.Resistivity);
@@ -1760,7 +1862,56 @@ namespace MapGISPlugin3
 
         private void Form_CSAMT1di_Load(object sender, EventArgs e)
         {
+            if (splitContainer2.Orientation == Orientation.Vertical)
+            {
+                // 如果是左右排列，取宽度的 50%
+                splitContainer2.SplitterDistance = splitContainer2.Width / 2;
+            }
+            else
+            {
+                // 如果是上下排列，取高度的 50%
+                splitContainer2.SplitterDistance = splitContainer2.Height / 2;
+            }
             LoadLayersFromMap();
         }
+        private void btnClose_Click(object sender, EventArgs e)
+        {
+            this.Close();
+        }
+        #region --- 新增：窗口拖动与边框拉伸核心逻辑 ---
+
+        /// <summary>
+        /// 初始化标题栏拖动事件（绑定panel1）
+        /// </summary>
+        private void InitDragEvent()
+        {
+            panel1.MouseDown += TitlePanel_MouseDown;
+            panel1.MouseMove += TitlePanel_MouseMove;
+        }
+
+        /// <summary>
+        /// 标题栏按下：记录鼠标相对位置
+        /// </summary>
+        private void TitlePanel_MouseDown(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                mousePoint.X = e.X;
+                mousePoint.Y = e.Y;
+            }
+        }
+
+        /// <summary>
+        /// 标题栏移动：计算窗口新位置
+        /// </summary>
+        private void TitlePanel_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                this.Left = Control.MousePosition.X - mousePoint.X;
+                this.Top = Control.MousePosition.Y - mousePoint.Y;
+            }
+        }
+        #endregion
     } // End Class
 } // End Namespace

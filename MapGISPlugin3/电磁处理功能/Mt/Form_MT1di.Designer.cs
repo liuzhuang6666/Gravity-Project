@@ -24,15 +24,9 @@ namespace MapGISPlugin3
         #region Windows Form Designer generated code
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea1 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.Legend legend1 = new System.Windows.Forms.DataVisualization.Charting.Legend();
-            System.Windows.Forms.DataVisualization.Charting.Series series1 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea2 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.Legend legend2 = new System.Windows.Forms.DataVisualization.Charting.Legend();
-            System.Windows.Forms.DataVisualization.Charting.Series series2 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea3 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.Legend legend3 = new System.Windows.Forms.DataVisualization.Charting.Legend();
-            System.Windows.Forms.DataVisualization.Charting.Series series3 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea6 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea5 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea4 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
@@ -52,7 +46,6 @@ namespace MapGISPlugin3
             this.label2 = new System.Windows.Forms.Label();
             this.cmbLineName = new System.Windows.Forms.ComboBox();
             this.cmbStationLayer = new System.Windows.Forms.ComboBox();
-            this.chartPhase = new System.Windows.Forms.DataVisualization.Charting.Chart();
             this.chartResistivity = new System.Windows.Forms.DataVisualization.Charting.Chart();
             this.tabControl2 = new System.Windows.Forms.TabControl();
             this.tabPageDisplayTE = new System.Windows.Forms.TabPage();
@@ -60,6 +53,7 @@ namespace MapGISPlugin3
             this.panelTitle = new System.Windows.Forms.Panel();
             this.labelTitle = new System.Windows.Forms.Label();
             this.btnClose = new System.Windows.Forms.Button();
+            this.chartPhase = new System.Windows.Forms.DataVisualization.Charting.Chart();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -73,10 +67,10 @@ namespace MapGISPlugin3
             ((System.ComponentModel.ISupportInitialize)(this.gridTE)).BeginInit();
             this.tabPage3.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.gridTM)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.chartPhase)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.chartResistivity)).BeginInit();
             this.tabControl2.SuspendLayout();
             this.panelTitle.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.chartPhase)).BeginInit();
             this.SuspendLayout();
             // 
             // splitContainer1
@@ -98,8 +92,8 @@ namespace MapGISPlugin3
             this.splitContainer1.Panel2.Controls.Add(this.chartPhase);
             this.splitContainer1.Panel2.Controls.Add(this.chartResistivity);
             this.splitContainer1.Panel2.Controls.Add(this.tabControl2);
-            this.splitContainer1.Size = new System.Drawing.Size(1434, 776);
-            this.splitContainer1.SplitterDistance = 821;
+            this.splitContainer1.Size = new System.Drawing.Size(1485, 927);
+            this.splitContainer1.SplitterDistance = 849;
             this.splitContainer1.TabIndex = 0;
             // 
             // tabControl1
@@ -108,10 +102,10 @@ namespace MapGISPlugin3
             this.tabControl1.Controls.Add(this.tabPage2);
             this.tabControl1.Controls.Add(this.tabPage3);
             this.tabControl1.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.tabControl1.Location = new System.Drawing.Point(0, 51);
+            this.tabControl1.Location = new System.Drawing.Point(0, 72);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(821, 725);
+            this.tabControl1.Size = new System.Drawing.Size(849, 855);
             this.tabControl1.TabIndex = 5;
             // 
             // tabPage1
@@ -121,8 +115,8 @@ namespace MapGISPlugin3
             this.tabPage1.Controls.Add(this.chartProfileView);
             this.tabPage1.Location = new System.Drawing.Point(4, 28);
             this.tabPage1.Name = "tabPage1";
-            this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage1.Size = new System.Drawing.Size(813, 693);
+            this.tabPage1.Padding = new System.Windows.Forms.Padding(3, 3, 3, 3);
+            this.tabPage1.Size = new System.Drawing.Size(841, 823);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "计算";
             // 
@@ -136,7 +130,7 @@ namespace MapGISPlugin3
             this.groupBoxParams.Controls.Add(this.btnCalculate);
             this.groupBoxParams.Location = new System.Drawing.Point(14, 15);
             this.groupBoxParams.Name = "groupBoxParams";
-            this.groupBoxParams.Size = new System.Drawing.Size(778, 95);
+            this.groupBoxParams.Size = new System.Drawing.Size(778, 94);
             this.groupBoxParams.TabIndex = 1;
             this.groupBoxParams.TabStop = false;
             this.groupBoxParams.Text = "计算参数";
@@ -144,7 +138,7 @@ namespace MapGISPlugin3
             // nudIterationCount
             // 
             this.nudIterationCount.BackColor = System.Drawing.SystemColors.Control;
-            this.nudIterationCount.Location = new System.Drawing.Point(377, 38);
+            this.nudIterationCount.Location = new System.Drawing.Point(376, 38);
             this.nudIterationCount.Name = "nudIterationCount";
             this.nudIterationCount.Size = new System.Drawing.Size(198, 28);
             this.nudIterationCount.TabIndex = 5;
@@ -152,7 +146,7 @@ namespace MapGISPlugin3
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(284, 43);
+            this.label4.Location = new System.Drawing.Point(284, 44);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(98, 18);
             this.label4.TabIndex = 4;
@@ -161,7 +155,7 @@ namespace MapGISPlugin3
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(38, 43);
+            this.label3.Location = new System.Drawing.Point(38, 44);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(98, 18);
             this.label3.TabIndex = 3;
@@ -170,7 +164,7 @@ namespace MapGISPlugin3
             // rbInversionTM
             // 
             this.rbInversionTM.AutoSize = true;
-            this.rbInversionTM.Location = new System.Drawing.Point(151, 56);
+            this.rbInversionTM.Location = new System.Drawing.Point(152, 56);
             this.rbInversionTM.Name = "rbInversionTM";
             this.rbInversionTM.Size = new System.Drawing.Size(51, 22);
             this.rbInversionTM.TabIndex = 2;
@@ -181,7 +175,7 @@ namespace MapGISPlugin3
             // 
             this.rbInversionTE.AutoSize = true;
             this.rbInversionTE.Checked = true;
-            this.rbInversionTE.Location = new System.Drawing.Point(151, 27);
+            this.rbInversionTE.Location = new System.Drawing.Point(152, 27);
             this.rbInversionTE.Name = "rbInversionTE";
             this.rbInversionTE.Size = new System.Drawing.Size(51, 22);
             this.rbInversionTE.TabIndex = 1;
@@ -192,7 +186,7 @@ namespace MapGISPlugin3
             // btnCalculate
             // 
             this.btnCalculate.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.btnCalculate.Location = new System.Drawing.Point(635, 32);
+            this.btnCalculate.Location = new System.Drawing.Point(634, 32);
             this.btnCalculate.Name = "btnCalculate";
             this.btnCalculate.Size = new System.Drawing.Size(78, 40);
             this.btnCalculate.TabIndex = 0;
@@ -202,30 +196,22 @@ namespace MapGISPlugin3
             // 
             // chartProfileView
             // 
-            this.chartProfileView.BackColor = System.Drawing.SystemColors.Control;
-            chartArea1.Name = "ChartArea1";
-            this.chartProfileView.ChartAreas.Add(chartArea1);
-            legend1.Name = "Legend1";
-            this.chartProfileView.Legends.Add(legend1);
-            this.chartProfileView.Location = new System.Drawing.Point(11, 99);
+            chartArea6.Name = "ChartArea1";
+            this.chartProfileView.ChartAreas.Add(chartArea6);
+            this.chartProfileView.Location = new System.Drawing.Point(10, 115);
             this.chartProfileView.Name = "chartProfileView";
-            series1.ChartArea = "ChartArea1";
-            series1.Legend = "Legend1";
-            series1.Name = "Series1";
-            this.chartProfileView.Series.Add(series1);
-            this.chartProfileView.Size = new System.Drawing.Size(782, 561);
+            this.chartProfileView.Size = new System.Drawing.Size(820, 712);
             this.chartProfileView.TabIndex = 0;
             this.chartProfileView.Text = "chart1";
             this.chartProfileView.MouseClick += new System.Windows.Forms.MouseEventHandler(this.chartProfileView_MouseClick);
-            legend1.BackColor = System.Drawing.SystemColors.Control;
             // 
             // tabPage2
             // 
             this.tabPage2.Controls.Add(this.gridTE);
             this.tabPage2.Location = new System.Drawing.Point(4, 28);
             this.tabPage2.Name = "tabPage2";
-            this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage2.Size = new System.Drawing.Size(813, 693);
+            this.tabPage2.Padding = new System.Windows.Forms.Padding(3, 3, 3, 3);
+            this.tabPage2.Size = new System.Drawing.Size(841, 823);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "TE";
             this.tabPage2.UseVisualStyleBackColor = true;
@@ -238,7 +224,7 @@ namespace MapGISPlugin3
             this.gridTE.Name = "gridTE";
             this.gridTE.RowHeadersWidth = 62;
             this.gridTE.RowTemplate.Height = 30;
-            this.gridTE.Size = new System.Drawing.Size(807, 687);
+            this.gridTE.Size = new System.Drawing.Size(835, 817);
             this.gridTE.TabIndex = 0;
             // 
             // tabPage3
@@ -246,8 +232,8 @@ namespace MapGISPlugin3
             this.tabPage3.Controls.Add(this.gridTM);
             this.tabPage3.Location = new System.Drawing.Point(4, 28);
             this.tabPage3.Name = "tabPage3";
-            this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage3.Size = new System.Drawing.Size(813, 693);
+            this.tabPage3.Padding = new System.Windows.Forms.Padding(3, 3, 3, 3);
+            this.tabPage3.Size = new System.Drawing.Size(841, 823);
             this.tabPage3.TabIndex = 2;
             this.tabPage3.Text = "TM";
             this.tabPage3.UseVisualStyleBackColor = true;
@@ -260,7 +246,7 @@ namespace MapGISPlugin3
             this.gridTM.Name = "gridTM";
             this.gridTM.RowHeadersWidth = 62;
             this.gridTM.RowTemplate.Height = 30;
-            this.gridTM.Size = new System.Drawing.Size(807, 687);
+            this.gridTM.Size = new System.Drawing.Size(835, 817);
             this.gridTM.TabIndex = 0;
             // 
             // label1
@@ -287,7 +273,7 @@ namespace MapGISPlugin3
             this.cmbLineName.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbLineName.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.cmbLineName.FormattingEnabled = true;
-            this.cmbLineName.Location = new System.Drawing.Point(551, 19);
+            this.cmbLineName.Location = new System.Drawing.Point(550, 20);
             this.cmbLineName.Name = "cmbLineName";
             this.cmbLineName.Size = new System.Drawing.Size(236, 26);
             this.cmbLineName.TabIndex = 1;
@@ -299,59 +285,31 @@ namespace MapGISPlugin3
             this.cmbStationLayer.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbStationLayer.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.cmbStationLayer.FormattingEnabled = true;
-            this.cmbStationLayer.Location = new System.Drawing.Point(147, 19);
+            this.cmbStationLayer.Location = new System.Drawing.Point(147, 20);
             this.cmbStationLayer.Name = "cmbStationLayer";
             this.cmbStationLayer.Size = new System.Drawing.Size(236, 26);
             this.cmbStationLayer.TabIndex = 0;
             this.cmbStationLayer.SelectedIndexChanged += new System.EventHandler(this.cmbStationLayer_SelectedIndexChanged);
             // 
-            // chartPhase
-            // 
-            this.chartPhase.BackColor = System.Drawing.SystemColors.Control;
-            chartArea2.Name = "ChartArea1";
-            this.chartPhase.ChartAreas.Add(chartArea2);
-            this.chartPhase.Dock = System.Windows.Forms.DockStyle.Fill;
-            legend2.Name = "Legend1";
-            this.chartPhase.Legends.Add(legend2);
-            this.chartPhase.Location = new System.Drawing.Point(0, 398);
-            this.chartPhase.Name = "chartPhase";
-            series2.ChartArea = "ChartArea1";
-            series2.Legend = "Legend1";
-            series2.Name = "Series1";
-            this.chartPhase.Series.Add(series2);
-            this.chartPhase.Size = new System.Drawing.Size(609, 378);
-            this.chartPhase.TabIndex = 2;
-            this.chartPhase.Text = "chart3";
-            legend2.BackColor = System.Drawing.SystemColors.Control;
-            // 
             // chartResistivity
             // 
-            this.chartResistivity.BackColor = System.Drawing.SystemColors.Control;
-            chartArea3.Name = "ChartArea1";
-            this.chartResistivity.ChartAreas.Add(chartArea3);
-            this.chartResistivity.Dock = System.Windows.Forms.DockStyle.Top;
-            legend3.Name = "Legend1";
-            this.chartResistivity.Legends.Add(legend3);
-            this.chartResistivity.Location = new System.Drawing.Point(0, 28);
+            chartArea5.Name = "ChartArea1";
+            this.chartResistivity.ChartAreas.Add(chartArea5);
+            this.chartResistivity.Location = new System.Drawing.Point(10, 27);
             this.chartResistivity.Name = "chartResistivity";
-            series3.ChartArea = "ChartArea1";
-            series3.Legend = "Legend1";
-            series3.Name = "Series1";
-            this.chartResistivity.Series.Add(series3);
-            this.chartResistivity.Size = new System.Drawing.Size(609, 370);
+            this.chartResistivity.Size = new System.Drawing.Size(606, 414);
             this.chartResistivity.TabIndex = 1;
             this.chartResistivity.Text = "chart2";
-            legend3.BackColor = System.Drawing.SystemColors.Control;
             // 
             // tabControl2
             // 
+            this.tabControl2.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.tabControl2.Controls.Add(this.tabPageDisplayTE);
             this.tabControl2.Controls.Add(this.tabPageDisplayTM);
-            this.tabControl2.Dock = System.Windows.Forms.DockStyle.Top;
-            this.tabControl2.Location = new System.Drawing.Point(0, 0);
+            this.tabControl2.Location = new System.Drawing.Point(8, 0);
             this.tabControl2.Name = "tabControl2";
             this.tabControl2.SelectedIndex = 0;
-            this.tabControl2.Size = new System.Drawing.Size(609, 28);
+            this.tabControl2.Size = new System.Drawing.Size(622, 28);
             this.tabControl2.TabIndex = 0;
             this.tabControl2.SelectedIndexChanged += new System.EventHandler(this.tabControl2_SelectedIndexChanged);
             // 
@@ -359,8 +317,8 @@ namespace MapGISPlugin3
             // 
             this.tabPageDisplayTE.Location = new System.Drawing.Point(4, 28);
             this.tabPageDisplayTE.Name = "tabPageDisplayTE";
-            this.tabPageDisplayTE.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPageDisplayTE.Size = new System.Drawing.Size(601, 0);
+            this.tabPageDisplayTE.Padding = new System.Windows.Forms.Padding(3, 3, 3, 3);
+            this.tabPageDisplayTE.Size = new System.Drawing.Size(614, 0);
             this.tabPageDisplayTE.TabIndex = 0;
             this.tabPageDisplayTE.Text = "TE";
             this.tabPageDisplayTE.UseVisualStyleBackColor = true;
@@ -369,8 +327,8 @@ namespace MapGISPlugin3
             // 
             this.tabPageDisplayTM.Location = new System.Drawing.Point(4, 28);
             this.tabPageDisplayTM.Name = "tabPageDisplayTM";
-            this.tabPageDisplayTM.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPageDisplayTM.Size = new System.Drawing.Size(601, 0);
+            this.tabPageDisplayTM.Padding = new System.Windows.Forms.Padding(3, 3, 3, 3);
+            this.tabPageDisplayTM.Size = new System.Drawing.Size(624, 0);
             this.tabPageDisplayTM.TabIndex = 1;
             this.tabPageDisplayTM.Text = "TM";
             this.tabPageDisplayTM.UseVisualStyleBackColor = true;
@@ -383,7 +341,7 @@ namespace MapGISPlugin3
             this.panelTitle.Dock = System.Windows.Forms.DockStyle.Top;
             this.panelTitle.Location = new System.Drawing.Point(0, 0);
             this.panelTitle.Name = "panelTitle";
-            this.panelTitle.Size = new System.Drawing.Size(1434, 48);
+            this.panelTitle.Size = new System.Drawing.Size(1485, 48);
             this.panelTitle.TabIndex = 6;
             // 
             // labelTitle
@@ -403,7 +361,7 @@ namespace MapGISPlugin3
             this.btnClose.FlatAppearance.BorderColor = System.Drawing.SystemColors.ControlLight;
             this.btnClose.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnClose.Font = new System.Drawing.Font("宋体", 6.75F);
-            this.btnClose.Location = new System.Drawing.Point(1390, 0);
+            this.btnClose.Location = new System.Drawing.Point(1441, 0);
             this.btnClose.Name = "btnClose";
             this.btnClose.Size = new System.Drawing.Size(44, 48);
             this.btnClose.TabIndex = 0;
@@ -411,11 +369,22 @@ namespace MapGISPlugin3
             this.btnClose.UseVisualStyleBackColor = true;
             this.btnClose.Click += new System.EventHandler(this.btnClose_Click);
             // 
+            // chartPhase
+            // 
+            this.chartPhase.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            chartArea4.Name = "ChartArea1";
+            this.chartPhase.ChartAreas.Add(chartArea4);
+            this.chartPhase.Location = new System.Drawing.Point(10, 438);
+            this.chartPhase.Name = "chartPhase";
+            this.chartPhase.Size = new System.Drawing.Size(606, 485);
+            this.chartPhase.TabIndex = 2;
+            this.chartPhase.Text = "chart3";
+            // 
             // Form_MT1di
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 18F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1434, 824);
+            this.ClientSize = new System.Drawing.Size(1485, 975);
             this.Controls.Add(this.splitContainer1);
             this.Controls.Add(this.panelTitle);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
@@ -438,10 +407,10 @@ namespace MapGISPlugin3
             ((System.ComponentModel.ISupportInitialize)(this.gridTE)).EndInit();
             this.tabPage3.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.gridTM)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.chartPhase)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.chartResistivity)).EndInit();
             this.tabControl2.ResumeLayout(false);
             this.panelTitle.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.chartPhase)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -474,8 +443,8 @@ namespace MapGISPlugin3
         private System.Windows.Forms.DataGridView gridTM;
         private System.Windows.Forms.TabControl tabControl2;
         private System.Windows.Forms.TabPage tabPageDisplayTM;
-        private System.Windows.Forms.DataVisualization.Charting.Chart chartPhase;
         private System.Windows.Forms.DataVisualization.Charting.Chart chartResistivity;
         private System.Windows.Forms.TabPage tabPageDisplayTE;
+        private System.Windows.Forms.DataVisualization.Charting.Chart chartPhase;
     }
 }

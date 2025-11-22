@@ -11,50 +11,71 @@ using MapGIS.GeoMap;
 using MapGIS.GeoDataBase;
 using MapGIS.GeoObjects.Att;
 using MapGIS.GeoObjects;
-using System.Windows.Forms.DataVisualization.Charting; // <-- 必须引用
+using System.Windows.Forms.DataVisualization.Charting;
 using System.Runtime.InteropServices;
 using MapGIS.GeoObjects.Geometry;
-using System.IO; // 用于文件读写 (Path, StreamWriter)
-using System.Diagnostics; // 用于执行 a.exe (Process)
-using System.Reflection; // 用于获取 a.exe 的路径 (Assembly)
+using System.IO;
+using System.Diagnostics;
+using System.Reflection;
 
 namespace MapGISPlugin3
 {
-    // -----------------------------------------------------------------
-    // 【修改 1】: 重命名窗体类
-    // -----------------------------------------------------------------
     public partial class Form_MT2di : Form
     {
         // --- 核心变量 ---
         private IApplication _hook;
-        private List<MapLayer> m_allPointLayers; // 存储所有点图层
-        private List<MapLayer> m_allObjectLayers; // 存储所有对象类
-        private SFeatureCls m_SelectedStationLayer; // 当前选中的测点要素类
-        private ObjectCls m_SelectedSoundingTable; // 自动关联的测深数据表
-        private List<StationInfo> m_CurrentLineStations; // 当前测线上的所有测点 (用于小地图)
-        private DataTable m_CurrentLineData; // 当前测线上的所有数据 (用于表格)
-        private string m_CurrentSelectedStationName; // 当前选中的测点号
+        private List<MapLayer> m_allPointLayers;
+        private List<MapLayer> m_allObjectLayers;
+        private SFeatureCls m_SelectedStationLayer;
+        private ObjectCls m_SelectedSoundingTable;
+        private List<StationInfo> m_CurrentLineStations;
+        private DataTable m_CurrentLineData;
+        private string m_CurrentSelectedStationName;
 
-        // 内部辅助类 (在文件底部定义)
+        // 图例常量（与一维反演保持一致）
+        private const string ProfileLegendName = "ProfileLegend";
+        private const string ResistivityLegendName = "ResistivityLegend";
+        private const string PhaseLegendName = "PhaseLegend";
 
-        /// <summary>
-        /// 构造函数
-        /// </summary>
         public Form_MT2di(IApplication hook)
         {
             InitializeComponent();
             _hook = hook;
 
-            // 初始化列表
             m_allPointLayers = new List<MapLayer>();
             m_allObjectLayers = new List<MapLayer>();
             m_CurrentLineStations = new List<StationInfo>();
             m_CurrentLineData = new DataTable();
         }
 
-        /// <summary>
-        /// (辅助函数) 从 "电法数据" 地图加载图层列表 (已移除弹窗调试)
-        /// </summary>
+        #region 窗口拖动逻辑（与Form_MT1di保持一致）
+        private Point mousePoint = new Point();
+
+        private void InitDragEvent()
+        {
+            panelTitle.MouseDown += TitlePanel_MouseDown;
+            panelTitle.MouseMove += TitlePanel_MouseMove;
+        }
+
+        private void TitlePanel_MouseDown(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                mousePoint.X = e.X;
+                mousePoint.Y = e.Y;
+            }
+        }
+
+        private void TitlePanel_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                this.Left = Control.MousePosition.X - mousePoint.X;
+                this.Top = Control.MousePosition.Y - mousePoint.Y;
+            }
+        }
+        #endregion
+
         private void LoadLayersFromMap()
         {
             m_allPointLayers.Clear();
@@ -73,19 +94,7 @@ namespace MapGISPlugin3
                     return;
                 }
 
-                int layerCount = 0;
-                try
-                {
-                    layerCount = electroMap.LayerCount; // 获取图层数量
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"获取 '电法数据' 地图图层数量时出错: {ex.Message}", "LoadLayersFromMap - 错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    cmbStationLayer.Enabled = false;
-                    cmbLineName.Enabled = false;
-                    return;
-                }
-
+                int layerCount = electroMap.LayerCount;
                 MapLayer layer = null;
                 for (int i = 0; i < layerCount; i++)
                 {
@@ -93,35 +102,29 @@ namespace MapGISPlugin3
                     try
                     {
                         layer = electroMap.get_Layer(i);
-                        if (layer == null)
-                        {
-                            Console.WriteLine($"图层索引 {i} 为 null，跳过。"); // 这个信息不关键，用 Console 即可
-                            continue;
-                        }
-
-                        // 调用（已移除弹窗的）图层处理函数
+                        if (layer == null) continue;
                         ProcessLayerForComboBox_Debug(layer);
-
                     }
                     catch (COMException comEx)
                     {
-                        MessageBox.Show($"遍历图层索引 {i} (名称: {layer?.Name ?? "未知"}) 时发生 COM 错误: {comEx.Message} (Code: {comEx.ErrorCode})", "LoadLayersFromMap - COM 错误", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        MessageBox.Show($"遍历图层索引 {i} 时发生 COM 错误: {comEx.Message}", "LoadLayersFromMap - COM 错误", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show($"遍历图层索引 {i} (名称: {layer?.Name ?? "未知"}) 时发生错误: {ex.Message}", "LoadLayersFromMap - 错误", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        MessageBox.Show($"遍历图层索引 {i} 时发生错误: {ex.Message}", "LoadLayersFromMap - 错误", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     }
-                    finally
-                    {
-                        // 不释放 layer
-                    }
-                } // 遍历结束
-
+                }
             }
-            catch (COMException comEx) { MessageBox.Show($"查找地图或获取图层数COM错误: {comEx.Message}", "LoadLayersFromMap - 致命COM错误"); /* ... 禁用控件 ... */ return; }
-            catch (Exception ex) { MessageBox.Show($"加载图层列表意外错误: {ex.Message}", "LoadLayersFromMap - 致命错误"); /* ... 禁用控件 ... */ return; }
-            finally { Console.WriteLine("[LoadLayersFromMap] finally 块执行完毕。"); }
-
+            catch (COMException comEx)
+            {
+                MessageBox.Show($"查找地图或获取图层数COM错误: {comEx.Message}", "LoadLayersFromMap - 致命COM错误");
+                return;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"加载图层列表意外错误: {ex.Message}", "LoadLayersFromMap - 致命错误");
+                return;
+            }
 
             cmbStationLayer.DisplayMember = "Name";
 
@@ -139,43 +142,34 @@ namespace MapGISPlugin3
             }
         }
 
-        /// <summary>
-        /// (已移除弹窗调试) 处理单个图层，如果是组图层则递归处理
-        /// </summary>
         private void ProcessLayerForComboBox_Debug(MapLayer layer)
         {
             if (layer == null) return;
 
-            string layerName = "[无法获取名称]"; // 默认值
-            string layerTypeName = "[无法获取类型]";
-            try { layerName = layer.Name ?? "[名称为null]"; layerTypeName = layer.GetType().Name; } catch { /* 忽略获取名称/类型的错误 */ }
+            string layerName = "[无法获取名称]";
+            try { layerName = layer.Name ?? "[名称为null]"; } catch { }
 
             try
             {
-                // 检查是否是组图层
                 if (layer is GroupLayer groupLayer)
                 {
                     int subLayerCount = 0;
-                    try { subLayerCount = groupLayer.Count; } catch { } // 安全获取数量
-
+                    try { subLayerCount = groupLayer.Count; } catch { }
                     MapLayer subLayer = null;
-                    for (int i = 0; i < subLayerCount; i++) // 使用安全获取的数量
+                    for (int i = 0; i < subLayerCount; i++)
                     {
                         subLayer = null;
                         try
                         {
                             subLayer = groupLayer.get_Item(i);
-                            // 递归调用（已移除弹窗的）版本
                             ProcessLayerForComboBox_Debug(subLayer);
                         }
-                        catch (Exception ex) { MessageBox.Show($"处理组 '{layerName}' 的子图层 {i} 时出错: {ex.Message}", "ProcessLayer - 递归错误"); }
-                        finally { /* 不释放 subLayer */ }
+                        catch (Exception ex) { }
                     }
                 }
-                // 检查是否是 VectorLayer
                 else if (layer is VectorLayer vectorLayer)
                 {
-                    GeomType geomType = GeomType.Unknown; // 默认值
+                    GeomType geomType = GeomType.Unknown;
                     bool isPoint = false;
                     try
                     {
@@ -184,11 +178,10 @@ namespace MapGISPlugin3
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show($"获取图层 '{layerName}' 的几何类型时出错: {ex.Message}", "ProcessLayer - 错误");
-                        return; // 获取类型失败，无法继续判断
+                        return;
                     }
 
-                    if (isPoint) // 几何类型是点
+                    if (isPoint)
                     {
                         bool nameMatch = false;
                         if (layerName != null && layerName.Contains("测点"))
@@ -196,76 +189,65 @@ namespace MapGISPlugin3
                             nameMatch = true;
                         }
 
-                        if (nameMatch) // 名称也匹配
+                        if (nameMatch)
                         {
                             m_allPointLayers.Add(layer);
                             cmbStationLayer.Items.Add(layer);
                         }
                     }
                 }
-                // 检查是否是 ObjectLayer
                 else if (layer is ObjectLayer objectLayer)
                 {
-                    // 并且名称包含 "测深数据"
                     if (layerName != null && layerName.Contains("测深数据"))
                     {
                         m_allObjectLayers.Add(layer);
                     }
                 }
             }
-            catch (COMException comEx) // 捕获访问 layer 属性（如 Name, GeometryType）时可能发生的错误
+            catch (COMException comEx)
             {
-                MessageBox.Show($"处理图层 '{layerName}' 时发生 COM 错误: {comEx.Message} (Code: {comEx.ErrorCode})", "ProcessLayer - COM 错误");
+                MessageBox.Show($"处理图层 '{layerName}' 时发生 COM 错误: {comEx.Message}", "ProcessLayer - COM 错误");
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"处理图层 '{layerName}' 时发生错误: {ex.Message}", "ProcessLayer - 错误");
             }
-            // *** 不释放 layer ***
         }
 
-        #region --- 1. 主控件事件 (左栏顶部) ---
+        #region --- 主控件事件 ---
 
-        /// <summary>
-        /// 事件: 当用户选择一个新的 "测点图层" (使用原始变量名)
-        /// </summary>
         private void cmbStationLayer_SelectedIndexChanged(object sender, EventArgs e)
         {
-            // --- 1. 清理旧状态 ---
             if (m_SelectedStationLayer != null) try { Marshal.ReleaseComObject(m_SelectedStationLayer); } catch { }
-            m_SelectedStationLayer = null; // SFeatureCls
+            m_SelectedStationLayer = null;
             if (m_SelectedSoundingTable != null) try { Marshal.ReleaseComObject(m_SelectedSoundingTable); } catch { }
-            m_SelectedSoundingTable = null; // ObjectCls
+            m_SelectedSoundingTable = null;
 
-            cmbLineName.Items.Clear();      // 清空测线下拉框
-            ClearAllDisplays();             // 清空所有图表、表格和小地图
+            cmbLineName.Items.Clear();
+            ClearAllDisplays();
 
             if (cmbStationLayer.SelectedItem == null || !(cmbStationLayer.SelectedItem is MapLayer selectedLayer))
             {
                 cmbLineName.Enabled = false;
-                Console.WriteLine("cmbStationLayer_SelectedIndexChanged: No valid MapLayer selected.");
                 return;
             }
 
             Console.WriteLine($"用户选择了测点图层: {selectedLayer.Name}");
 
-            // --- 2. 获取选中的测点图层和要素类 ---
             try
             {
                 m_SelectedStationLayer = selectedLayer.GetData() as SFeatureCls;
                 if (m_SelectedStationLayer == null || !m_SelectedStationLayer.HasOpen())
                 {
-                    MessageBox.Show($"无法从图层 '{selectedLayer.Name}' 获取有效的要素类数据 (SFeatureCls)！", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show($"无法从图层 '{selectedLayer.Name}' 获取有效的要素类数据！", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     cmbLineName.Enabled = false;
-                    m_SelectedStationLayer = null; // 确保清空
+                    m_SelectedStationLayer = null;
                     return;
                 }
-                Console.WriteLine($"成功获取选中测点图层的 SFeatureCls: {selectedLayer.Name}");
             }
             catch (COMException comEx)
             {
-                MessageBox.Show($"获取图层 '{selectedLayer.Name}' 数据 (SFeatureCls) 时发生 COM 错误: {comEx.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                Console.WriteLine($"Error getting SFeatureCls for {selectedLayer.Name}: {comEx}");
+                MessageBox.Show($"获取图层数据时发生 COM 错误: {comEx.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 cmbLineName.Enabled = false;
                 if (m_SelectedStationLayer != null) try { Marshal.ReleaseComObject(m_SelectedStationLayer); } catch { }
                 m_SelectedStationLayer = null;
@@ -273,50 +255,42 @@ namespace MapGISPlugin3
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"获取图层 '{selectedLayer.Name}' 数据 (SFeatureCls) 时发生错误: {ex.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                Console.WriteLine($"Error getting SFeatureCls for {selectedLayer.Name}: {ex}");
+                MessageBox.Show($"获取图层数据时发生错误: {ex.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 cmbLineName.Enabled = false;
                 if (m_SelectedStationLayer != null) try { Marshal.ReleaseComObject(m_SelectedStationLayer); } catch { }
                 m_SelectedStationLayer = null;
                 return;
             }
 
-            // --- 3. 自动关联测深数据表 ---
             string stationLayerName = selectedLayer.Name;
             string expectedTableName = stationLayerName.Replace("测点", "测深数据");
-            Console.WriteLine($"尝试查找匹配的测深数据表: {expectedTableName}");
-
             MapLayer soundingLayer = m_allObjectLayers.FirstOrDefault(layer => layer != null && layer.Name == expectedTableName);
 
             if (soundingLayer == null)
             {
-                MessageBox.Show($"未在 '电法数据' 地图中找到与 '{stationLayerName}' 匹配的测深数据表 '{expectedTableName}'！\n请检查图层命名规范。", "关联失败", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show($"未找到与 '{stationLayerName}' 匹配的测深数据表 '{expectedTableName}'！", "关联失败", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 cmbLineName.Enabled = false;
                 if (m_SelectedStationLayer != null) try { Marshal.ReleaseComObject(m_SelectedStationLayer); } catch { }
                 m_SelectedStationLayer = null;
                 return;
             }
-
-            Console.WriteLine($"找到可能的测深数据表图层: {soundingLayer.Name}");
 
             try
             {
                 m_SelectedSoundingTable = soundingLayer.GetData() as ObjectCls;
                 if (m_SelectedSoundingTable == null || !m_SelectedSoundingTable.HasOpen())
                 {
-                    MessageBox.Show($"图层 '{expectedTableName}' 不是有效的对象类 (ObjectCls) 或无法打开！", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    m_SelectedSoundingTable = null; // 确保清空
+                    MessageBox.Show($"图层 '{expectedTableName}' 不是有效的对象类或无法打开！", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    m_SelectedSoundingTable = null;
                     cmbLineName.Enabled = false;
                     if (m_SelectedStationLayer != null) try { Marshal.ReleaseComObject(m_SelectedStationLayer); } catch { }
                     m_SelectedStationLayer = null;
                     return;
                 }
-                Console.WriteLine($"成功关联到测深数据表 ObjectCls: {soundingLayer.Name}");
             }
             catch (COMException comEx)
             {
-                MessageBox.Show($"获取测深表 '{soundingLayer.Name}' 数据 (ObjectCls) 时发生 COM 错误: {comEx.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                Console.WriteLine($"Error getting ObjectCls for {soundingLayer.Name}: {comEx}");
+                MessageBox.Show($"获取测深表数据时发生 COM 错误: {comEx.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 cmbLineName.Enabled = false;
                 if (m_SelectedStationLayer != null) try { Marshal.ReleaseComObject(m_SelectedStationLayer); } catch { }
                 m_SelectedStationLayer = null;
@@ -326,8 +300,7 @@ namespace MapGISPlugin3
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"获取测深表 '{soundingLayer.Name}' 数据 (ObjectCls) 时发生错误: {ex.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                Console.WriteLine($"Error getting ObjectCls for {soundingLayer.Name}: {ex}");
+                MessageBox.Show($"获取测深表数据时发生错误: {ex.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 cmbLineName.Enabled = false;
                 if (m_SelectedStationLayer != null) try { Marshal.ReleaseComObject(m_SelectedStationLayer); } catch { }
                 m_SelectedStationLayer = null;
@@ -336,15 +309,12 @@ namespace MapGISPlugin3
                 return;
             }
 
-            // --- 4. (如果成功) 填充 cmbLineName (测线下拉框) ---
             cmbLineName.Enabled = true;
-            FillLineComboBox(); // 调用辅助函数填充测线列表 
+            FillLineComboBox();
 
-            // --- 5. (如果成功且有测线) 自动选中第一条测线 ---
             if (cmbLineName.Items.Count > 0)
             {
-                cmbLineName.Text = "请选择测线..."; // 给出提示
-                Console.WriteLine("测线列表已填充，等待用户选择。");
+                cmbLineName.Text = "请选择测线...";
             }
             else
             {
@@ -354,93 +324,58 @@ namespace MapGISPlugin3
             }
         }
 
-
-
-        /// <summary>
-        /// 事件: 当用户选择一个新的 "测线" (主刷新函数) - 【!! 调试中 !!】
-        /// </summary>
         private void cmbLineName_SelectedIndexChanged(object sender, EventArgs e)
         {
-            // 0. 基本检查和清空
-            ClearAllDisplays(); // 清空所有旧数据
+            ClearAllDisplays();
             if (cmbLineName.SelectedItem == null || m_SelectedStationLayer == null || m_SelectedSoundingTable == null)
             {
                 return;
             }
 
             string selectedLine = cmbLineName.SelectedItem.ToString();
-
-            this.Cursor = Cursors.WaitCursor; // 开始等待
+            this.Cursor = Cursors.WaitCursor;
 
             try
             {
-                // 1.  查询 SFeatureCls (点图层)，获取所有测点 (X, Y, 测点号)
-
                 m_CurrentLineStations = QueryStationsForLine(selectedLine);
-
-
-
-                // 2. 查询 ObjectCls (测深表)，获取该测线所有数据
                 m_CurrentLineData = QuerySoundingDataForLine(selectedLine);
 
-                // 3. 刷新"计算"页的小地图
                 UpdateProfileView();
-
-                // 4.刷新"TE" 和 "TM" 页的表格
                 UpdateDataGrids();
 
-                // 6.自动选中第一个点
                 if (m_CurrentLineStations.Count > 0)
                 {
                     string firstStation = m_CurrentLineStations[0].StationName;
-                    // 自动选中第一个点并刷新右侧图表
                     SelectStationAndRefreshCharts(firstStation);
-                }
-                else
-                {
-                    Console.WriteLine("cmbLineName_SelectedIndexChanged: 未查询到测点，跳过自动选中。");
                 }
             }
             catch (COMException comEx)
             {
                 MessageBox.Show($"加载测线 '{selectedLine}' 数据时发生 COM 错误: {comEx.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                Console.WriteLine($"Error in cmbLineName_SelectedIndexChanged: {comEx}");
-                ClearAllDisplays(); // 出错时清空
+                ClearAllDisplays();
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"加载测线 '{selectedLine}' 数据时发生错误: {ex.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                Console.WriteLine($"Error in cmbLineName_SelectedIndexChanged: {ex}");
-                ClearAllDisplays(); // 出错时清空
+                ClearAllDisplays();
             }
             finally
             {
-                this.Cursor = Cursors.Default; // 结束等待
+                this.Cursor = Cursors.Default;
             }
         }
 
         #endregion
 
-        #region --- 2. 标签页控件事件 (左栏下方) ---
+        #region --- 标签页控件事件 ---
 
-        /// <summary>
-        /// 事件: 当用户在 "小地图" 上点击 (实现可视化点选)
-        /// </summary>
         private void chartProfileView_MouseClick(object sender, MouseEventArgs e)
         {
-            // 使用 HitTest 来查找点击位置的图表元素
             var hitTestResult = chartProfileView.HitTest(e.X, e.Y);
-
-            // 检查是否点中了数据点 (DataPoint)
             if (hitTestResult.ChartElementType == ChartElementType.DataPoint)
             {
-                // 从数据点中获取我们存储的测点信息
                 DataPoint dataPoint = (DataPoint)hitTestResult.Object;
-
-                // 在 UpdateProfileView 中, 我们把测点名存在了 Tag 里
                 string stationName = dataPoint.Tag?.ToString();
-
-                // (备用方案: 如果 Tag 为空, 尝试用 Label)
                 if (string.IsNullOrEmpty(stationName))
                 {
                     stationName = dataPoint.Label;
@@ -448,58 +383,21 @@ namespace MapGISPlugin3
 
                 if (!string.IsNullOrEmpty(stationName))
                 {
-                    // 找到了测点名, 调用您现有的刷新函数
                     SelectStationAndRefreshCharts(stationName);
                 }
             }
         }
 
-
-        // -----------------------------------------------------------------
-        // 【修改 2】: 辅助函数，用于获取 iwd
-        // -----------------------------------------------------------------
-        /// <summary>
-        /// 根据 C++ (二维反演) 的要求获取 iwd
-        /// 0=TE&TM, 1=TE, 2=TM
-        /// </summary>
         private int GetIWD_2D()
         {
-            // !! 假设您在设计器中添加了 rbInversionTETM 
-            // !! 并保留了 rbInversionTE
-            // !! 和 rbInversionTM (来自 Form_MT1di.Designer.cs)
-
-            // if (rbInversionTETM.Checked)
-            // {
-            //     return 0; // TE & TM
-            // }
-            if (rbInversionTETM.Checked)
-            {
-                return 0; // TE & TM
-            }
-            // 然后检查 TE 模式 (iwd = 1)
-            else if (rbInversionTE.Checked)
-            {
-                return 1; // TE
-            }
-            // 最后检查 TM 模式 (iwd = 2)
-            else if (rbInversionTM.Checked)
-            {
-                return 2; // TM
-            }
-            else
-            {
-                // 如果（因为某些原因）一个都没选中，也默认按 TE&TM (0) 计算
-                return 0;
-            }
+            if (rbInversionTETM.Checked) return 0;
+            else if (rbInversionTE.Checked) return 1;
+            else if (rbInversionTM.Checked) return 2;
+            else return 0;
         }
 
-        /// <summary>
-        /// 事件: 点击 "开始计算" 按钮
-        /// 【V-Final-3: 针对 MT2di (二维) 修改】
-        /// </summary>
         private void btnCalculate_Click(object sender, EventArgs e)
         {
-            // --- 1. 检查数据 ---
             if (m_CurrentLineData == null || m_CurrentLineData.Rows.Count == 0)
             {
                 MessageBox.Show("没有加载任何测线数据，无法计算。", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -508,14 +406,10 @@ namespace MapGISPlugin3
 
             this.Cursor = Cursors.WaitCursor;
 
-            // -----------------------------------------------------------------
-            // 【修改 3】: 获取参数 (根据 2D C++ 代码)
-            // -----------------------------------------------------------------
             int its = (int)nudIterationCount.Value;
-            int iwd = GetIWD_2D(); // 0=TE&TM, 1=TE, 2=TM
+            int iwd = GetIWD_2D();
 
-            // --- 3. 定义路径 ---
-            string tempInputFile = Path.GetTempFileName(); // 临时数据文件 (argv[1])
+            string tempInputFile = Path.GetTempFileName();
             string exePath;
             string pluginDir;
             string workspaceName;
@@ -523,24 +417,16 @@ namespace MapGISPlugin3
 
             try
             {
-                // 1. 获取插件的运行目录 (例如 ...\Program\)
                 pluginDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-
-                // -----------------------------------------------------------------
-                // 【修改 4】: 更改算法路径和 exe 名称
-                // -----------------------------------------------------------------
-                // 2. 组合出 2D exe 所在的子目录
-                string algorithmDir = Path.Combine(pluginDir, "Algorithm", "MT2di"); // <-- 修改 "MT1di"
-
-                exePath = Path.Combine(algorithmDir, "a.exe"); // <-- 修改 "a.exe"
-                                                               // -----------------------------------------------------------------
+                string algorithmDir = Path.Combine(pluginDir, "Algorithm", "MT2di");
+                exePath = Path.Combine(algorithmDir, "a.exe");
 
                 if (!File.Exists(exePath))
                 {
                     throw new FileNotFoundException($"计算程序 'a.exe' 未找到。\n请确保它位于: {exePath}");
                 }
 
-                workspaceName = Path.GetRandomFileName().Substring(0, 6); // (argv[2])
+                workspaceName = Path.GetRandomFileName().Substring(0, 6);
                 fullWorkspacePath = Path.Combine(pluginDir, workspaceName);
 
                 if (Directory.Exists(fullWorkspacePath))
@@ -558,7 +444,6 @@ namespace MapGISPlugin3
 
             try
             {
-                // --- 4. 数据转换 (写入临时文件) ---
                 Dictionary<string, StationInfo> stationCoords = m_CurrentLineStations.ToDictionary(s => s.StationName);
 
                 using (StreamWriter writer = new StreamWriter(tempInputFile))
@@ -566,33 +451,25 @@ namespace MapGISPlugin3
                     writer.WriteLine("PROFILE STATION COORX COORY FREQ RXY PXY RYX PYX");
                     foreach (DataRow row in m_CurrentLineData.Rows)
                     {
-                        // -----------------------------------------------------------------
-                        // 【修改 5】: 获取 2D C++ 需要的9个参数
-                        // -----------------------------------------------------------------
-                        string lineName = row["测线编号"].ToString(); // C++: m_line
-                        string stationName = row["测点编号"].ToString(); // C++: m_sta
+                        string lineName = row["测线编号"].ToString();
+                        string stationName = row["测点编号"].ToString();
 
                         StationInfo station;
                         if (!stationCoords.TryGetValue(stationName, out station)) { continue; }
 
                         double period = GetDoubleFromRow(row, "周期", 1.0);
                         if (period == 0) period = 1e-9;
-                        double freq = 1.0 / period; // C++ 需要的是频率 (C++: m_dictFreq)
+                        double freq = 1.0 / period;
 
-                        double rxy = GetDoubleFromRow(row, "视电阻率_TE", 0.0); // C++: m_dictRxy
-                        double pxy = GetDoubleFromRow(row, "相位_TE", 0.0);    // C++: m_dictPxy
-                        double ryx = GetDoubleFromRow(row, "视电阻率_TM", 0.0); // C++: m_dictRyx
-                        double pyx = GetDoubleFromRow(row, "相位_TM", 0.0);    // C++: m_dictPyx
+                        double rxy = GetDoubleFromRow(row, "视电阻率_TE", 0.0);
+                        double pxy = GetDoubleFromRow(row, "相位_TE", 0.0);
+                        double ryx = GetDoubleFromRow(row, "视电阻率_TM", 0.0);
+                        double pyx = GetDoubleFromRow(row, "相位_TM", 0.0);
 
-                        // C++ 2D read() 函数读取9列: 
-                        // m_line, m_sta, m_coorx, m_coory, m_dictFreq, m_dictRxy, m_dictPxy, m_dictRyx, m_dictPyx
-                        // (它跳过了 Z 坐标)
                         writer.WriteLine($"{lineName} {stationName} {station.X} {station.Y} {freq} {rxy} {pxy} {ryx} {pyx}");
-                        // -----------------------------------------------------------------
                     }
                 }
 
-                // --- 5. 执行 a.exe ---
                 ProcessStartInfo startInfo = new ProcessStartInfo();
                 startInfo.FileName = exePath;
                 startInfo.Arguments = $"\"{tempInputFile}\" \"{workspaceName}\" {iwd} {its}";
@@ -611,10 +488,9 @@ namespace MapGISPlugin3
                     error = process.StandardError.ReadToEnd();
                     process.WaitForExit();
 
-                    // --- 6. 反馈结果 ---
                     if (process.ExitCode == 0)
                     {
-                        MessageBox.Show($"计算成功！\n\n结果已保存到:\n{fullWorkspacePath}\n\n(提示: 结果文件在工作区内)\n程序输出:\n{output}",
+                        MessageBox.Show($"计算成功！\n\n结果已保存到:\n{fullWorkspacePath}\n\n程序输出:\n{output}",
                                     "计算完成", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                     else
@@ -629,11 +505,10 @@ namespace MapGISPlugin3
             }
             finally
             {
-                // --- 7. 清理 ---
                 if (File.Exists(tempInputFile))
                 {
                     try { File.Delete(tempInputFile); }
-                    catch (Exception ex) { Console.WriteLine($"删除临时文件 {tempInputFile} 失败: {ex.Message}"); }
+                    catch (Exception ex) { Console.WriteLine($"删除临时文件失败: {ex.Message}"); }
                 }
                 this.Cursor = Cursors.Default;
             }
@@ -641,17 +516,8 @@ namespace MapGISPlugin3
 
         #endregion
 
-        #region --- 3. 分析区事件 (右栏) ---
-        // (无修改)
+        #region --- 核心辅助函数 ---
 
-        #endregion
-
-        #region --- 4. 核心辅助函数 (被事件调用) ---
-        // (无修改)
-
-        /// <summary>
-        /// (辅助函数) 安全地从 DataRow 获取 double 值，处理 DBNull
-        /// </summary>
         private double GetDoubleFromRow(DataRow row, string columnName, double defaultValue)
         {
             try
@@ -668,9 +534,6 @@ namespace MapGISPlugin3
             return defaultValue;
         }
 
-        /// <summary>
-        /// (辅助函数) 查找地图
-        /// </summary>
         private Map FindMapByName(string mapName)
         {
             if (_hook == null || _hook.Document == null) return null;
@@ -686,9 +549,6 @@ namespace MapGISPlugin3
             return null;
         }
 
-        /// <summary>
-        /// (辅助函数) 填充测线下拉框 (cmbLineName) (已修复死循环)
-        /// </summary>
         private void FillLineComboBox()
         {
             cmbLineName.Items.Clear();
@@ -703,12 +563,10 @@ namespace MapGISPlugin3
 
             RecordSet rs = null;
             HashSet<string> uniqueLines = new HashSet<string>();
-            int validRecordCount = 0;
 
             try
             {
                 string queryField = "测线号";
-
                 Fields fields = m_SelectedStationLayer.Fields;
                 if (fields == null || fields.IndexOf(queryField) < 0)
                 {
@@ -717,19 +575,13 @@ namespace MapGISPlugin3
                 }
 
                 rs = m_SelectedStationLayer.Select(null);
-
                 if (rs == null)
                 {
-                    MessageBox.Show("Select(null) 返回 null。尝试用 QueryDef(Filter='')...");
                     QueryDef query = new QueryDef();
                     query.Filter = "";
                     query.WithSpatial = false;
                     rs = m_SelectedStationLayer.Select(query);
-                    if (rs == null)
-                    {
-                        MessageBox.Show("Select(QueryDef) 也返回 null。检查数据源 URL 或 HasOpen()！");
-                        return;
-                    }
+                    if (rs == null) return;
                 }
 
                 try
@@ -739,18 +591,13 @@ namespace MapGISPlugin3
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"预加载记录集出错: {ex.Message} (可能数据损坏或 COM 问题)");
+                    MessageBox.Show($"预加载记录集出错: {ex.Message}");
                     return;
                 }
 
                 int currentIndex = 0;
                 int totalRecords = rs.Count;
-
-                if (totalRecords == 0)
-                {
-                    Console.WriteLine("FillLineComboBox: totalRecords 为 0，循环前退出。");
-                    return;
-                }
+                if (totalRecords == 0) return;
 
                 do
                 {
@@ -768,20 +615,15 @@ namespace MapGISPlugin3
                                 if (!string.IsNullOrWhiteSpace(lineName))
                                 {
                                     uniqueLines.Add(lineName);
-                                    validRecordCount++;
                                 }
                             }
                         }
 
-                        if (currentIndex > rs.Count * 1.5 && rs.Count > 0)
-                        {
-                            MessageBox.Show($"迭代超过预期 ({currentIndex} > {rs.Count})，强制停止循环（可能 MoveNext Bug）");
-                            break;
-                        }
+                        if (currentIndex > rs.Count * 1.5 && rs.Count > 0) break;
                     }
                     catch (Exception recEx)
                     {
-                        MessageBox.Show($"迭代第 {currentIndex} 条记录出错: {recEx.Message} (可能该记录损坏，跳过)");
+                        MessageBox.Show($"迭代第 {currentIndex} 条记录出错: {recEx.Message}");
                     }
                     finally
                     {
@@ -794,14 +636,10 @@ namespace MapGISPlugin3
                     var sortedLines = uniqueLines.OrderBy(s => s).ToArray();
                     cmbLineName.Items.AddRange(sortedLines);
                 }
-                else
-                {
-                    MessageBox.Show($"查询未返回任何唯一值。（有效记录: {validRecordCount}；所有'测线号'可能为空，用 MapGIS 桌面验证数据）");
-                }
             }
             catch (COMException comEx)
             {
-                MessageBox.Show($"查询过程中发生 COM 错误: {comEx.Message} (Code: {comEx.ErrorCode})", "错误");
+                MessageBox.Show($"查询过程中发生 COM 错误: {comEx.Message}", "错误");
             }
             catch (Exception ex)
             {
@@ -809,23 +647,14 @@ namespace MapGISPlugin3
             }
             finally
             {
-                if (rs != null)
-                {
-                    try { Marshal.ReleaseComObject(rs); } catch { }
-                }
-
+                if (rs != null) try { Marshal.ReleaseComObject(rs); } catch { }
                 this.Cursor = Cursors.Default;
                 cmbLineName.Enabled = (uniqueLines.Count > 0);
             }
         }
 
-        /// <summary>
-        /// (辅助函数) 清空所有显示区域 (图表、表格、小地图)
-        /// </summary>
         private void ClearAllDisplays()
         {
-            Console.WriteLine("执行 ClearAllDisplays...");
-
             if (chartProfileView.Series != null) chartProfileView.Series.Clear();
             if (chartResistivity.Series != null) chartResistivity.Series.Clear();
             if (chartPhase.Series != null) chartPhase.Series.Clear();
@@ -856,11 +685,9 @@ namespace MapGISPlugin3
             if (chartPhase.Titles.Count > 0) chartPhase.Titles[0].Text = "周期-相位";
         }
 
-
-
-
         /// <summary>
-        /// (辅助函数) TODO 3: 刷新"计算"页的小地图 (chartProfileView)
+        /// 刷新"计算"页的小地图 (chartProfileView)
+        /// 【统一样式版本】
         /// </summary>
         private void UpdateProfileView()
         {
@@ -868,12 +695,31 @@ namespace MapGISPlugin3
 
             chartProfileView.Series.Clear();
 
-            Series s = chartProfileView.Series.Add("Stations");
-            s.ChartType = SeriesChartType.Point; // 散点图
-            s.MarkerStyle = MarkerStyle.Circle;
-            s.MarkerSize = 8;
-            s.MarkerColor = System.Drawing.Color.Red;
-            s.IsValueShownAsLabel = true; // 在点上显示标签
+            // 确保图例存在
+            if (chartProfileView.Legends[ProfileLegendName] == null)
+                InitChartLegend(chartProfileView, ProfileLegendName);
+
+            // 设置图表区域位置，为图例预留上方空间
+            if (chartProfileView.ChartAreas.Count > 0)
+            {
+                var chartArea = chartProfileView.ChartAreas[0];
+
+                // 图表区域从上方15%开始，为图例预留空间
+                chartArea.Position = new ElementPosition(8, 5, 85, 90);
+
+                // 绘图区内边距
+                chartArea.InnerPlotPosition = new ElementPosition(10, 10, 85, 85);
+            }
+
+            // 创建测点系列
+            Series stationSeries = chartProfileView.Series.Add("测点");
+            stationSeries.ChartType = SeriesChartType.Point;
+            stationSeries.MarkerStyle = MarkerStyle.Circle;
+            stationSeries.MarkerSize = 8;
+            stationSeries.MarkerColor = System.Drawing.Color.Blue;
+            stationSeries.IsValueShownAsLabel = true;
+            stationSeries.Legend = ProfileLegendName;
+            stationSeries.LegendText = "测点";
 
             if (m_CurrentLineStations == null || m_CurrentLineStations.Count == 0)
             {
@@ -881,43 +727,122 @@ namespace MapGISPlugin3
                 return;
             }
 
+            // 计算坐标范围（添加边距避免点贴边）
+            double minX = m_CurrentLineStations.Min(s => s.X);
+            double maxX = m_CurrentLineStations.Max(s => s.X);
+            double minY = m_CurrentLineStations.Min(s => s.Y);
+            double maxY = m_CurrentLineStations.Max(s => s.Y);
+            double marginX = (maxX - minX) * 0.1;
+            double marginY = (maxY - minY) * 0.1;
+
+            // 添加测点数据
             foreach (var station in m_CurrentLineStations)
             {
-                int pointIndex = s.Points.AddXY(station.X, station.Y);
-                s.Points[pointIndex].Label = station.StationName;
-                s.Points[pointIndex].Tag = station.StationName;
+                int index = stationSeries.Points.AddXY(station.X, station.Y);
+                stationSeries.Points[index].Label = station.StationName;
+                stationSeries.Points[index].Tag = station.StationName;
             }
+
+            // 设置坐标轴范围和样式
+            chartProfileView.ChartAreas[0].AxisX.Minimum = minX - marginX;
+            chartProfileView.ChartAreas[0].AxisX.Maximum = maxX + marginX;
+            chartProfileView.ChartAreas[0].AxisY.Minimum = minY - marginY;
+            chartProfileView.ChartAreas[0].AxisY.Maximum = maxY + marginY;
+
+            // 设置坐标轴标题
+            chartProfileView.ChartAreas[0].AxisX.Title = "X坐标";
+            chartProfileView.ChartAreas[0].AxisY.Title = "Y坐标";
+            chartProfileView.ChartAreas[0].AxisX.TitleFont = new System.Drawing.Font("微软雅黑", 9f, FontStyle.Bold);
+            chartProfileView.ChartAreas[0].AxisY.TitleFont = new System.Drawing.Font("微软雅黑", 9f, FontStyle.Bold);
 
             chartProfileView.ChartAreas[0].AxisX.LabelStyle.Format = "F0";
             chartProfileView.ChartAreas[0].AxisY.LabelStyle.Format = "F0";
+
+            // 设置坐标轴标签样式
+            chartProfileView.ChartAreas[0].AxisX.LabelStyle.Font = new System.Drawing.Font("Arial", 8f);
+            chartProfileView.ChartAreas[0].AxisY.LabelStyle.Font = new System.Drawing.Font("Arial", 8f);
+
+            // 启用边距
+            chartProfileView.ChartAreas[0].AxisX.IsMarginVisible = true;
+            chartProfileView.ChartAreas[0].AxisY.IsMarginVisible = true;
+
+            // 应用美化设置
+            BeautifyProfileViewAxes(chartProfileView.ChartAreas[0]);
+
             chartProfileView.ChartAreas[0].RecalculateAxesScale();
+            CalibrateLegendSize(chartProfileView);
+
+            // 强制刷新
+            chartProfileView.Invalidate();
+        }
+        /// <summary>
+        /// 专门为小地图美化的坐标轴设置
+        /// </summary>
+        private void BeautifyProfileViewAxes(ChartArea area)
+        {
+            if (area == null) return;
+
+            // 横坐标设置
+            area.AxisX.LabelStyle.Format = "F0";
+            area.AxisX.LabelStyle.Font = new System.Drawing.Font("Arial", 8f);
+            area.AxisX.TitleFont = new System.Drawing.Font("微软雅黑", 9f, FontStyle.Bold);
+            area.AxisX.TitleAlignment = StringAlignment.Center;
+
+            // 纵坐标设置
+            area.AxisY.LabelStyle.Format = "F0";
+            area.AxisY.LabelStyle.Font = new System.Drawing.Font("Arial", 8f);
+            area.AxisY.TitleFont = new System.Drawing.Font("微软雅黑", 9f, FontStyle.Bold);
+            area.AxisY.TitleAlignment = StringAlignment.Center;
+
+            // 坐标轴间隔设置（小地图使用线性坐标）
+            area.AxisX.IntervalAutoMode = IntervalAutoMode.VariableCount;
+            area.AxisY.IntervalAutoMode = IntervalAutoMode.VariableCount;
+
+            // 网格线设置
+            area.AxisX.MajorGrid.LineWidth = 1;
+            area.AxisX.MajorGrid.LineColor = System.Drawing.Color.LightGray;
+            area.AxisY.MajorGrid.LineWidth = 1;
+            area.AxisY.MajorGrid.LineColor = System.Drawing.Color.LightGray;
+
+            area.AxisX.MinorGrid.Enabled = true;
+            area.AxisX.MinorGrid.LineDashStyle = ChartDashStyle.Dot;
+            area.AxisX.MinorGrid.LineColor = System.Drawing.Color.Gainsboro;
+
+            area.AxisY.MinorGrid.Enabled = true;
+            area.AxisY.MinorGrid.LineDashStyle = ChartDashStyle.Dot;
+            area.AxisY.MinorGrid.LineColor = System.Drawing.Color.Gainsboro;
+
+            // 坐标轴线设置
+            area.AxisX.LineWidth = 1;
+            area.AxisX.LineColor = System.Drawing.Color.Black;
+            area.AxisY.LineWidth = 1;
+            area.AxisY.LineColor = System.Drawing.Color.Black;
+
+            area.RecalculateAxesScale();
         }
 
-        /// <summary>
-        /// (辅助函数) TODO 6: 选中一个测点并刷新右栏图表
-        /// </summary>
         private void SelectStationAndRefreshCharts(string stationName)
         {
             if (string.IsNullOrWhiteSpace(stationName)) return;
 
             m_CurrentSelectedStationName = stationName;
-            Console.WriteLine($"已选中测点: {stationName}");
 
+            // 高亮 chartProfileView 上的这个点
             try
             {
-                if (chartProfileView.Series.Count > 0)
+                if (chartProfileView.Series.Count > 0 && chartProfileView.Series["测点"] != null)
                 {
-                    foreach (var point in chartProfileView.Series["Stations"].Points)
+                    foreach (var point in chartProfileView.Series["测点"].Points)
                     {
                         if (point.Tag?.ToString() == stationName)
                         {
-                            point.MarkerColor = System.Drawing.Color.Blue;
                             point.MarkerSize = 12;
+                            point.MarkerColor = System.Drawing.Color.Red;
                         }
                         else
                         {
-                            point.MarkerColor = System.Drawing.Color.Red;
                             point.MarkerSize = 8;
+                            point.MarkerColor = System.Drawing.Color.Blue;
                         }
                     }
                 }
@@ -927,10 +852,6 @@ namespace MapGISPlugin3
             UpdateRightPanelCharts();
         }
 
-
-        /// <summary>
-        /// 事件: 当用户切换 右侧 的 "TE" / "TM" 图表标签页时 (tabControl2)
-        /// </summary>
         private void tabControl2_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (!string.IsNullOrEmpty(m_CurrentSelectedStationName))
@@ -940,87 +861,50 @@ namespace MapGISPlugin3
         }
 
         /// <summary>
-        /// (辅助函数) 刷新右栏的两张曲线图
+        /// 刷新右栏的两张曲线图
+        /// 【与一维反演保持一致的样式】
         /// </summary>
         private void UpdateRightPanelCharts()
         {
+            // 先清除所有Series
             chartResistivity.Series.Clear();
             chartPhase.Series.Clear();
 
-            if (string.IsNullOrEmpty(m_CurrentSelectedStationName) || m_CurrentLineData == null)
-            {
-                if (chartResistivity.Titles.Count > 0) chartResistivity.Titles[0].Text = "周期-视电阻率";
-                if (chartPhase.Titles.Count > 0) chartPhase.Titles[0].Text = "周期-相位";
+            // 确保图例存在
+            if (chartResistivity.Legends[ResistivityLegendName] == null)
+                InitChartLegend(chartResistivity, ResistivityLegendName);
+            if (chartPhase.Legends[PhaseLegendName] == null)
+                InitChartLegend(chartPhase, PhaseLegendName);
 
-                chartResistivity.ChartAreas[0].AxisX.Title = "周期(s)";
-                chartResistivity.ChartAreas[0].AxisY.Title = "视电阻率";
-                chartPhase.ChartAreas[0].AxisX.Title = "周期(s)";
-                chartPhase.ChartAreas[0].AxisY.Title = "相位";
-                return;
-            }
+            // 选择TE/TM模式
+            string resField = tabControl2.SelectedTab == tabPageDisplayTE ? "视电阻率_TE" : "视电阻率_TM";
+            string phaseField = tabControl2.SelectedTab == tabPageDisplayTE ? "相位_TE" : "相位_TM";
+            string seriesName = tabControl2.SelectedTab == tabPageDisplayTE ? "TE模式" : "TM模式";
 
-            string resField = "视电阻率_TM";
-            string phaseField = "相位_TM";
-            string resSeriesName = "视电阻率(TM)";
-            string phaseSeriesName = "相位(TM)";
-
-            if (tabControl2.SelectedTab == tabPageDisplayTE)
-            {
-                resField = "视电阻率_TE";
-                phaseField = "相位_TE";
-                resSeriesName = "视电阻率(TE)";
-                phaseSeriesName = "相位(TE)";
-            }
-
-            Console.WriteLine($"UpdateRightPanelCharts: resField={resField}, phaseField={phaseField}");
-
-            if (string.IsNullOrEmpty(resField) || string.IsNullOrEmpty(phaseField))
-            {
-                MessageBox.Show("内部错误：resField 或 phaseField 未初始化！", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
-
-            if (chartResistivity.Titles.Count > 0) chartResistivity.Titles[0].Text = $"{m_CurrentSelectedStationName} - {resSeriesName}";
-            if (chartPhase.Titles.Count > 0) chartPhase.Titles[0].Text = $"{m_CurrentSelectedStationName} - {phaseSeriesName}";
-
-            chartResistivity.ChartAreas[0].AxisX.Title = "周期(s)";
-            chartResistivity.ChartAreas[0].AxisY.Title = "视电阻率";
-            chartPhase.ChartAreas[0].AxisX.Title = "周期(s)";
-            chartPhase.ChartAreas[0].AxisY.Title = "相位";
-
-
-            DataView dvStation = new DataView(m_CurrentLineData);
-            try
-            {
-                dvStation.RowFilter = $"测点编号 = '{m_CurrentSelectedStationName}'";
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"筛选测点出错: {ex.Message}", "错误");
-                return;
-            }
-
-            if (dvStation.Count == 0)
-            {
-                Console.WriteLine($"未找到测点数据: {m_CurrentSelectedStationName}");
-                return;
-            }
-
-            var resSeries = chartResistivity.Series.Add(resSeriesName);
-            var phaseSeries = chartPhase.Series.Add(phaseSeriesName);
-
+            // 创建电阻率系列
+            Series resSeries = chartResistivity.Series.Add("视电阻率");
             resSeries.ChartType = SeriesChartType.Spline;
             resSeries.MarkerStyle = MarkerStyle.Circle;
             resSeries.MarkerSize = 5;
             resSeries.BorderWidth = 2;
+            resSeries.Legend = ResistivityLegendName;
+            resSeries.LegendText = $"{seriesName} 视电阻率";
+
+            // 创建相位系列
+            Series phaseSeries = chartPhase.Series.Add("相位");
             phaseSeries.ChartType = SeriesChartType.Spline;
             phaseSeries.MarkerStyle = MarkerStyle.Circle;
             phaseSeries.MarkerSize = 5;
             phaseSeries.BorderWidth = 2;
+            phaseSeries.Legend = PhaseLegendName;
+            phaseSeries.LegendText = $"{seriesName} 相位";
 
-            List<double> periods = new List<double>();
-            List<double> resistivities = new List<double>();
-            List<double> phases = new List<double>();
+            // 数据绑定
+            if (m_CurrentLineData == null || string.IsNullOrEmpty(m_CurrentSelectedStationName))
+                return;
+
+            DataView dvStation = new DataView(m_CurrentLineData);
+            dvStation.RowFilter = $"测点编号 = '{m_CurrentSelectedStationName}'";
 
             foreach (DataRowView row in dvStation)
             {
@@ -1031,75 +915,106 @@ namespace MapGISPlugin3
                 double res = Convert.ToDouble(row[resField]);
                 double phase = Convert.ToDouble(row[phaseField]);
 
-                if (period <= 0 || res <= 0) continue;
-
-                periods.Add(period);
-                resistivities.Add(res);
-                phases.Add(phase);
-
                 resSeries.Points.AddXY(period, res);
                 phaseSeries.Points.AddXY(period, phase);
             }
 
-            if (periods.Count == 0)
+            // 设置坐标轴标题
+            chartResistivity.ChartAreas[0].AxisX.Title = "周期(s)";
+            chartResistivity.ChartAreas[0].AxisY.Title = "视电阻率";
+            chartPhase.ChartAreas[0].AxisX.Title = "周期(s)";
+            chartPhase.ChartAreas[0].AxisY.Title = "相位";
+
+            // 应用统一的样式设置
+            foreach (var chart in new[] { chartResistivity, chartPhase })
             {
-                Console.WriteLine("无有效数据点，跳过绘制。");
-                return;
-            }
-
-            bool canLogX = periods.All(p => p > 0);
-            bool canLogYRes = resistivities.All(r => r > 0);
-
-            chartResistivity.ChartAreas[0].AxisX.IsLogarithmic = canLogX;
-            chartResistivity.ChartAreas[0].AxisY.IsLogarithmic = canLogYRes;
-            chartPhase.ChartAreas[0].AxisX.IsLogarithmic = canLogX;
-            chartPhase.ChartAreas[0].AxisY.IsLogarithmic = false;
-
-            if (!canLogX) Console.WriteLine("警告: 周期有 ≤0 值，使用线性轴。");
-            if (!canLogYRes) Console.WriteLine("警告: 视电阻率有 ≤0 值，使用线性轴。");
-
-            if (canLogX && periods.Count > 0)
-            {
-                double minX = periods.Min();
-                double maxX = periods.Max();
-
-                if (minX == maxX)
+                if (chart.ChartAreas.Count > 0)
                 {
-                    minX = minX * 0.1;
-                    maxX = maxX * 10;
-                }
+                    var chartArea = chart.ChartAreas[0];
 
-                chartResistivity.ChartAreas[0].AxisX.Minimum = Math.Pow(10, Math.Floor(Math.Log10(minX)));
-                chartResistivity.ChartAreas[0].AxisX.Maximum = Math.Pow(10, Math.Ceiling(Math.Log10(maxX)));
-                chartPhase.ChartAreas[0].AxisX.Minimum = chartResistivity.ChartAreas[0].AxisX.Minimum;
-                chartPhase.ChartAreas[0].AxisX.Maximum = chartResistivity.ChartAreas[0].AxisX.Maximum;
+                    // 设置图表区域位置，为图例和坐标轴标题预留空间
+                    chartArea.Position = new ElementPosition(8, 15, 85, 75);
+
+                    // 设置绘图区内边距
+                    chartArea.InnerPlotPosition = new ElementPosition(10, 10, 85, 80);
+
+                    // 横坐标设置
+                    chartArea.AxisX.LabelStyle.Format = "0.###";
+                    chartArea.AxisX.LabelStyle.Font = new System.Drawing.Font("Arial", 8f);
+                    chartArea.AxisX.TitleFont = new System.Drawing.Font("微软雅黑", 9f, FontStyle.Bold);
+                    chartArea.AxisX.IsStartedFromZero = false;
+                    chartArea.AxisX.IsMarginVisible = true;
+
+                    // 纵坐标设置
+                    chartArea.AxisY.LabelStyle.Format = "0.##";
+                    chartArea.AxisY.LabelStyle.Font = new System.Drawing.Font("Arial", 8f);
+                    chartArea.AxisY.TitleFont = new System.Drawing.Font("微软雅黑", 9f, FontStyle.Bold);
+                    chartArea.AxisY.IsStartedFromZero = false;
+                    chartArea.AxisY.IsMarginVisible = true;
+
+                    // 坐标轴自适应设置
+                    chartArea.AxisX.IntervalAutoMode = IntervalAutoMode.VariableCount;
+                    chartArea.AxisY.IntervalAutoMode = IntervalAutoMode.VariableCount;
+
+                    // 网格线设置
+                    chartArea.AxisX.MajorGrid.LineWidth = 1;
+                    chartArea.AxisX.MajorGrid.LineColor = System.Drawing.Color.LightGray;
+                    chartArea.AxisY.MajorGrid.LineWidth = 1;
+                    chartArea.AxisY.MajorGrid.LineColor = System.Drawing.Color.LightGray;
+
+                    chartArea.AxisX.MinorGrid.Enabled = true;
+                    chartArea.AxisX.MinorGrid.LineDashStyle = ChartDashStyle.Dot;
+                    chartArea.AxisX.MinorGrid.LineColor = System.Drawing.Color.Gainsboro;
+
+                    chartArea.AxisY.MinorGrid.Enabled = true;
+                    chartArea.AxisY.MinorGrid.LineDashStyle = ChartDashStyle.Dot;
+                    chartArea.AxisY.MinorGrid.LineColor = System.Drawing.Color.Gainsboro;
+
+                    // 坐标轴线设置
+                    chartArea.AxisX.LineWidth = 1;
+                    chartArea.AxisX.LineColor = System.Drawing.Color.Black;
+                    chartArea.AxisY.LineWidth = 1;
+                    chartArea.AxisY.LineColor = System.Drawing.Color.Black;
+                }
             }
 
+            // 强制重新计算坐标轴（实现按内容适应）
             chartResistivity.ChartAreas[0].RecalculateAxesScale();
             chartPhase.ChartAreas[0].RecalculateAxesScale();
 
-            BeautifyChartAxes(chartResistivity.ChartAreas[0]);
-            BeautifyChartAxes(chartPhase.ChartAreas[0]);
+            // 校准图例尺寸
+            CalibrateLegendSize(chartResistivity);
+            CalibrateLegendSize(chartPhase);
+
+            // 强制刷新图表
+            chartResistivity.Invalidate();
+            chartPhase.Invalidate();
         }
-
-
-
+        /// <summary>
+        /// 美化图表坐标轴设置
+        /// 【专门优化坐标轴标题显示】
+        /// </summary>
         private void BeautifyChartAxes(ChartArea area)
         {
             if (area == null) return;
 
+            // 横坐标设置
             area.AxisX.LabelStyle.Format = "0.###";
+            area.AxisX.LabelStyle.Angle = -45;
+            area.AxisX.LabelStyle.IsStaggered = true;
+            area.AxisX.LabelStyle.Font = new System.Drawing.Font("Arial", 8f);
+
+            // 【修复6】确保横坐标标题可见
+            area.AxisX.TitleFont = new System.Drawing.Font("微软雅黑", 10f, FontStyle.Bold);
+            area.AxisX.TitleAlignment = StringAlignment.Center;
+
+            // 纵坐标设置
             area.AxisY.LabelStyle.Format = "0.##";
-
-            area.AxisX.LabelStyle.Font = new System.Drawing.Font("Arial", 9f);
             area.AxisY.LabelStyle.Font = new System.Drawing.Font("Arial", 9f);
+            area.AxisY.TitleFont = new System.Drawing.Font("微软雅黑", 10f, FontStyle.Bold);
+            area.AxisY.TitleAlignment = StringAlignment.Center;
 
-            area.AxisX.TitleFont = new System.Drawing.Font("微软雅黑", 10f);
-            area.AxisY.TitleFont = new System.Drawing.Font("微软雅黑", 10f);
-
-            area.AxisX.LabelStyle.Angle = 0;
-            area.AxisX.LabelStyle.IsStaggered = false;
-
+            // 坐标轴间隔设置
             if (area.AxisX.IsLogarithmic)
             {
                 area.AxisX.LogarithmBase = 10;
@@ -1120,6 +1035,7 @@ namespace MapGISPlugin3
                 area.AxisY.IntervalAutoMode = IntervalAutoMode.VariableCount;
             }
 
+            // 网格线设置
             area.AxisX.MajorGrid.LineWidth = 1;
             area.AxisX.MajorGrid.LineColor = System.Drawing.Color.LightGray;
             area.AxisY.MajorGrid.LineWidth = 1;
@@ -1133,6 +1049,7 @@ namespace MapGISPlugin3
             area.AxisY.MinorGrid.LineDashStyle = ChartDashStyle.Dot;
             area.AxisY.MinorGrid.LineColor = System.Drawing.Color.Gainsboro;
 
+            // 坐标轴线设置
             area.AxisX.LineWidth = 1;
             area.AxisX.LineColor = System.Drawing.Color.Black;
             area.AxisY.LineWidth = 1;
@@ -1141,6 +1058,79 @@ namespace MapGISPlugin3
             area.RecalculateAxesScale();
         }
 
+
+        /// <summary>
+        /// 初始化图表图例（与一维反演保持一致的上方右侧样式）
+        /// </summary>
+        private void InitChartLegend(Chart chart, string legendName)
+        {
+            chart.Legends.Clear();
+
+            Legend legend = new Legend(legendName)
+            {
+                IsDockedInsideChartArea = false, // 确保不在图表区域内
+                Docking = Docking.Top,
+                Alignment = StringAlignment.Far, // 右对齐
+                LegendStyle = LegendStyle.Table,
+                BorderColor = System.Drawing.Color.LightGray,
+                BorderWidth = 1,
+                BackColor = System.Drawing.Color.White,
+                Font = new System.Drawing.Font("微软雅黑", 8f),
+                // 关键：将图例定位在图表区域之外的上方
+                Position = new ElementPosition(65, 3, 30, 10) // 在图表上方，不与图表重叠
+            };
+
+            chart.Legends.Add(legend);
+        }
+
+        /// <summary>
+        /// 校准图例尺寸（针对不同图表使用不同尺寸）
+        /// </summary>
+        private void CalibrateLegendSize(Chart chart)
+        {
+            if (chart.Legends.Count == 0 || chart.Series.Count == 0) return;
+
+            Legend legend = chart.Legends[0];
+            int actualItemCount = chart.Series.Count;
+            float singleItemHeight = legend.Font.Height + 4;
+
+            float totalHeightPercent = (singleItemHeight / chart.Height * 100) * actualItemCount + 3;
+
+            // 针对不同图表设置不同的图例尺寸
+            if (chart == chartResistivity)
+            {
+                // chartResistivity 图例更大（内容多）
+                legend.Position = new ElementPosition(
+                    50,  // 从左边50%开始
+                    2,   // 顶部
+                    45,  // 宽度45%（更宽）
+                    Math.Min(totalHeightPercent, 15) // 高度最大15%
+                );
+            }
+            else if (chart == chartProfileView)
+            {
+                // chartProfileView 图例更小（内容少）
+                legend.Position = new ElementPosition(
+                    70,  // 从左边70%开始（更靠右）
+                    2,   // 顶部
+                    25,  // 宽度25%（更窄）
+                    Math.Min(totalHeightPercent, 8)  // 高度最大8%（更矮）
+                );
+            }
+            else
+            {
+                // 其他图表（chartPhase等）保持中等尺寸
+                legend.Position = new ElementPosition(
+                    60,  // 从左边60%开始
+                    2,   // 顶部
+                    35,  // 宽度35%
+                    Math.Min(totalHeightPercent, 12) // 高度最大12%
+                );
+            }
+        }
+
+
+        // 其他辅助函数保持不变...
         private List<StationInfo> QueryStationsForLine(string lineName)
         {
             var stations = new List<StationInfo>();
@@ -1323,9 +1313,6 @@ namespace MapGISPlugin3
         }
 
 
-
-
-
         /// <summary>
         /// (辅助函数) TODO 2: 查询指定测线的所有测深数据到 DataTable (V7.6.0.0 兼容版)
         /// </summary>
@@ -1448,6 +1435,7 @@ namespace MapGISPlugin3
             return dataTable;
         }
 
+
         /// <summary>
         /// (辅助函数) TODO 4 & 5: 刷新 TE 和 TM 页的表格
         /// </summary>
@@ -1489,7 +1477,7 @@ namespace MapGISPlugin3
 
         #endregion
 
-        // (内部辅助类)
+        // 内部辅助类
         private class StationInfo
         {
             public string StationName { get; set; }
@@ -1497,19 +1485,66 @@ namespace MapGISPlugin3
             public double Y { get; set; }
         }
 
-
         private void Form_MT2di_Load(object sender, EventArgs e)
         {
             LoadLayersFromMap();
+            InitDragEvent();
+
+            // 设置所有图表为白色背景
+            chartProfileView.BackColor = System.Drawing.Color.White;
+            chartResistivity.BackColor = System.Drawing.Color.White;
+            chartPhase.BackColor = System.Drawing.Color.White;
+
+            // 初始化所有图表的图例（使用常量名称）
+            InitChartLegend(chartProfileView, ProfileLegendName);
+            InitChartLegend(chartResistivity, ResistivityLegendName);
+            InitChartLegend(chartPhase, PhaseLegendName);
+
+            // 清除设计器自动创建的默认Series
+            ClearDefaultSeries();
         }
 
-        private void rbInversionTE_CheckedChanged(object sender, EventArgs e)
+        /// <summary>
+        /// 清除设计器自动生成的默认Series
+        /// </summary>
+        private void ClearDefaultSeries()
         {
-
+            if (chartProfileView.Series.Count > 0)
+                chartProfileView.Series.Clear();
+            if (chartResistivity.Series.Count > 0)
+                chartResistivity.Series.Clear();
+            if (chartPhase.Series.Count > 0)
+                chartPhase.Series.Clear();
         }
+
         private void btnClose_Click(object sender, EventArgs e)
         {
             this.Close();
         }
-    } // End Class
-} // End Namespace
+
+        private void rbInversionTE_CheckedChanged(object sender, EventArgs e)
+        {
+            // 事件处理
+        }
+        /// <summary>
+        /// 配置坐标轴自适应
+        /// </summary>
+        private void ConfigureAutoScaleAxes(ChartArea chartArea)
+        {
+            if (chartArea == null) return;
+
+            // 横坐标自适应
+            chartArea.AxisX.IsStartedFromZero = false;
+            chartArea.AxisX.IsMarginVisible = true;
+            chartArea.AxisX.IntervalAutoMode = IntervalAutoMode.VariableCount;
+
+            // 纵坐标自适应  
+            chartArea.AxisY.IsStartedFromZero = false;
+            chartArea.AxisY.IsMarginVisible = true;
+            chartArea.AxisY.IntervalAutoMode = IntervalAutoMode.VariableCount;
+
+            // 强制重新计算坐标轴
+            chartArea.RecalculateAxesScale();
+        }
+    }
+}
