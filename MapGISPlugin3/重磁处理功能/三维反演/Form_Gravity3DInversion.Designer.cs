@@ -16,11 +16,9 @@
         {
             this.panel1 = new System.Windows.Forms.Panel();
             this.labelTitle = new System.Windows.Forms.Label();
-            this.btnClose = new System.Windows.Forms.Button();
             this.groupBoxData = new System.Windows.Forms.GroupBox();
             this.treeViewLayers = new System.Windows.Forms.TreeView();
             this.groupBoxSettings = new System.Windows.Forms.GroupBox();
-            this.btnBrowseTerrain = new System.Windows.Forms.Button();
             this.labelTerrain = new System.Windows.Forms.Label();
             this.textBoxTerrainPath = new System.Windows.Forms.TextBox();
             this.labelGDB = new System.Windows.Forms.Label();
@@ -29,20 +27,22 @@
             this.textBoxSavePath = new System.Windows.Forms.TextBox();
             this.btnOK = new System.Windows.Forms.Button();
             this.btnCancel = new System.Windows.Forms.Button();
+            this.btnClose = new System.Windows.Forms.Button();
+            this.btnBrowseTerrain = new System.Windows.Forms.Button();
             this.panel1.SuspendLayout();
             this.groupBoxData.SuspendLayout();
             this.groupBoxSettings.SuspendLayout();
             this.SuspendLayout();
             // 
-            // panel1 (Title Bar)
+            // panel1
             // 
             this.panel1.BackColor = System.Drawing.SystemColors.Control;
-            this.panel1.Controls.Add(this.labelTitle);
             this.panel1.Controls.Add(this.btnClose);
+            this.panel1.Controls.Add(this.labelTitle);
             this.panel1.Dock = System.Windows.Forms.DockStyle.Top;
             this.panel1.Location = new System.Drawing.Point(0, 0);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(800, 30);
+            this.panel1.Size = new System.Drawing.Size(794, 30);
             this.panel1.TabIndex = 0;
             // 
             // labelTitle
@@ -50,26 +50,14 @@
             this.labelTitle.AutoSize = true;
             this.labelTitle.Location = new System.Drawing.Point(10, 8);
             this.labelTitle.Name = "labelTitle";
-            this.labelTitle.Size = new System.Drawing.Size(89, 12);
+            this.labelTitle.Size = new System.Drawing.Size(77, 12);
             this.labelTitle.TabIndex = 1;
             this.labelTitle.Text = "重力三维反演";
             // 
-            // btnClose
-            // 
-            this.btnClose.Dock = System.Windows.Forms.DockStyle.Right;
-            this.btnClose.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnClose.Location = new System.Drawing.Point(770, 0);
-            this.btnClose.Name = "btnClose";
-            this.btnClose.Size = new System.Drawing.Size(30, 30);
-            this.btnClose.TabIndex = 0;
-            this.btnClose.Text = "X";
-            this.btnClose.UseVisualStyleBackColor = true;
-            this.btnClose.Click += new System.EventHandler(this.button1_Click);
-            // 
-            // groupBoxData (Left Side)
+            // groupBoxData
             // 
             this.groupBoxData.Controls.Add(this.treeViewLayers);
-            this.groupBoxData.Location = new System.Drawing.Point(12, 40);
+            this.groupBoxData.Location = new System.Drawing.Point(39, 40);
             this.groupBoxData.Name = "groupBoxData";
             this.groupBoxData.Size = new System.Drawing.Size(250, 300);
             this.groupBoxData.TabIndex = 1;
@@ -85,7 +73,7 @@
             this.treeViewLayers.TabIndex = 0;
             this.treeViewLayers.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.treeViewLayers_AfterSelect);
             // 
-            // groupBoxSettings (Right Side)
+            // groupBoxSettings
             // 
             this.groupBoxSettings.Controls.Add(this.btnBrowseTerrain);
             this.groupBoxSettings.Controls.Add(this.labelTerrain);
@@ -94,9 +82,9 @@
             this.groupBoxSettings.Controls.Add(this.textBoxGdbDirectory);
             this.groupBoxSettings.Controls.Add(this.labelSave);
             this.groupBoxSettings.Controls.Add(this.textBoxSavePath);
-            this.groupBoxSettings.Location = new System.Drawing.Point(280, 40);
+            this.groupBoxSettings.Location = new System.Drawing.Point(318, 92);
             this.groupBoxSettings.Name = "groupBoxSettings";
-            this.groupBoxSettings.Size = new System.Drawing.Size(500, 240);
+            this.groupBoxSettings.Size = new System.Drawing.Size(437, 181);
             this.groupBoxSettings.TabIndex = 2;
             this.groupBoxSettings.TabStop = false;
             this.groupBoxSettings.Text = "参数设置";
@@ -112,25 +100,17 @@
             // 
             // textBoxTerrainPath
             // 
-            this.textBoxTerrainPath.Location = new System.Drawing.Point(100, 37);
+            this.textBoxTerrainPath.BackColor = System.Drawing.SystemColors.Control;
+            this.textBoxTerrainPath.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.textBoxTerrainPath.Location = new System.Drawing.Point(100, 35);
             this.textBoxTerrainPath.Name = "textBoxTerrainPath";
-            this.textBoxTerrainPath.Size = new System.Drawing.Size(300, 21);
+            this.textBoxTerrainPath.Size = new System.Drawing.Size(267, 21);
             this.textBoxTerrainPath.TabIndex = 1;
-            // 
-            // btnBrowseTerrain
-            // 
-            this.btnBrowseTerrain.Location = new System.Drawing.Point(410, 35);
-            this.btnBrowseTerrain.Name = "btnBrowseTerrain";
-            this.btnBrowseTerrain.Size = new System.Drawing.Size(75, 23);
-            this.btnBrowseTerrain.TabIndex = 2;
-            this.btnBrowseTerrain.Text = "浏览...";
-            this.btnBrowseTerrain.UseVisualStyleBackColor = true;
-            this.btnBrowseTerrain.Click += new System.EventHandler(this.btnBrowseTerrain_Click);
             // 
             // labelGDB
             // 
             this.labelGDB.AutoSize = true;
-            this.labelGDB.Location = new System.Drawing.Point(20, 90);
+            this.labelGDB.Location = new System.Drawing.Point(20, 85);
             this.labelGDB.Name = "labelGDB";
             this.labelGDB.Size = new System.Drawing.Size(53, 12);
             this.labelGDB.TabIndex = 3;
@@ -138,15 +118,18 @@
             // 
             // textBoxGdbDirectory
             // 
-            this.textBoxGdbDirectory.Location = new System.Drawing.Point(100, 87);
+            this.textBoxGdbDirectory.BackColor = System.Drawing.SystemColors.Control;
+            this.textBoxGdbDirectory.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.textBoxGdbDirectory.Location = new System.Drawing.Point(100, 82);
             this.textBoxGdbDirectory.Name = "textBoxGdbDirectory";
             this.textBoxGdbDirectory.Size = new System.Drawing.Size(300, 21);
             this.textBoxGdbDirectory.TabIndex = 4;
+            this.textBoxGdbDirectory.Text = "/Temporary";
             // 
             // labelSave
             // 
             this.labelSave.AutoSize = true;
-            this.labelSave.Location = new System.Drawing.Point(20, 140);
+            this.labelSave.Location = new System.Drawing.Point(20, 133);
             this.labelSave.Name = "labelSave";
             this.labelSave.Size = new System.Drawing.Size(59, 12);
             this.labelSave.TabIndex = 5;
@@ -154,15 +137,17 @@
             // 
             // textBoxSavePath
             // 
-            this.textBoxSavePath.Location = new System.Drawing.Point(100, 137);
+            this.textBoxSavePath.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.textBoxSavePath.Location = new System.Drawing.Point(100, 130);
             this.textBoxSavePath.Name = "textBoxSavePath";
+            this.textBoxSavePath.ReadOnly = true;
             this.textBoxSavePath.Size = new System.Drawing.Size(300, 21);
             this.textBoxSavePath.TabIndex = 6;
-            this.textBoxSavePath.ReadOnly = true;
             // 
             // btnOK
             // 
-            this.btnOK.Location = new System.Drawing.Point(380, 310);
+            this.btnOK.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.btnOK.Location = new System.Drawing.Point(383, 307);
             this.btnOK.Name = "btnOK";
             this.btnOK.Size = new System.Drawing.Size(100, 30);
             this.btnOK.TabIndex = 3;
@@ -172,7 +157,8 @@
             // 
             // btnCancel
             // 
-            this.btnCancel.Location = new System.Drawing.Point(500, 310);
+            this.btnCancel.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.btnCancel.Location = new System.Drawing.Point(606, 307);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(100, 30);
             this.btnCancel.TabIndex = 4;
@@ -180,17 +166,42 @@
             this.btnCancel.UseVisualStyleBackColor = true;
             this.btnCancel.Click += new System.EventHandler(this.btnCancel_Click);
             // 
+            // btnClose
+            // 
+            this.btnClose.Dock = System.Windows.Forms.DockStyle.Right;
+            this.btnClose.FlatAppearance.BorderColor = System.Drawing.SystemColors.ControlLight;
+            this.btnClose.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnClose.Font = new System.Drawing.Font("宋体", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.btnClose.Location = new System.Drawing.Point(761, 0);
+            this.btnClose.Name = "btnClose";
+            this.btnClose.Size = new System.Drawing.Size(33, 30);
+            this.btnClose.TabIndex = 2;
+            this.btnClose.Text = "X";
+            this.btnClose.UseVisualStyleBackColor = true;
+            // 
+            // btnBrowseTerrain
+            // 
+            this.btnBrowseTerrain.FlatAppearance.BorderColor = System.Drawing.Color.Black;
+            this.btnBrowseTerrain.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.btnBrowseTerrain.Location = new System.Drawing.Point(365, 35);
+            this.btnBrowseTerrain.Name = "btnBrowseTerrain";
+            this.btnBrowseTerrain.Size = new System.Drawing.Size(35, 21);
+            this.btnBrowseTerrain.TabIndex = 7;
+            this.btnBrowseTerrain.Text = "...";
+            this.btnBrowseTerrain.UseVisualStyleBackColor = true;
+            // 
             // Form_Gravity3DInversion
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(800, 360);
+            this.ClientSize = new System.Drawing.Size(794, 360);
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.btnOK);
             this.Controls.Add(this.groupBoxSettings);
             this.Controls.Add(this.groupBoxData);
             this.Controls.Add(this.panel1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
+            this.Name = "Form_Gravity3DInversion";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "重力三维反演";
             this.Load += new System.EventHandler(this.Form_Gravity3DInversion_Load);
@@ -200,17 +211,16 @@
             this.groupBoxSettings.ResumeLayout(false);
             this.groupBoxSettings.PerformLayout();
             this.ResumeLayout(false);
+
         }
 
         #endregion
 
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.Label labelTitle;
-        private System.Windows.Forms.Button btnClose;
         private System.Windows.Forms.GroupBox groupBoxData;
         private System.Windows.Forms.TreeView treeViewLayers;
         private System.Windows.Forms.GroupBox groupBoxSettings;
-        private System.Windows.Forms.Button btnBrowseTerrain;
         private System.Windows.Forms.Label labelTerrain;
         private System.Windows.Forms.TextBox textBoxTerrainPath;
         private System.Windows.Forms.Label labelGDB;
@@ -219,5 +229,7 @@
         private System.Windows.Forms.TextBox textBoxSavePath;
         private System.Windows.Forms.Button btnOK;
         private System.Windows.Forms.Button btnCancel;
+        private System.Windows.Forms.Button btnClose;
+        private System.Windows.Forms.Button btnBrowseTerrain;
     }
 }

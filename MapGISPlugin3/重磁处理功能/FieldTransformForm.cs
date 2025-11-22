@@ -121,13 +121,13 @@ namespace MapGISPlugin3
             this.m_mtr.Dock = DockStyle.Fill;
             this.m_mtr.ShowRuler = false;
             this.m_mtr.ShowScrollBar = false;
-            this.panelControl1.Controls.Add(m_mtr);
+            this.panelLeft.Controls.Add(m_mtr); // 使用新的 Panel 名字
 
             this.m_mtr2 = new MapControl();
             this.m_mtr2.Dock = DockStyle.Fill;
             this.m_mtr2.ShowRuler = false;
             this.m_mtr2.ShowScrollBar = false;
-            this.panelControl2.Controls.Add(m_mtr2);
+            this.panelRight.Controls.Add(m_mtr2); // 使用新的 Panel 名字
 
             // 【修改】将临时地图添加到临时文档
             m_tempDoc.GetMaps().Append(m_Map);
@@ -146,10 +146,8 @@ namespace MapGISPlugin3
             // 移除这行有问题的代码
             // this.buttonEdit1.Properties.Buttons[0].Enabled = false;
 
-            // 改用这种方式设置只读
-            this.buttonEdit1.Properties.ReadOnly = true;
-            this.buttonEdit1.Properties.TextEditStyle = DevExpress.XtraEditors.Controls.TextEditStyles.DisableTextEditor;
-            this.buttonEdit1.BackColor = System.Drawing.SystemColors.ControlLight;
+            this.txtOutPath.ReadOnly = true;
+            this.txtOutPath.BackColor = System.Drawing.SystemColors.ControlLight; // 设置为只读颜色
 
             this.m_mtr.ActiveMap = m_Map;
             this.m_mtr2.ActiveMap = m_Map2;
@@ -313,12 +311,12 @@ namespace MapGISPlugin3
                             string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
                             string newFileName = $"{inputFileNameWithoutExt}_{timestamp}.grd";
                             string newfilePath = Path.Combine(inputDirectory, newFileName);
-                            this.buttonEdit1.Text = newfilePath;
+                            this.txtOutPath.Text = newfilePath;
                         }
                         catch (Exception ex)
                         {
                             MessageBox.Show($"自动生成输出路径时出错: {ex.Message}", "路径错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                            this.buttonEdit1.Text = "";
+                            this.txtOutPath.Text = "";
                             _inputFilePath = null;
                         }
 
@@ -1037,7 +1035,7 @@ namespace MapGISPlugin3
             }
 
             // --- 【第2步：为本次计算生成唯一的输出路径】 ---
-            string originalOutputPath = this.buttonEdit1.Text.Trim();
+            string originalOutputPath = this.txtOutPath.Text.Trim();
             if (string.IsNullOrEmpty(originalOutputPath))
             {
                 MessageBox.Show("请先指定一个基础的结果输出路径。", "操作提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -1053,7 +1051,7 @@ namespace MapGISPlugin3
             string finalOutputFilePath = Path.Combine(directory, uniqueFileName);
 
             // （可选）更新界面上的路径，让用户知道实际保存位置
-            this.buttonEdit1.Text = finalOutputFilePath;
+            this.txtOutPath.Text = finalOutputFilePath;
             System.Windows.Forms.Application.DoEvents(); // 强制UI刷新
 
             // --- 【第3步：参数校验和读取（您的原始代码）】 ---
@@ -1474,7 +1472,23 @@ namespace MapGISPlugin3
                 mapView.MapControl.Refresh();
             }
         }
-        private void buttonEdit1_ButtonClick(object sender, DevExpress.XtraEditors.Controls.ButtonPressedEventArgs e)
+        //原来的点击事件
+        //private void buttonEdit1_ButtonClick(object sender, DevExpress.XtraEditors.Controls.ButtonPressedEventArgs e)
+        //{
+        //    SaveFileDialog savefile = new SaveFileDialog();
+        //    savefile.Filter = "Surfer 6 Grid File (*.grd)|*.grd|All files (*.*)|*.*";
+        //    savefile.FilterIndex = 1;
+        //    savefile.RestoreDirectory = true;
+        //    savefile.Title = "请选择计算结果(.grd)的保存位置";
+
+        //    if (savefile.ShowDialog() == DialogResult.OK)
+        //    {
+        //        this.buttonEdit1.Text = savefile.FileName;
+        //    }
+        //    savefile.Dispose();
+        //}
+        // ✅ 添加新方法，绑定到 btnSelectOutPath 的 Click 事件
+        private void btnSelectOutPath_Click(object sender, EventArgs e)
         {
             SaveFileDialog savefile = new SaveFileDialog();
             savefile.Filter = "Surfer 6 Grid File (*.grd)|*.grd|All files (*.*)|*.*";
@@ -1484,7 +1498,8 @@ namespace MapGISPlugin3
 
             if (savefile.ShowDialog() == DialogResult.OK)
             {
-                this.buttonEdit1.Text = savefile.FileName;
+                // 修改这里引用 txtOutPath
+                this.txtOutPath.Text = savefile.FileName;
             }
             savefile.Dispose();
         }
@@ -1662,6 +1677,11 @@ namespace MapGISPlugin3
         private void groupBox1_Enter(object sender, EventArgs e)
         {
 
+        }
+        // ✅ 添加新方法，绑定到 btnClose 的 Click 事件
+        private void btnClose_Click(object sender, EventArgs e)
+        {
+            this.Close();
         }
         #region --- 新增：窗口拖动与边框拉伸核心逻辑 ---
 

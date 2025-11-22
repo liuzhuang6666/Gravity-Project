@@ -30,7 +30,7 @@ namespace MapGISPlugin3
         {
             InitializeComponent();
             m_Hook = hook;
-            InitTitleDrag();
+            InitTitleDrag(); // 初始化拖动功能
         }
 
         private void Form_Magnetic3DInversion_Load(object sender, EventArgs e)
@@ -104,8 +104,7 @@ namespace MapGISPlugin3
             finally { this.Cursor = Cursors.Default; }
         }
 
-        // --- ConvertDatToSfclsInGdb (与重力反演代码完全一致，必须包含在类中) ---
-        // --- 核心逻辑：转换 DAT 到 SFCLS (修正版：修复属性字段丢失问题) ---
+        // --- ConvertDatToSfclsInGdb (保持原样) ---
         private string ConvertDatToSfclsInGdb(string datPath, string className, string gdbDirectory)
         {
             SFeatureCls sfc = null;
@@ -125,7 +124,7 @@ namespace MapGISPlugin3
                     return null;
                 }
 
-                // 2. 定义属性结构 (*** 关键修正：必须设置 MskLength 和 PointLength ***)
+                // 2. 定义属性结构
                 Fields fields = new Fields();
 
                 // Value 字段
@@ -136,7 +135,7 @@ namespace MapGISPlugin3
                 valueField.PointLength = 6; // 小数位
                 fields.AppendField(valueField);
 
-                // X 字段 (坐标建议精度高一点)
+                // X 字段
                 Field xField = new Field();
                 xField.FieldName = "X";
                 xField.FieldType = FieldType.FldDouble;
@@ -173,45 +172,36 @@ namespace MapGISPlugin3
                 using (StreamReader reader = new StreamReader(datPath))
                 {
                     string line;
-                    // 读取文件内容
                     while ((line = reader.ReadLine()) != null)
                     {
-                        // 跳过空行或标题行 (如果 result.dat 有标题 "x y z value")
                         if (string.IsNullOrWhiteSpace(line)) continue;
-                        // 简单的非数字字符检查，防止读取标题行报错
                         if (char.IsLetter(line.Trim()[0])) continue;
 
                         string[] parts = line.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
                         if (parts.Length < 4) continue;
 
                         double x, y, z, val;
-                        // 解析数据
                         if (double.TryParse(parts[0], out x) &&
                             double.TryParse(parts[1], out y) &&
                             double.TryParse(parts[2], out z) &&
                             double.TryParse(parts[3], out val))
                         {
-                            // 构建几何点
                             Dot3D dot = new Dot3D(x, y, z);
                             GeoPoints pts = new GeoPoints();
                             pts.Append(dot);
 
-                            // 构建属性记录
                             Record rec = new Record();
-                            rec.Fields = fields; // 必须关联定义好的 Fields 结构
+                            rec.Fields = fields;
                             rec["Value"] = val;
                             rec["X"] = x;
                             rec["Y"] = y;
                             rec["Z"] = z;
 
-                            // 添加到要素类
                             sfc.Append(pts, rec, null);
                         }
                     }
                 }
                 sfc.EndBatch();
-
-                // 显式关闭以保存更改
                 sfc.Close();
 
                 return gdbPath;
@@ -224,7 +214,6 @@ namespace MapGISPlugin3
             }
             finally
             {
-                // 资源清理
                 if (sfc != null)
                 {
                     try
@@ -237,7 +226,7 @@ namespace MapGISPlugin3
             }
         }
 
-        // --- 辅助方法 (ExecuteAlgorithm, AddLayerToView, PopulateTreeView等，同上) ---
+        // --- 辅助方法 ---
         private void ExecuteAlgorithm(string exePath, string args)
         {
             ProcessStartInfo info = new ProcessStartInfo(exePath, args)
@@ -308,47 +297,64 @@ namespace MapGISPlugin3
 
         private void treeViewLayers_AfterSelect(object sender, TreeViewEventArgs e)
         {
-            // 检查用户是否选中了一个栅格图层
             if (e.Node.Tag is RasterLayer layer)
             {
-                // 1. 获取原始文件名 (不含扩展名)
-                string sourceName = layer.Name; // 默认使用图层名
+                string sourceName = layer.Name;
                 try
                 {
                     if (!string.IsNullOrEmpty(layer.URL))
                     {
                         Uri uri = new Uri(layer.URL);
-                        if (uri.IsFile)
-                        {
-                            sourceName = Path.GetFileNameWithoutExtension(uri.LocalPath);
-                        }
+                        if (uri.IsFile) sourceName = Path.GetFileNameWithoutExtension(uri.LocalPath);
                     }
                 }
-                catch { /* 如果URL解析失败，保持使用图层名 */ }
+                catch { }
 
-                // 2. 清理非法字符 (将空格、特殊符号替换为下划线)
                 sourceName = System.Text.RegularExpressions.Regex.Replace(sourceName, @"[^\w]", "_");
-
-                // 3. 生成时间戳
                 string timeStamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-
-                // 4. 组合类名: [文件名]_Mag_Inv_[时间戳]
                 textBoxSavePath.Text = $"{sourceName}_Mag_Inv_{timeStamp}";
             }
             else
             {
-                // 如果选中的不是栅格图层，清空输入框
                 textBoxSavePath.Text = "";
             }
         }
 
+        // --- 【修改】 使用 panelTitle 进行窗口拖动 ---
         private void InitTitleDrag()
         {
-            panel1.MouseDown += (s, e) => { if (e.Button == MouseButtons.Left) mousePoint = new Point(e.X, e.Y); };
-            panel1.MouseMove += (s, e) => { if (e.Button == MouseButtons.Left) { Left = Control.MousePosition.X - mousePoint.X; Top = Control.MousePosition.Y - mousePoint.Y; } };
+            // 绑定到新的 panelTitle 控件
+            panelTitle.MouseDown += (s, e) =>
+            {
+                if (e.Button == MouseButtons.Left)
+                    mousePoint = new Point(e.X, e.Y);
+            };
+
+            panelTitle.MouseMove += (s, e) =>
+            {
+                if (e.Button == MouseButtons.Left)
+                {
+                    Left = Control.MousePosition.X - mousePoint.X;
+                    Top = Control.MousePosition.Y - mousePoint.Y;
+                }
+            };
         }
 
-        private void button1_Click(object sender, EventArgs e) => Close();
-        private void btnCancel_Click(object sender, EventArgs e) => Close();
+        // --- 【新增】 右上角关闭按钮事件 ---
+        private void btnClose_Click(object sender, EventArgs e)
+        {
+            this.Close();
+        }
+
+        // --- 取消按钮事件 ---
+        private void btnCancel_Click(object sender, EventArgs e)
+        {
+            this.Close();
+        }
+
+        private void labelTitle_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }
