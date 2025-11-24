@@ -258,21 +258,46 @@ namespace MapGISPlugin3
             try
             {
                 Scenes scenes = m_Hook.Document.GetScenes();
-                if (scenes == null || scenes.Count == 0) return;
-                Scene scene = scenes.GetScene(0);
-                if (scene != null)
+                if (scenes != null && scenes.Count > 0)
                 {
-                    GMRunTime.AddLayer((DocumentItem)(object)scene, 3100, gdbPath, 3101, true);
-                    // 尝试刷新
+                    Scene targetScene = null;
+
+                    // --- 修改开始：遍历查找指定名称的场景 ---
+                    for (int i = 0; i < scenes.Count; i++)
+                    {
+                        Scene tempScene = scenes.GetScene(i);
+                        // 这里的名称必须与你左侧树状列表中的名称完全一致
+                        if (tempScene.Name == "重力数据三维场景")
+                        {
+                            targetScene = tempScene;
+                            break;
+                        }
+                    }
+
+                    // 如果没找到名为“重力数据三维场景”的节点，为了防止报错，可以选择默认添加到第1个，或者直接返回
+                    if (targetScene == null)
+                    {
+                        // 也可以选择弹窗提示没找到场景，这里暂时默认回退到索引0
+                        targetScene = scenes.GetScene(0);
+                    }
+                    // --- 修改结束 ---
+
+                    // 使用找到的 targetScene 添加图层
+                    GMRunTime.AddLayer((DocumentItem)(object)targetScene, 3100, gdbPath, 3101, true);
+
                     try
                     {
-                        SceneControl sc = m_Hook.WorkSpaceEngine.GetSceneControl(scene);
+                        SceneControl sc = m_Hook.WorkSpaceEngine.GetSceneControl(targetScene);
                         if (sc != null) { sc.Refresh(); Marshal.ReleaseComObject(sc); }
                     }
                     catch { }
                 }
             }
-            catch (Exception ex) { Console.WriteLine("加载图层失败: " + ex.Message); }
+            catch (Exception ex)
+            {
+                // 建议加上异常捕获日志，方便调试
+                Console.WriteLine("AddLayerToView Error: " + ex.Message);
+            }
         }
 
         private void PopulateTreeView()
