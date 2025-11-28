@@ -732,8 +732,34 @@ namespace MapGISPlugin3
             double maxX = m_CurrentLineStations.Max(s => s.X);
             double minY = m_CurrentLineStations.Min(s => s.Y);
             double maxY = m_CurrentLineStations.Max(s => s.Y);
-            double marginX = (maxX - minX) * 0.1;
-            double marginY = (maxY - minY) * 0.1;
+
+            double rangeX = maxX - minX;
+            double rangeY = maxY - minY;
+
+            double marginX = 0;
+            double marginY = 0;
+
+            // 如果只有一个点，或者所有点X坐标相同
+            if (Math.Abs(rangeX) < 1e-6)
+            {
+                // 人为给一个宽度，比如前后各加 100 米，或者加 1.0
+                marginX = 100.0;
+            }
+            else
+            {
+                marginX = rangeX * 0.1; // 正常的 10% 边距
+            }
+
+            // 如果只有一个点，或者所有点Y坐标相同
+            if (Math.Abs(rangeY) < 1e-6)
+            {
+                // 人为给一个高度
+                marginY = 100.0;
+            }
+            else
+            {
+                marginY = rangeY * 0.1;
+            }
 
             // 添加测点数据
             foreach (var station in m_CurrentLineStations)
@@ -748,6 +774,9 @@ namespace MapGISPlugin3
             chartProfileView.ChartAreas[0].AxisX.Maximum = maxX + marginX;
             chartProfileView.ChartAreas[0].AxisY.Minimum = minY - marginY;
             chartProfileView.ChartAreas[0].AxisY.Maximum = maxY + marginY;
+
+            chartResistivity.ChartAreas[0].AxisX.IsLogarithmic = true;
+            chartPhase.ChartAreas[0].AxisX.IsLogarithmic = true;
 
             // 设置坐标轴标题
             chartProfileView.ChartAreas[0].AxisX.Title = "X坐标";

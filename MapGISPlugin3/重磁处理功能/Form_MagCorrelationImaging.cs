@@ -954,7 +954,7 @@ namespace MapGISPlugin3
                 }
 
                 // 获取第一个三维场景
-                scene = scenes.GetScene(0);
+                scene = scenes.GetScene(1);
                 if (scene == null)
                 {
                     ShowError("获取第一个三维场景失败 (返回 null)。", "加载错误");
