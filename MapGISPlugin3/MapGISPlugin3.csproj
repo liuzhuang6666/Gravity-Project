@@ -384,6 +384,20 @@
     <Compile Include="重磁处理功能\PluginResourceManager.cs" />
     <Compile Include="重磁处理功能\ShowMyProcessorCommand.cs" />
     <Compile Include="重磁处理功能\SurfaceContinCommand.cs" />
+    <Compile Include="重磁处理功能\位场转换处理\GravityFieldTransformCommand.cs" />
+    <Compile Include="重磁处理功能\位场转换处理\GravityFieldTransformForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="重磁处理功能\位场转换处理\GravityFieldTransformForm.Designer.cs">
+      <DependentUpon>GravityFieldTransformForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="重磁处理功能\位场转换处理\MagneticFieldTransformCommand.cs" />
+    <Compile Include="重磁处理功能\位场转换处理\MagneticFieldTransformForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="重磁处理功能\位场转换处理\MagneticFieldTransformForm.Designer.cs">
+      <DependentUpon>MagneticFieldTransformForm.cs</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="查看属性\Preview_MT.resx">
