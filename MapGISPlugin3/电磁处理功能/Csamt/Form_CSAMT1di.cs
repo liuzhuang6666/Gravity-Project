@@ -27,8 +27,12 @@ namespace MapGISPlugin3
         private IApplication _hook;
         private List<MapLayer> m_allPointLayers; // 存储所有点图层
         private List<MapLayer> m_allObjectLayers; // 存储所有对象类
+        // 【新增】存储所有发射源图层
+        private List<MapLayer> m_allTransmitterLayers;
         private SFeatureCls m_SelectedStationLayer; // 当前选中的测点要素类
         private ObjectCls m_SelectedSoundingTable; // 自动关联的测深数据表
+        // 【新增】自动关联的发射源要素类
+        private SFeatureCls m_SelectedTransmitterLayer;
         private List<StationInfo> m_CurrentLineStations; // 当前测线上的所有测点 (用于小地图)
         private DataTable m_CurrentLineData; // 当前测线上的所有数据 (用于表格)
         private string m_CurrentSelectedStationName; // 当前选中的测点号
@@ -51,18 +55,28 @@ namespace MapGISPlugin3
             // 初始化列表
             m_allPointLayers = new List<MapLayer>();
             m_allObjectLayers = new List<MapLayer>();
+            // 【新增】
+            m_allTransmitterLayers = new List<MapLayer>();
+
             m_CurrentLineStations = new List<StationInfo>();
             m_CurrentLineData = new DataTable();
             m_StationDistances = new Dictionary<string, (double, double)>();
+
+            // 【删除】在此处删除 btnLoadTranFile 的事件绑定（如果在 Designer.cs 中已经删除了按钮，这里通常不需要动）
         }
 
         /// <summary>
         /// (辅助函数) 从 "电法数据" 地图加载图层列表 (已移除弹窗调试)
         /// </summary>
+        /// <summary>
+        /// (辅助函数) 从 "电法数据" 地图加载图层列表
+        /// </summary>
         private void LoadLayersFromMap()
         {
             m_allPointLayers.Clear();
             m_allObjectLayers.Clear();
+            // 【新增】清空发射源列表
+            m_allTransmitterLayers.Clear();
             cmbStationLayer.Items.Clear();
 
             Map electroMap = null;
@@ -99,10 +113,10 @@ namespace MapGISPlugin3
                         layer = electroMap.get_Layer(i);
                         if (layer == null)
                         {
-                            Console.WriteLine($"图层索引 {i} 为 null，跳过。"); // 这个信息不关键，用 Console 即可
+                            Console.WriteLine($"图层索引 {i} 为 null，跳过。");
                             continue;
                         }
-                        // 调用（已移除弹窗的）图层处理函数
+                        // 调用图层处理函数
                         ProcessLayerForComboBox_Debug(layer);
                     }
                     catch (COMException comEx)
@@ -113,14 +127,10 @@ namespace MapGISPlugin3
                     {
                         MessageBox.Show($"遍历图层索引 {i} (名称: {layer?.Name ?? "未知"}) 时发生错误: {ex.Message}", "LoadLayersFromMap - 错误", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     }
-                    finally
-                    {
-                        // 不释放 layer
-                    }
                 } // 遍历结束
             }
-            catch (COMException comEx) { MessageBox.Show($"查找地图或获取图层数COM错误: {comEx.Message}", "LoadLayersFromMap - 致命COM错误"); /* ... 禁用控件 ... */ return; }
-            catch (Exception ex) { MessageBox.Show($"加载图层列表意外错误: {ex.Message}", "LoadLayersFromMap - 致命错误"); /* ... 禁用控件 ... */ return; }
+            catch (COMException comEx) { MessageBox.Show($"查找地图或获取图层数COM错误: {comEx.Message}", "LoadLayersFromMap - 致命COM错误"); return; }
+            catch (Exception ex) { MessageBox.Show($"加载图层列表意外错误: {ex.Message}", "LoadLayersFromMap - 致命错误"); return; }
             finally { Console.WriteLine("[LoadLayersFromMap] finally 块执行完毕。"); }
 
             cmbStationLayer.DisplayMember = "Name";
@@ -141,13 +151,15 @@ namespace MapGISPlugin3
         /// <summary>
         /// (已移除弹窗调试) 处理单个图层，如果是组图层则递归处理
         /// </summary>
+        /// <summary>
+        /// 处理单个图层，如果是组图层则递归处理
+        /// </summary>
         private void ProcessLayerForComboBox_Debug(MapLayer layer)
         {
             if (layer == null) return;
 
-            string layerName = "[无法获取名称]"; // 默认值
-            string layerTypeName = "[无法获取类型]";
-            try { layerName = layer.Name ?? "[名称为null]"; layerTypeName = layer.GetType().Name; } catch { /* 忽略获取名称/类型的错误 */ }
+            string layerName = "[无法获取名称]";
+            try { layerName = layer.Name ?? "[名称为null]"; } catch { }
 
             try
             {
@@ -155,26 +167,24 @@ namespace MapGISPlugin3
                 if (layer is GroupLayer groupLayer)
                 {
                     int subLayerCount = 0;
-                    try { subLayerCount = groupLayer.Count; } catch { } // 安全获取数量
+                    try { subLayerCount = groupLayer.Count; } catch { }
 
                     MapLayer subLayer = null;
-                    for (int i = 0; i < subLayerCount; i++) // 使用安全获取的数量
+                    for (int i = 0; i < subLayerCount; i++)
                     {
                         subLayer = null;
                         try
                         {
                             subLayer = groupLayer.get_Item(i);
-                            // 递归调用（已移除弹窗的）版本
-                            ProcessLayerForComboBox_Debug(subLayer);
+                            ProcessLayerForComboBox_Debug(subLayer); // 递归
                         }
-                        catch (Exception ex) { MessageBox.Show($"处理组 '{layerName}' 的子图层 {i} 时出错: {ex.Message}", "ProcessLayer - 递归错误"); }
-                        finally { /* 不释放 subLayer */ }
+                        catch (Exception ex) { Console.WriteLine($"处理组 '{layerName}' 的子图层 {i} 时出错: {ex.Message}"); }
                     }
                 }
                 // 检查是否是 VectorLayer
                 else if (layer is VectorLayer vectorLayer)
                 {
-                    GeomType geomType = GeomType.Unknown; // 默认值
+                    GeomType geomType = GeomType.Unknown;
                     bool isPoint = false;
                     try
                     {
@@ -183,59 +193,65 @@ namespace MapGISPlugin3
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show($"获取图层 '{layerName}' 的几何类型时出错: {ex.Message}", "ProcessLayer - 错误");
-                        return; // 获取类型失败，无法继续判断
+                        Console.WriteLine($"获取图层 '{layerName}' 的几何类型时出错: {ex.Message}");
+                        return;
                     }
 
-                    if (isPoint) // 几何类型是点
+                    if (isPoint && layerName != null)
                     {
-                        bool nameMatch = false;
-                        if (layerName != null && layerName.Contains("测点"))
-                        {
-                            nameMatch = true;
-                        }
-
-                        if (nameMatch) // 名称也匹配
+                        // 【修改】识别测点图层
+                        if (layerName.Contains("测点"))
                         {
                             m_allPointLayers.Add(layer);
                             cmbStationLayer.Items.Add(layer);
+                        }
+                        // 【修改】识别发射源图层
+                        else if (layerName.Contains("发射源"))
+                        {
+                            m_allTransmitterLayers.Add(layer);
+                            Console.WriteLine($"发现发射源图层: {layerName}");
                         }
                     }
                 }
                 // 检查是否是 ObjectLayer
                 else if (layer is ObjectLayer objectLayer)
                 {
-                    // 并且名称包含 "测深数据"
                     if (layerName != null && layerName.Contains("测深数据"))
                     {
                         m_allObjectLayers.Add(layer);
                     }
                 }
             }
-            catch (COMException comEx) // 捕获访问 layer 属性（如 Name, GeometryType）时可能发生的错误
-            {
-                MessageBox.Show($"处理图层 '{layerName}' 时发生 COM 错误: {comEx.Message} (Code: {comEx.ErrorCode})", "ProcessLayer - COM 错误");
-            }
             catch (Exception ex)
             {
-                MessageBox.Show($"处理图层 '{layerName}' 时发生错误: {ex.Message}", "ProcessLayer - 错误");
+                Console.WriteLine($"处理图层 '{layerName}' 时发生错误: {ex.Message}");
             }
-            // *** 不释放 layer ***
         }
 
         #region --- 1. 主控件事件 (左栏顶部) ---
         /// <summary>
         /// 事件: 当用户选择一个新的 "测点图层" (使用原始变量名)
         /// </summary>
+        /// <summary>
+        /// 事件: 当用户选择一个新的 "测点图层"
+        /// </summary>
         private void cmbStationLayer_SelectedIndexChanged(object sender, EventArgs e)
         {
             // --- 1. 清理旧状态 ---
             if (m_SelectedStationLayer != null) try { Marshal.ReleaseComObject(m_SelectedStationLayer); } catch { }
-            m_SelectedStationLayer = null; // SFeatureCls
+            m_SelectedStationLayer = null;
             if (m_SelectedSoundingTable != null) try { Marshal.ReleaseComObject(m_SelectedSoundingTable); } catch { }
-            m_SelectedSoundingTable = null; // ObjectCls
-            cmbLineName.Items.Clear(); // 清空测线下拉框
-            ClearAllDisplays(); // 清空所有图表、表格和小地图
+            m_SelectedSoundingTable = null;
+            // 【新增】清理旧的发射源对象
+            if (m_SelectedTransmitterLayer != null) try { Marshal.ReleaseComObject(m_SelectedTransmitterLayer); } catch { }
+            m_SelectedTransmitterLayer = null;
+
+            // 重置发射源坐标显示
+            txtAx.Text = "0"; txtAy.Text = "0"; txtAz.Text = "0";
+            txtBx.Text = "0"; txtBy.Text = "0"; txtBz.Text = "0";
+
+            cmbLineName.Items.Clear();
+            ClearAllDisplays();
 
             if (cmbStationLayer.SelectedItem == null || !(cmbStationLayer.SelectedItem is MapLayer selectedLayer))
             {
@@ -254,26 +270,14 @@ namespace MapGISPlugin3
                 {
                     MessageBox.Show($"无法从图层 '{selectedLayer.Name}' 获取有效的要素类数据 (SFeatureCls)！", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     cmbLineName.Enabled = false;
-                    m_SelectedStationLayer = null; // 确保清空
+                    m_SelectedStationLayer = null;
                     return;
                 }
-                Console.WriteLine($"成功获取选中测点图层的 SFeatureCls: {selectedLayer.Name}");
-            }
-            catch (COMException comEx)
-            {
-                MessageBox.Show($"获取图层 '{selectedLayer.Name}' 数据 (SFeatureCls) 时发生 COM 错误: {comEx.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                Console.WriteLine($"Error getting SFeatureCls for {selectedLayer.Name}: {comEx}");
-                cmbLineName.Enabled = false;
-                if (m_SelectedStationLayer != null) try { Marshal.ReleaseComObject(m_SelectedStationLayer); } catch { }
-                m_SelectedStationLayer = null;
-                return;
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"获取图层 '{selectedLayer.Name}' 数据 (SFeatureCls) 时发生错误: {ex.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                Console.WriteLine($"Error getting SFeatureCls for {selectedLayer.Name}: {ex}");
+                MessageBox.Show($"获取图层 '{selectedLayer.Name}' 数据时发生错误: {ex.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 cmbLineName.Enabled = false;
-                if (m_SelectedStationLayer != null) try { Marshal.ReleaseComObject(m_SelectedStationLayer); } catch { }
                 m_SelectedStationLayer = null;
                 return;
             }
@@ -281,19 +285,14 @@ namespace MapGISPlugin3
             // --- 3. 自动关联测深数据表 ---
             string stationLayerName = selectedLayer.Name;
             string expectedTableName = stationLayerName.Replace("测点", "测深数据");
-            Console.WriteLine($"尝试查找匹配的测深数据表: {expectedTableName}");
 
             MapLayer soundingLayer = m_allObjectLayers.FirstOrDefault(layer => layer != null && layer.Name == expectedTableName);
             if (soundingLayer == null)
             {
-                MessageBox.Show($"未在 '电法数据' 地图中找到与 '{stationLayerName}' 匹配的测深数据表 '{expectedTableName}'！\n请检查图层命名规范。", "关联失败", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show($"未在 '电法数据' 地图中找到与 '{stationLayerName}' 匹配的测深数据表 '{expectedTableName}'！", "关联失败", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 cmbLineName.Enabled = false;
-                if (m_SelectedStationLayer != null) try { Marshal.ReleaseComObject(m_SelectedStationLayer); } catch { }
-                m_SelectedStationLayer = null;
                 return;
             }
-
-            Console.WriteLine($"找到可能的测深数据表图层: {soundingLayer.Name}");
 
             try
             {
@@ -301,52 +300,208 @@ namespace MapGISPlugin3
                 if (m_SelectedSoundingTable == null || !m_SelectedSoundingTable.HasOpen())
                 {
                     MessageBox.Show($"图层 '{expectedTableName}' 不是有效的对象类 (ObjectCls) 或无法打开！", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    m_SelectedSoundingTable = null; // 确保清空
+                    m_SelectedSoundingTable = null;
                     cmbLineName.Enabled = false;
-                    if (m_SelectedStationLayer != null) try { Marshal.ReleaseComObject(m_SelectedStationLayer); } catch { }
-                    m_SelectedStationLayer = null;
                     return;
                 }
-                Console.WriteLine($"成功关联到测深数据表 ObjectCls: {soundingLayer.Name}");
-            }
-            catch (COMException comEx)
-            {
-                MessageBox.Show($"获取测深表 '{soundingLayer.Name}' 数据 (ObjectCls) 时发生 COM 错误: {comEx.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                Console.WriteLine($"Error getting ObjectCls for {soundingLayer.Name}: {comEx}");
-                cmbLineName.Enabled = false;
-                if (m_SelectedStationLayer != null) try { Marshal.ReleaseComObject(m_SelectedStationLayer); } catch { }
-                m_SelectedStationLayer = null;
-                if (m_SelectedSoundingTable != null) try { Marshal.ReleaseComObject(m_SelectedSoundingTable); } catch { }
-                m_SelectedSoundingTable = null;
-                return;
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"获取测深表 '{soundingLayer.Name}' 数据 (ObjectCls) 时发生错误: {ex.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                Console.WriteLine($"Error getting ObjectCls for {soundingLayer.Name}: {ex}");
-                cmbLineName.Enabled = false;
-                if (m_SelectedStationLayer != null) try { Marshal.ReleaseComObject(m_SelectedStationLayer); } catch { }
-                m_SelectedStationLayer = null;
-                if (m_SelectedSoundingTable != null) try { Marshal.ReleaseComObject(m_SelectedSoundingTable); } catch { }
+                MessageBox.Show($"获取测深表数据时发生错误: {ex.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 m_SelectedSoundingTable = null;
+                cmbLineName.Enabled = false;
                 return;
             }
 
-            // --- 4. (如果成功) 填充 cmbLineName (测线下拉框) ---
-            cmbLineName.Enabled = true;
-            FillLineComboBox(); // 调用辅助函数填充测线列表
+            // --- 4. 【新增】自动关联发射源图层并读取数据 ---
+            string expectedTransmitterName = stationLayerName.Replace("测点", "发射源");
+            Console.WriteLine($"尝试查找匹配的发射源图层: {expectedTransmitterName}");
 
-            // --- 5. (如果成功且有测线) 自动选中第一条测线 ---
+            MapLayer tranLayer = m_allTransmitterLayers.FirstOrDefault(layer => layer != null && layer.Name == expectedTransmitterName);
+
+            if (tranLayer != null)
+            {
+                try
+                {
+                    m_SelectedTransmitterLayer = tranLayer.GetData() as SFeatureCls;
+                    if (m_SelectedTransmitterLayer != null && m_SelectedTransmitterLayer.HasOpen())
+                    {
+                        Console.WriteLine($"成功关联发射源图层: {tranLayer.Name}，正在读取坐标...");
+                        // 调用辅助函数读取坐标
+                        LoadTransmitterCoordsFromLayer();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"自动加载发射源数据失败: {ex.Message}");
+                    MessageBox.Show($"虽然找到了发射源图层，但在读取数据时出错: {ex.Message}", "警告", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+            }
+            else
+            {
+                // 如果找不到自动匹配的，尝试找任意一个包含 "发射源" 的图层作为备选 (可选策略)
+                // 或者直接提示用户
+                Console.WriteLine("未找到名称精确匹配的发射源图层。");
+            }
+
+            // --- 5. 填充 cmbLineName (测线下拉框) ---
+            cmbLineName.Enabled = true;
+            FillLineComboBox();
+
+            // --- 6. 自动选中第一条测线 ---
             if (cmbLineName.Items.Count > 0)
             {
-                cmbLineName.Text = "请选择测线..."; // 给出提示
-                Console.WriteLine("测线列表已填充，等待用户选择。");
+                cmbLineName.Text = "请选择测线...";
             }
             else
             {
                 MessageBox.Show($"在测点图层 '{stationLayerName}' 中未能查询到任何测线号。", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 cmbLineName.Enabled = false;
                 ClearAllDisplays();
+            }
+        }
+
+        /// <summary>
+        /// (辅助函数) 从关联的发射源图层读取 A、B 点坐标并填充到界面
+        /// 【已修正】修复了可能只读取第一条记录而跳过B点的问题
+        /// </summary>
+        /// <summary>
+        /// (辅助函数) 从关联的发射源图层读取 A、B 点坐标并填充到界面
+        /// 【已修正】增加 SafeRelease 逻辑，解决 COM 对象释放报错导致循环中断的问题
+        /// </summary>
+        private void LoadTransmitterCoordsFromLayer()
+        {
+            if (m_SelectedTransmitterLayer == null) return;
+
+            RecordSet rs = null;
+            try
+            {
+                // 查询所有记录
+                rs = m_SelectedTransmitterLayer.Select(null);
+                if (rs == null || rs.Count == 0) return;
+
+                rs.MoveFirst();
+
+                // 获取字段索引
+                int idxName = rs.Fields.IndexOf("点名");
+                int idxX = rs.Fields.IndexOf("X");
+                int idxY = rs.Fields.IndexOf("Y");
+                int idxZ = rs.Fields.IndexOf("Z");
+
+                bool useFields = (idxX >= 0 && idxY >= 0);
+                long recordCount = rs.Count;
+
+                // 使用 for 循环遍历
+                for (int i = 0; i < recordCount; i++)
+                {
+                    Record att = null;
+                    IGeometry geom = null;
+                    Dot3D dotToRelease = null; // 专门用于捕获可能需要释放的几何点
+
+                    try
+                    {
+                        att = rs.Att;
+                        if (att != null)
+                        {
+                            string pName = "";
+                            double pX = 0, pY = 0, pZ = 0;
+
+                            // 1. 获取名称
+                            if (idxName >= 0)
+                            {
+                                object valName = att.GetValue(idxName);
+                                if (valName != null) pName = valName.ToString().Trim().ToUpper();
+                            }
+
+                            // 2. 获取坐标
+                            if (useFields)
+                            {
+                                object oX = att.GetValue(idxX);
+                                object oY = att.GetValue(idxY);
+                                object oZ = (idxZ >= 0) ? att.GetValue(idxZ) : 0;
+
+                                if (oX != null) double.TryParse(oX.ToString(), out pX);
+                                if (oY != null) double.TryParse(oY.ToString(), out pY);
+                                if (oZ != null) double.TryParse(oZ.ToString(), out pZ);
+                            }
+                            else
+                            {
+                                // 备用：从几何信息读取
+                                geom = rs.Geometry;
+                                if (geom is Dot3D dot)
+                                {
+                                    pX = dot.X; pY = dot.Y; pZ = dot.Z;
+                                }
+                                else if (geom is GeoPoints pnts && pnts.Count > 0)
+                                {
+                                    // 注意：GetItem 返回的对象可能需要释放，也可能不需要，取决于MapGIS版本
+                                    // 把它赋值给变量以便在 finally 中安全检查
+                                    dotToRelease = pnts.GetItem(0);
+                                    if (dotToRelease != null)
+                                    {
+                                        pX = dotToRelease.X;
+                                        pY = dotToRelease.Y;
+                                        pZ = dotToRelease.Z;
+                                    }
+                                }
+                            }
+
+                            // 3. 填充到文本框
+                            // 逻辑：包含 A 则为 A点，包含 B 则为 B点，或者按索引 0->A, 1->B
+                            bool isA = (pName.Contains("A") || (string.IsNullOrEmpty(pName) && i == 0));
+                            bool isB = (pName.Contains("B") || (string.IsNullOrEmpty(pName) && i == 1));
+
+                            if (isA)
+                            {
+                                txtAx.Text = pX.ToString();
+                                txtAy.Text = pY.ToString();
+                                txtAz.Text = pZ.ToString();
+                                Console.WriteLine($"[调试] 读取到 A: {pX},{pY}");
+                            }
+                            else if (isB)
+                            {
+                                txtBx.Text = pX.ToString();
+                                txtBy.Text = pY.ToString();
+                                txtBz.Text = pZ.ToString();
+                                Console.WriteLine($"[调试] 读取到 B: {pX},{pY}");
+                            }
+                        }
+                    }
+                    catch (Exception innerEx)
+                    {
+                        // 捕获单条记录的错误，防止影响下一条记录的读取
+                        Console.WriteLine($"读取第 {i} 条记录时出错: {innerEx.Message}");
+                    }
+                    finally
+                    {
+                        // 【关键修复】安全释放逻辑
+                        // 只有当对象不为空，且确实是 COM 对象时才释放
+                        if (dotToRelease != null && Marshal.IsComObject(dotToRelease))
+                            Marshal.ReleaseComObject(dotToRelease);
+
+                        if (geom != null && Marshal.IsComObject(geom))
+                            Marshal.ReleaseComObject(geom);
+
+                        if (att != null && Marshal.IsComObject(att))
+                            Marshal.ReleaseComObject(att);
+                    }
+
+                    // 移动到下一条记录
+                    rs.MoveNext();
+                }
+
+                // 成功读取后，刷新距离
+                this.BeginInvoke(new Action(() => { UpdateDistances(); }));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"LoadTransmitterCoordsFromLayer 致命错误: {ex.Message}");
+                // 这里不弹窗了，避免影响主流程，只在控制台输出
+            }
+            finally
+            {
+                if (rs != null && Marshal.IsComObject(rs))
+                    try { Marshal.ReleaseComObject(rs); } catch { }
             }
         }
 
@@ -453,25 +608,29 @@ namespace MapGISPlugin3
 
         private void btnCalculate_Click(object sender, EventArgs e)
         {
+            // =======================================================
+            // 调试开关：调试完成后将此改为 false 即可关闭弹窗
+            bool enableDebug = true;
+            // =======================================================
+
             // --- 0. 检查发射源坐标 ---
             bool allZero = true;
+            double ax = 0, ay = 0, az = 0;
+            double bx = 0, by = 0, bz = 0;
 
             try
             {
-                // 安全地检查每个坐标值
-                double ax = SafeParseDouble(txtAx.Text);
-                double ay = SafeParseDouble(txtAy.Text);
-                double az = SafeParseDouble(txtAz.Text);
-                double bx = SafeParseDouble(txtBx.Text);
-                double by = SafeParseDouble(txtBy.Text);
-                double bz = SafeParseDouble(txtBz.Text);
+                ax = SafeParseDouble(txtAx.Text);
+                ay = SafeParseDouble(txtAy.Text);
+                az = SafeParseDouble(txtAz.Text);
+                bx = SafeParseDouble(txtBx.Text);
+                by = SafeParseDouble(txtBy.Text);
+                bz = SafeParseDouble(txtBz.Text);
 
-                // 检查是否所有坐标都是0
                 allZero = (ax == 0 && ay == 0 && az == 0 && bx == 0 && by == 0 && bz == 0);
             }
             catch (Exception ex)
             {
-                // 如果解析过程中出现异常，也认为是未设置
                 allZero = true;
                 Console.WriteLine($"解析坐标时出错: {ex.Message}");
             }
@@ -479,16 +638,9 @@ namespace MapGISPlugin3
             if (allZero)
             {
                 var result = MessageBox.Show("发射源坐标未设置或全部为0，请在布置图页面设置发射源坐标后再进行计算。\n\n是否立即跳转到布置图页面？",
-                    "发射源坐标未设置",
-                    MessageBoxButtons.YesNo,
-                    MessageBoxIcon.Warning);
-
-                if (result == DialogResult.Yes)
-                {
-                    // 切换到布置图标签页
-                    tabControl1.SelectedTab = tabPageLayout;
-                }
-                return; // 停止计算
+                    "发射源坐标未设置", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+                if (result == DialogResult.Yes) tabControl1.SelectedTab = tabPageLayout;
+                return;
             }
 
             // --- 1. 检查数据 ---
@@ -498,15 +650,27 @@ namespace MapGISPlugin3
                 return;
             }
 
-            this.Cursor = Cursors.WaitCursor;
+            int its = (int)nudIterationCount.Value;
 
+            // 【调试弹窗 1：基础参数检查】
+            if (enableDebug)
+            {
+                StringBuilder sb = new StringBuilder();
+                sb.AppendLine("=== [调试点 1] 输入参数检查 ===");
+                sb.AppendLine($"A点: ({ax}, {ay}, {az})");
+                sb.AppendLine($"B点: ({bx}, {by}, {bz})");
+                sb.AppendLine($"迭代次数: {its}");
+                sb.AppendLine($"数据表总行数: {m_CurrentLineData.Rows.Count}");
+                sb.AppendLine($"当前测点列表数: {m_CurrentLineStations?.Count ?? 0}");
+                MessageBox.Show(sb.ToString(), "调试信息 1/3");
+            }
+
+            this.Cursor = Cursors.WaitCursor;
             string tempRunDir = Path.Combine(Path.GetTempPath(), "CSAMT1di_run_" + Guid.NewGuid().ToString("N").Substring(0, 8));
 
             try
             {
                 Directory.CreateDirectory(tempRunDir);
-
-                int its = (int)nudIterationCount.Value;
 
                 // --- 2. 定义路径 ---
                 string exePath;
@@ -521,7 +685,7 @@ namespace MapGISPlugin3
 
                     if (!File.Exists(exePath))
                     {
-                        throw new FileNotFoundException($"计算程序 'a.exe' 未找到。\n请确保它位于: {exePath}");
+                        throw new FileNotFoundException($"计算程序 'a.exe' 未找到。\n期望路径: {exePath}");
                     }
                 }
                 catch (Exception ex)
@@ -538,6 +702,10 @@ namespace MapGISPlugin3
 
                 // --- 3. 数据转换 (写入临时文件) ---
                 Dictionary<string, StationInfo> stationCoords = m_CurrentLineStations.ToDictionary(s => s.StationName);
+
+                string debugFirstLine = "无数据写入"; // 用于调试
+                int writeCount = 0;
+
                 using (StreamWriter writer = new StreamWriter(tempDataFile))
                 {
                     foreach (DataRow row in m_CurrentLineData.Rows)
@@ -551,19 +719,36 @@ namespace MapGISPlugin3
                         double res = GetDoubleFromRow(row, "视电阻率", 0.0);
                         double pha = GetDoubleFromRow(row, "相位", 0.0);
 
-                        writer.WriteLine($"{lineName} {stationName} {station.X} {station.Y} {freq} {res} {pha}");
+                        string lineContent = $"{lineName} {stationName} {station.X} {station.Y} {freq} {res} {pha}";
+                        writer.WriteLine(lineContent);
+
+                        // 捕获第一行用于调试
+                        if (writeCount == 0) debugFirstLine = lineContent;
+                        writeCount++;
                     }
                 }
 
                 using (StreamWriter writer = new StreamWriter(tempTranFile))
                 {
-                    writer.WriteLine($"{Ax} {Ay} {Az}");
-                    writer.WriteLine($"{Bx} {By} {Bz}");
+                    writer.WriteLine($"{ax} {ay} {az}");
+                    writer.WriteLine($"{bx} {by} {bz}");
+                }
+
+                // 【调试弹窗 2：数据写入检查】
+                if (enableDebug)
+                {
+                    MessageBox.Show($"=== [调试点 2] 数据文件预览 ===\n" +
+                                    $"文件路径: {tempDataFile}\n" +
+                                    $"实际写入行数: {writeCount}\n" +
+                                    $"第一行内容预览:\n{debugFirstLine}\n\n" +
+                                    $"(格式应为: 线号 点号 X Y 频率 电阻率 相位)",
+                                    "调试信息 2/3");
                 }
 
                 // --- 4. 执行 a.exe ---
                 ProcessStartInfo startInfo = new ProcessStartInfo();
                 startInfo.FileName = exePath;
+                // 参数格式: input_data input_tran output_folder iterations
                 startInfo.Arguments = $"\"{tempDataFile}\" \"{tempTranFile}\" \"{workspaceName}\" {its}";
                 startInfo.WorkingDirectory = tempRunDir;
                 startInfo.UseShellExecute = false;
@@ -571,6 +756,16 @@ namespace MapGISPlugin3
                 startInfo.RedirectStandardError = true;
                 startInfo.CreateNoWindow = true;
                 startInfo.StandardErrorEncoding = Encoding.GetEncoding("GBK");
+
+                // 【调试弹窗 3：执行命令检查】
+                if (enableDebug)
+                {
+                    MessageBox.Show($"=== [调试点 3] 启动参数 ===\n" +
+                                    $"EXE路径: {exePath}\n" +
+                                    $"工作目录: {tempRunDir}\n" +
+                                    $"命令行参数: {startInfo.Arguments}",
+                                    "调试信息 3/3");
+                }
 
                 string output = "";
                 string error = "";
@@ -583,27 +778,29 @@ namespace MapGISPlugin3
                     // --- 5. 反馈结果 ---
                     if (process.ExitCode == 0)
                     {
-                        // --- (核心修改) 读取 KNOW 文件并调用可视化函数 ---
+                        // 读取 KNOW 文件并调用可视化函数
                         string knowFile = Path.Combine(fullWorkspacePath, "KNOW");
                         if (File.Exists(knowFile))
                         {
-                            // 调用解析和可视化函数
                             List<InversionResultPoint> results = ParseKnowFile(knowFile);
                             DisplayInversionResults(results);
+
+                            if (enableDebug)
+                            {
+                                MessageBox.Show($"调试：成功解析 KNOW 文件，包含 {results.Count} 个数据点。");
+                            }
                         }
                         else
                         {
-                            // 如果文件不存在，清空结果图
                             DisplayInversionResults(new List<InversionResultPoint>());
-                            MessageBox.Show("计算成功，但未找到 KNOW 结果文件。", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            MessageBox.Show($"计算程序返回成功 (ExitCode 0)，但未生成 KNOW 结果文件。\n\n程序输出:\n{output}", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         }
 
-                        MessageBox.Show($"计算成功！\n\n反演结果剖面图已生成。\n结果文件位于:\n{fullWorkspacePath}",
-                                        "计算完成", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        MessageBox.Show($"计算完成！\n结果保存在: {fullWorkspacePath}", "成功", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                     else
                     {
-                        throw new Exception($"a.exe 运行失败 (ExitCode: {process.ExitCode})。\n\n工作目录:\n{startInfo.WorkingDirectory}\n\n命令行:\n{startInfo.FileName} {startInfo.Arguments}\n\n错误信息:\n{error}\n\n输出信息:\n{output}");
+                        throw new Exception($"a.exe 运行失败 (ExitCode: {process.ExitCode})。\n\n错误信息:\n{error}\n\n标准输出:\n{output}");
                     }
                 }
             }
@@ -613,18 +810,17 @@ namespace MapGISPlugin3
             }
             finally
             {
-                // --- 6. 清理 ---
-                if (Directory.Exists(tempRunDir))
+                // 调试模式下，建议先不删除临时文件，以便去文件夹里检查
+                if (!enableDebug && Directory.Exists(tempRunDir))
                 {
-                    try
-                    {
-                        Directory.Delete(tempRunDir, true);
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"删除临时目录 {tempRunDir} 失败: {ex.Message}");
-                    }
+                    try { Directory.Delete(tempRunDir, true); } catch { }
                 }
+                else if (enableDebug)
+                {
+                    // 调试时告诉用户临时文件夹在哪里，方便去查看
+                    Console.WriteLine($"[调试] 临时文件夹保留在: {tempRunDir}");
+                }
+
                 this.Cursor = Cursors.Default;
             }
         }

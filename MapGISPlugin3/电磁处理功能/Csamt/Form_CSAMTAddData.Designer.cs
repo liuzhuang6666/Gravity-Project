@@ -37,6 +37,9 @@
             this.btnOK = new System.Windows.Forms.Button();
             this.btnCancel = new System.Windows.Forms.Button();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.label3 = new System.Windows.Forms.Label();
+            this.txtTranFile = new System.Windows.Forms.TextBox();
+            this.btnSelectTranFile = new System.Windows.Forms.Button();
             this.panel1 = new System.Windows.Forms.Panel();
             this.label7 = new System.Windows.Forms.Label();
             this.button2 = new System.Windows.Forms.Button();
@@ -47,19 +50,17 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(63, 52);
-            this.label1.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.label1.Location = new System.Drawing.Point(42, 45);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(89, 12);
             this.label1.TabIndex = 0;
-            this.label1.Text = "输入.dat文件：";
+            this.label1.Text = "观测数据文件：";
             // 
             // txtInputFile
             // 
             this.txtInputFile.BackColor = System.Drawing.SystemColors.Control;
             this.txtInputFile.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.txtInputFile.Location = new System.Drawing.Point(171, 49);
-            this.txtInputFile.Margin = new System.Windows.Forms.Padding(2);
+            this.txtInputFile.Location = new System.Drawing.Point(150, 42);
             this.txtInputFile.Name = "txtInputFile";
             this.txtInputFile.Size = new System.Drawing.Size(208, 21);
             this.txtInputFile.TabIndex = 1;
@@ -67,8 +68,7 @@
             // btnSelectFile
             // 
             this.btnSelectFile.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.btnSelectFile.Location = new System.Drawing.Point(346, 50);
-            this.btnSelectFile.Margin = new System.Windows.Forms.Padding(2);
+            this.btnSelectFile.Location = new System.Drawing.Point(362, 43);
             this.btnSelectFile.Name = "btnSelectFile";
             this.btnSelectFile.Size = new System.Drawing.Size(33, 19);
             this.btnSelectFile.TabIndex = 2;
@@ -79,8 +79,7 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(63, 90);
-            this.label2.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.label2.Location = new System.Drawing.Point(42, 116);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(95, 12);
             this.label2.TabIndex = 3;
@@ -90,8 +89,7 @@
             // 
             this.txtGdbPathDisplay.BackColor = System.Drawing.SystemColors.Control;
             this.txtGdbPathDisplay.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.txtGdbPathDisplay.Location = new System.Drawing.Point(171, 87);
-            this.txtGdbPathDisplay.Margin = new System.Windows.Forms.Padding(2);
+            this.txtGdbPathDisplay.Location = new System.Drawing.Point(150, 113);
             this.txtGdbPathDisplay.Name = "txtGdbPathDisplay";
             this.txtGdbPathDisplay.ReadOnly = true;
             this.txtGdbPathDisplay.Size = new System.Drawing.Size(208, 21);
@@ -100,8 +98,7 @@
             // btnSelectGdbLocation
             // 
             this.btnSelectGdbLocation.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.btnSelectGdbLocation.Location = new System.Drawing.Point(346, 88);
-            this.btnSelectGdbLocation.Margin = new System.Windows.Forms.Padding(2);
+            this.btnSelectGdbLocation.Location = new System.Drawing.Point(362, 114);
             this.btnSelectGdbLocation.Name = "btnSelectGdbLocation";
             this.btnSelectGdbLocation.Size = new System.Drawing.Size(33, 19);
             this.btnSelectGdbLocation.TabIndex = 5;
@@ -112,8 +109,7 @@
             // btnOK
             // 
             this.btnOK.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.btnOK.Location = new System.Drawing.Point(86, 222);
-            this.btnOK.Margin = new System.Windows.Forms.Padding(2);
+            this.btnOK.Location = new System.Drawing.Point(86, 252);
             this.btnOK.Name = "btnOK";
             this.btnOK.Size = new System.Drawing.Size(66, 28);
             this.btnOK.TabIndex = 6;
@@ -124,8 +120,7 @@
             // btnCancel
             // 
             this.btnCancel.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.btnCancel.Location = new System.Drawing.Point(367, 222);
-            this.btnCancel.Margin = new System.Windows.Forms.Padding(2);
+            this.btnCancel.Location = new System.Drawing.Point(367, 252);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(66, 28);
             this.btnCancel.TabIndex = 7;
@@ -135,6 +130,9 @@
             // 
             // groupBox1
             // 
+            this.groupBox1.Controls.Add(this.label3);
+            this.groupBox1.Controls.Add(this.txtTranFile);
+            this.groupBox1.Controls.Add(this.btnSelectTranFile);
             this.groupBox1.Controls.Add(this.btnSelectGdbLocation);
             this.groupBox1.Controls.Add(this.txtGdbPathDisplay);
             this.groupBox1.Controls.Add(this.label2);
@@ -143,10 +141,39 @@
             this.groupBox1.Controls.Add(this.label1);
             this.groupBox1.Location = new System.Drawing.Point(21, 58);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(460, 135);
+            this.groupBox1.Size = new System.Drawing.Size(460, 165);
             this.groupBox1.TabIndex = 8;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "基本信息";
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(42, 80);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(77, 12);
+            this.label3.TabIndex = 8;
+            this.label3.Text = "发射源文件：";
+            // 
+            // txtTranFile
+            // 
+            this.txtTranFile.BackColor = System.Drawing.SystemColors.Control;
+            this.txtTranFile.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.txtTranFile.Location = new System.Drawing.Point(150, 77);
+            this.txtTranFile.Name = "txtTranFile";
+            this.txtTranFile.Size = new System.Drawing.Size(208, 21);
+            this.txtTranFile.TabIndex = 9;
+            // 
+            // btnSelectTranFile
+            // 
+            this.btnSelectTranFile.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.btnSelectTranFile.Location = new System.Drawing.Point(362, 79);
+            this.btnSelectTranFile.Name = "btnSelectTranFile";
+            this.btnSelectTranFile.Size = new System.Drawing.Size(33, 19);
+            this.btnSelectTranFile.TabIndex = 10;
+            this.btnSelectTranFile.Text = "...";
+            this.btnSelectTranFile.UseVisualStyleBackColor = true;
+            this.btnSelectTranFile.Click += new System.EventHandler(this.btnSelectTranFile_Click_1);
             // 
             // panel1
             // 
@@ -165,7 +192,7 @@
             this.label7.ForeColor = System.Drawing.SystemColors.ControlText;
             this.label7.Location = new System.Drawing.Point(0, 0);
             this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(86, 32);
+            this.label7.Size = new System.Drawing.Size(95, 32);
             this.label7.TabIndex = 1;
             this.label7.Text = "添加CSAMT数据";
             this.label7.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -188,15 +215,14 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(510, 280);
+            this.ClientSize = new System.Drawing.Size(510, 310);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.btnOK);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
-            this.Margin = new System.Windows.Forms.Padding(2);
-            this.MaximumSize = new System.Drawing.Size(510, 280);
-            this.MinimumSize = new System.Drawing.Size(510, 280);
+            this.MaximumSize = new System.Drawing.Size(510, 310);
+            this.MinimumSize = new System.Drawing.Size(510, 310);
             this.Name = "Form_CSAMTAddData";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = " ";
@@ -221,5 +247,8 @@
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.Button button2;
         private System.Windows.Forms.Label label7;
+        private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.TextBox txtTranFile;
+        private System.Windows.Forms.Button btnSelectTranFile;
     }
 }
