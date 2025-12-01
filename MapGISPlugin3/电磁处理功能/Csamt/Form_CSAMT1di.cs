@@ -1170,52 +1170,85 @@ namespace MapGISPlugin3
         /// <summary>
         /// (辅助函数) 刷新"布置图"页的小地图 (chartLayout)
         /// </summary>
+        /// <summary>
+        /// (辅助函数) 刷新"布置图"页的小地图 (chartLayout) - 包含发射源 AB
+        /// </summary>
         private void UpdateLayoutView()
         {
             if (chartLayout == null) return;
 
+            // 1. 基础设置
             chartLayout.Series.Clear();
             chartLayout.BackColor = System.Drawing.Color.White;
 
-            // --- 配置 chartLayout 图例 (上方右侧) ---
             chartLayout.Legends.Clear();
             Legend layoutLegend = chartLayout.Legends.Add("LegendLayout");
             layoutLegend.Docking = Docking.Top;
             layoutLegend.Alignment = StringAlignment.Far;
-            layoutLegend.BackColor = System.Drawing.Color.White;
-            layoutLegend.BorderColor = System.Drawing.Color.LightGray;
-            layoutLegend.BorderWidth = 1;
             layoutLegend.Font = new System.Drawing.Font("微软雅黑", 8f);
-            layoutLegend.LegendStyle = LegendStyle.Table;
-            layoutLegend.IsEquallySpacedItems = false;
-            layoutLegend.TableStyle = LegendTableStyle.Auto;
 
-            Series s = chartLayout.Series.Add("Stations");
-            s.ChartType = SeriesChartType.Point;
-            s.MarkerStyle = MarkerStyle.Circle;
-            s.MarkerSize = 8;
-            s.MarkerColor = System.Drawing.Color.Red;
-            s.IsValueShownAsLabel = true;
-            s.LegendText = "测点";
+            // 2. 绘制测点 (Stations)
+            Series sStations = chartLayout.Series.Add("Stations");
+            sStations.ChartType = SeriesChartType.Point;
+            sStations.MarkerStyle = MarkerStyle.Circle;
+            sStations.MarkerSize = 6;
+            sStations.Color = System.Drawing.Color.Blue;
+            sStations.LegendText = "测点";
+            // 只有选中时才显示标签，防止太乱，或者全部显示
+            // sStations.IsValueShownAsLabel = true; 
 
-            if (m_CurrentLineStations == null || m_CurrentLineStations.Count == 0)
+            if (m_CurrentLineStations != null && m_CurrentLineStations.Count > 0)
             {
-                Console.WriteLine("UpdateLayoutView: m_CurrentLineStations 为空，不绘制。");
-                return;
+                foreach (var station in m_CurrentLineStations)
+                {
+                    int idx = sStations.Points.AddXY(station.X, station.Y);
+                    sStations.Points[idx].Tag = station.StationName;
+                    sStations.Points[idx].ToolTip = $"测点: {station.StationName}\nX: {station.X}\nY: {station.Y}";
+                }
             }
 
-            foreach (var station in m_CurrentLineStations)
+            // 3. 【新增】绘制发射源 (Transmitter A-B)
+            // 尝试解析界面上的坐标
+            double ax = SafeParseDouble(txtAx.Text);
+            double ay = SafeParseDouble(txtAy.Text);
+            double bx = SafeParseDouble(txtBx.Text);
+            double by = SafeParseDouble(txtBy.Text);
+
+            // 只有当坐标不全为0时才绘制
+            if (!(ax == 0 && ay == 0 && bx == 0 && by == 0))
             {
-                int pointIndex = s.Points.AddXY(station.X, station.Y);
-                s.Points[pointIndex].Label = station.StationName;
-                s.Points[pointIndex].Tag = station.StationName;
-                s.Points[pointIndex].Color = System.Drawing.Color.Blue;
+                Series sTransmitter = chartLayout.Series.Add("Transmitter");
+                sTransmitter.ChartType = SeriesChartType.Line; // 用线连接 A 和 B
+                sTransmitter.Color = System.Drawing.Color.Red;
+                sTransmitter.BorderWidth = 2;
+                sTransmitter.MarkerStyle = MarkerStyle.Star5; // A/B 点用星星表示
+                sTransmitter.MarkerSize = 12;
+                sTransmitter.MarkerColor = System.Drawing.Color.Red;
+                sTransmitter.LegendText = "发射源 (AB)";
+
+                // 添加 A 点
+                int idxA = sTransmitter.Points.AddXY(ax, ay);
+                sTransmitter.Points[idxA].Label = "A";
+                sTransmitter.Points[idxA].LabelForeColor = System.Drawing.Color.Red;
+                sTransmitter.Points[idxA].Font = new System.Drawing.Font("Arial", 10f, FontStyle.Bold);
+
+                // 添加 B 点
+                int idxB = sTransmitter.Points.AddXY(bx, by);
+                sTransmitter.Points[idxB].Label = "B";
+                sTransmitter.Points[idxB].LabelForeColor = System.Drawing.Color.Red;
+                sTransmitter.Points[idxB].Font = new System.Drawing.Font("Arial", 10f, FontStyle.Bold);
             }
 
+            // 4. 坐标轴调整
             chartLayout.ChartAreas[0].AxisX.LabelStyle.Format = "F0";
             chartLayout.ChartAreas[0].AxisY.LabelStyle.Format = "F0";
             chartLayout.ChartAreas[0].AxisX.IsStartedFromZero = false;
             chartLayout.ChartAreas[0].AxisY.IsStartedFromZero = false;
+
+            // 设置轴标题
+            chartLayout.ChartAreas[0].AxisX.Title = "X 坐标";
+            chartLayout.ChartAreas[0].AxisY.Title = "Y 坐标";
+
             chartLayout.ChartAreas[0].RecalculateAxesScale();
         }
 
@@ -1962,78 +1995,143 @@ namespace MapGISPlugin3
         }
 
         /// <summary>
-        /// (新增辅助函数) 将反演结果数据显示在剖面图上
+        /// (辅助函数) 将反演结果数据显示在剖面图上
+        /// 【最终修正版】
+        /// 1. X轴强制从0开始，消除负数。
+        /// 2. Y轴强制从1000开始，消除上方空白。
+        /// 3. 修复色块溢出视觉问题，对齐网格。
         /// </summary>
         /// <summary>
         /// (辅助函数) 将反演结果数据显示在剖面图上
+        /// 【最终美化版】
+        /// 1. 严格控制 X=0, Y=1000 起点，杜绝负数。
+        /// 2. 消除绘图区边框，解决色块“出界”的视觉问题。
+        /// 3. Y轴逻辑：底部1000，往上数值增大（深度变深）。
         /// </summary>
         private void DisplayInversionResults(List<InversionResultPoint> results)
         {
             var chart = chartResultSection;
 
+            // 1. 清理图表
             chart.Series.Clear();
             chart.ChartAreas.Clear();
             chart.Legends.Clear();
             chart.Titles.Clear();
 
-            if (results == null || results.Count == 0)
-            {
-                return;
-            }
+            if (results == null || results.Count == 0) return;
 
-            chart.Titles.Add("一维反演电阻率剖面图");
+            // 2. 设置标题
+            chart.Titles.Add("CSAMT 一维反演电阻率剖面图 (深部 > 1000m)");
+            chart.Titles[0].Font = new System.Drawing.Font("微软雅黑", 12f, FontStyle.Bold);
 
+            // 3. 创建绘图区域
             ChartArea ca = chart.ChartAreas.Add("ResultArea");
-            ca.AxisX.Title = "测点坐标 (X)";
+            ca.AxisX.Title = "相对距离 (m)";
             ca.AxisY.Title = "深度 (m)";
-            ca.AxisY.IsReversed = true;
 
+            // 按照您的要求：底部1000，往上增大。这是标准坐标系，无需反转。
+            ca.AxisY.IsReversed = false;
+
+            // 4. 创建数据序列
             Series s = chart.Series.Add("ResistivitySection");
             s.ChartType = SeriesChartType.Point;
             s.MarkerStyle = MarkerStyle.Square;
-            s.MarkerSize = 10;
+            // 稍微减小一点尺寸，视觉更精致，减少压线感
+            s.MarkerSize = 12;
+            s.BorderWidth = 0;
 
-            var validResults = results.Where(r => r.Resistivity > 0).ToList();
+            // 隐藏图例项，只留色标
+            s.IsVisibleInLegend = false;
+
+            // 5. 数据处理：过滤 + 坐标转换
+            var validResults = results.Where(r => r.Resistivity > 0 && r.Depth < -1000).ToList();
+
             if (validResults.Count == 0)
             {
-                MessageBox.Show("结果文件中没有有效的（>0）电阻率值。", "警告", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("结果文件中没有深度超过 1000m 的有效数据。", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
+            // 获取最小 X 值作为基准 (用于相对坐标)
+            double minX = validResults.Min(r => r.X);
+            double maxXRel = validResults.Max(r => r.X) - minX;
+
+            // 准备色标范围 (Log10)
             var logResistivities = validResults.Select(r => Math.Log10(r.Resistivity)).ToList();
             double minLogRes = logResistivities.Min();
             double maxLogRes = logResistivities.Max();
 
+            // 6. 添加图例 (色标)
             Legend legend = chart.Legends.Add("ColorScale");
             legend.Docking = Docking.Right;
             legend.Alignment = StringAlignment.Center;
             legend.Title = "lg(ρ/Ω·m)";
-            // (修改) 明确指定 System.Drawing.Font
             legend.TitleFont = new System.Drawing.Font("微软雅黑", 9F, FontStyle.Bold);
 
             int legendSteps = 7;
             for (int i = 0; i <= legendSteps; i++)
             {
                 double val = minLogRes + (maxLogRes - minLogRes) * i / legendSteps;
-                // (修改) 明确指定 System.Windows.Forms.DataVisualization.Charting.LegendItem
                 System.Windows.Forms.DataVisualization.Charting.LegendItem item = new System.Windows.Forms.DataVisualization.Charting.LegendItem();
-                item.Name = Math.Pow(10, val).ToString("0.#");
+                item.Name = val.ToString("F1");
                 item.Color = GetColorForValue(val, minLogRes, maxLogRes);
                 item.MarkerStyle = MarkerStyle.Square;
                 item.MarkerSize = 12;
                 legend.CustomItems.Add(item);
             }
 
+            // 7. 填充数据
             foreach (var point in validResults)
             {
                 double logRes = Math.Log10(point.Resistivity);
-                int pointIndex = s.Points.AddXY(point.X, point.Depth);
+
+                // X: 相对坐标
+                double relativeX = point.X - minX;
+
+                // Y: 取绝对值，转换为正数
+                double positiveDepth = Math.Abs(point.Depth);
+
+                int pointIndex = s.Points.AddXY(relativeX, positiveDepth);
                 s.Points[pointIndex].Color = GetColorForValue(logRes, minLogRes, maxLogRes);
+
+                s.Points[pointIndex].ToolTip = $"X: {point.X:F1}\nRel X: {relativeX:F1}\nDepth: {positiveDepth:F0}m\nRes: {point.Resistivity:F1}";
             }
 
-            BeautifyChartAxes(ca);
+            // =========================================================
+            // 【关键修改：解决负数坐标和黑框溢出问题】
+            // =========================================================
+
+            // 1. 关闭自动边距
+            // 这将强制坐标轴从设定的 Minimum 严格开始，解决出现 "-13" 的问题
+            ca.AxisX.IsMarginVisible = false;
+            // ca.AxisY.IsMarginVisible = false; // Y轴通常保持默认即可，避免顶部切太死
+
+            // 2. 严格锁定范围
+            ca.AxisX.Minimum = 0;
+            ca.AxisX.Maximum = maxXRel; // 右侧也严格对齐
+
+            ca.AxisY.Minimum = 1000;
+            ca.AxisY.Maximum = Double.NaN;
+
+            // 3. 【视觉魔术】移除 ChartArea 的边框
+            // 之前看起来“出界”是因为色块压在了 Border 上。
+            // 把 Border 去掉，只保留 Axis 线条，视觉上就没有“出界”的概念了，只有“压线”。
+            ca.BorderWidth = 0;
+
+            // 4. 强化坐标轴线条 (替代原来的边框)
+            ca.AxisX.LineWidth = 1;
+            ca.AxisX.LineColor = System.Drawing.Color.Black;
+            ca.AxisY.LineWidth = 1;
+            ca.AxisY.LineColor = System.Drawing.Color.Black;
+
+            // 5. 确保网格线存在但颜色淡
+            ca.AxisX.MajorGrid.LineColor = System.Drawing.Color.FromArgb(50, System.Drawing.Color.Gray);
+            ca.AxisY.MajorGrid.LineColor = System.Drawing.Color.FromArgb(50, System.Drawing.Color.Gray);
             ca.AxisX.MinorGrid.Enabled = false;
             ca.AxisY.MinorGrid.Enabled = false;
+
+            // 6. 字体美化
+            BeautifyChartAxes(ca);
         }
         #endregion
 
