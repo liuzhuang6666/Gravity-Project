@@ -2012,7 +2012,7 @@ namespace MapGISPlugin3
         {
             var chart = chartResultSection;
 
-            // 1. 清理图表
+            // 1.  清理图表
             chart.Series.Clear();
             chart.ChartAreas.Clear();
             chart.Legends.Clear();
@@ -2024,7 +2024,7 @@ namespace MapGISPlugin3
             chart.Titles.Add("CSAMT 一维反演电阻率剖面图 (深部 > 1000m)");
             chart.Titles[0].Font = new System.Drawing.Font("微软雅黑", 12f, FontStyle.Bold);
 
-            // 3. 创建绘图区域
+            // 3.  创建绘图区域
             ChartArea ca = chart.ChartAreas.Add("ResultArea");
             ca.AxisX.Title = "相对距离 (m)";
             ca.AxisY.Title = "深度 (m)";
@@ -2032,11 +2032,10 @@ namespace MapGISPlugin3
             // 按照您的要求：底部1000，往上增大。这是标准坐标系，无需反转。
             ca.AxisY.IsReversed = false;
 
-            // 4. 创建数据序列
+            // 4.  创建数据序列
             Series s = chart.Series.Add("ResistivitySection");
             s.ChartType = SeriesChartType.Point;
             s.MarkerStyle = MarkerStyle.Square;
-            // 稍微减小一点尺寸，视觉更精致，减少压线感
             s.MarkerSize = 12;
             s.BorderWidth = 0;
 
@@ -2055,6 +2054,10 @@ namespace MapGISPlugin3
             // 获取最小 X 值作为基准 (用于相对坐标)
             double minX = validResults.Min(r => r.X);
             double maxXRel = validResults.Max(r => r.X) - minX;
+
+            // 获取 Y 轴范围
+            double minDepth = validResults.Min(r => Math.Abs(r.Depth)); // 应该接近 1000
+            double maxDepth = validResults.Max(r => Math.Abs(r.Depth));
 
             // 准备色标范围 (Log10)
             var logResistivities = validResults.Select(r => Math.Log10(r.Resistivity)).ToList();
@@ -2080,57 +2083,118 @@ namespace MapGISPlugin3
                 legend.CustomItems.Add(item);
             }
 
-            // 7. 填充数据
+            // =========================================================
+            // 【关键修改：计算偏移量，防止色块压盖坐标轴】
+            // =========================================================
+
+            // MarkerSize 是直径（像素），半径为 MarkerSize / 2
+            int markerSize = s.MarkerSize;
+            double halfMarkerPixels = markerSize / 2.0;
+
+            // 为了安全起见，额外增加 1-2 像素的间隙，视觉更清爽
+            double paddingPixels = halfMarkerPixels + 2;
+
+            // 估算绘图区的像素尺寸
+            // ChartArea 的 Position 是百分比，需要转换为像素
+            // 注意：在图表首次渲染前，这些值可能不准确，因此我们使用一个合理的估算
+
+            // 获取图表控件的实际尺寸
+            int chartWidth = chart.Width;
+            int chartHeight = chart.Height;
+
+            // ChartArea 默认占据大约 80% 的宽度和高度（去除标题、图例、轴标签等）
+            // 这是一个估算值，实际情况可能略有不同
+            double plotAreaWidthRatio = 0.70;  // 绘图区占图表宽度的比例
+            double plotAreaHeightRatio = 0.75; // 绘图区占图表高度的比例
+
+            double plotAreaWidthPixels = chartWidth * plotAreaWidthRatio;
+            double plotAreaHeightPixels = chartHeight * plotAreaHeightRatio;
+
+            // 设置坐标轴范围（先设置，才能计算像素到数据的转换）
+            double dataRangeX = maxXRel;
+            double dataRangeY = maxDepth - 1000; // Y轴从1000开始
+
+            // 防止除零
+            if (dataRangeX <= 0) dataRangeX = 1;
+            if (dataRangeY <= 0) dataRangeY = 1;
+
+            // 计算像素到数据坐标的转换系数
+            double pixelsPerUnitX = plotAreaWidthPixels / dataRangeX;
+            double pixelsPerUnitY = plotAreaHeightPixels / dataRangeY;
+
+            // 计算数据坐标系中的偏移量
+            double offsetX = paddingPixels / pixelsPerUnitX;
+            double offsetY = paddingPixels / pixelsPerUnitY;
+
+            // =========================================================
+            // 7. 填充数据（应用偏移）
+            // =========================================================
             foreach (var point in validResults)
             {
                 double logRes = Math.Log10(point.Resistivity);
 
-                // X: 相对坐标
+                // X: 相对坐标 + 偏移量（向右偏移，远离Y轴）
                 double relativeX = point.X - minX;
+                double adjustedX = relativeX + offsetX;
 
-                // Y: 取绝对值，转换为正数
+                // Y: 取绝对值 + 偏移量（向上偏移，远离X轴底部）
                 double positiveDepth = Math.Abs(point.Depth);
+                double adjustedY = positiveDepth + offsetY;
 
-                int pointIndex = s.Points.AddXY(relativeX, positiveDepth);
+                int pointIndex = s.Points.AddXY(adjustedX, adjustedY);
                 s.Points[pointIndex].Color = GetColorForValue(logRes, minLogRes, maxLogRes);
 
+                // ToolTip 仍显示原始值，方便用户查看真实数据
                 s.Points[pointIndex].ToolTip = $"X: {point.X:F1}\nRel X: {relativeX:F1}\nDepth: {positiveDepth:F0}m\nRes: {point.Resistivity:F1}";
             }
 
             // =========================================================
-            // 【关键修改：解决负数坐标和黑框溢出问题】
+            // 8.  设置坐标轴范围
             // =========================================================
 
-            // 1. 关闭自动边距
-            // 这将强制坐标轴从设定的 Minimum 严格开始，解决出现 "-13" 的问题
+            // 关闭自动边距
             ca.AxisX.IsMarginVisible = false;
-            // ca.AxisY.IsMarginVisible = false; // Y轴通常保持默认即可，避免顶部切太死
+            ca.AxisY.IsMarginVisible = false;
 
-            // 2. 严格锁定范围
+            // X轴：从0开始，最大值要容纳偏移后的数据
             ca.AxisX.Minimum = 0;
-            ca.AxisX.Maximum = maxXRel; // 右侧也严格对齐
+            ca.AxisX.Maximum = maxXRel + offsetX * 2; // 右侧也留出同样的边距
 
+            // Y轴：从1000开始
             ca.AxisY.Minimum = 1000;
-            ca.AxisY.Maximum = Double.NaN;
+            ca.AxisY.Maximum = maxDepth + offsetY * 2; // 顶部也留出边距
 
-            // 3. 【视觉魔术】移除 ChartArea 的边框
-            // 之前看起来“出界”是因为色块压在了 Border 上。
-            // 把 Border 去掉，只保留 Axis 线条，视觉上就没有“出界”的概念了，只有“压线”。
+            // =========================================================
+            // 9. 视觉优化
+            // =========================================================
+
+            // 移除 ChartArea 的边框
             ca.BorderWidth = 0;
 
-            // 4. 强化坐标轴线条 (替代原来的边框)
-            ca.AxisX.LineWidth = 1;
+            // 强化坐标轴线条
+            ca.AxisX.LineWidth = 2;
             ca.AxisX.LineColor = System.Drawing.Color.Black;
-            ca.AxisY.LineWidth = 1;
+            ca.AxisY.LineWidth = 2;
             ca.AxisY.LineColor = System.Drawing.Color.Black;
 
-            // 5. 确保网格线存在但颜色淡
+            // 确保坐标轴绘制在数据点之上（如果支持的话）
+            // 注意：MSChart 不直接支持 Z-Order，但加粗线条可以让轴更显眼
+
+            // 网格线设置
             ca.AxisX.MajorGrid.LineColor = System.Drawing.Color.FromArgb(50, System.Drawing.Color.Gray);
             ca.AxisY.MajorGrid.LineColor = System.Drawing.Color.FromArgb(50, System.Drawing.Color.Gray);
             ca.AxisX.MinorGrid.Enabled = false;
             ca.AxisY.MinorGrid.Enabled = false;
 
-            // 6. 字体美化
+            // 确保坐标轴箭头/终点样式
+            ca.AxisX.ArrowStyle = AxisArrowStyle.None;
+            ca.AxisY.ArrowStyle = AxisArrowStyle.None;
+
+            // 设置坐标轴刻度位置在内侧，避免与数据冲突
+            ca.AxisX.MajorTickMark.TickMarkStyle = TickMarkStyle.OutsideArea;
+            ca.AxisY.MajorTickMark.TickMarkStyle = TickMarkStyle.OutsideArea;
+
+            // 字体美化
             BeautifyChartAxes(ca);
         }
         #endregion

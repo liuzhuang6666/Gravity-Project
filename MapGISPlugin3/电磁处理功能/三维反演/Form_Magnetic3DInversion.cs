@@ -326,23 +326,41 @@ namespace MapGISPlugin3
         {
             if (e.Node.Tag is RasterLayer layer)
             {
-                string sourceName = layer.Name;
+                // 1. 获取图层原始名称（优先从文件路径取文件名，没有则用图层名）
+                string sourceName = layer.Name; // 默认使用图层显示名称
+
                 try
                 {
                     if (!string.IsNullOrEmpty(layer.URL))
                     {
                         Uri uri = new Uri(layer.URL);
-                        if (uri.IsFile) sourceName = Path.GetFileNameWithoutExtension(uri.LocalPath);
+                        if (uri.IsFile)
+                        {
+                            sourceName = Path.GetFileNameWithoutExtension(uri.LocalPath);
+                        }
                     }
                 }
-                catch { }
+                catch { /* 解析失败时保持使用图层名 */ }
 
-                sourceName = System.Text.RegularExpressions.Regex.Replace(sourceName, @"[^\w]", "_");
-                string timeStamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-                textBoxSavePath.Text = $"{sourceName}_Mag_Inv_{timeStamp}";
+                // 2. 清理非法字符，只保留字母、数字、下划线
+                string cleanName = System.Text.RegularExpressions.Regex.Replace(sourceName, @"[^\w]", "");
+
+                // 3. 取前6位（如果不足6位则全部使用）
+                string namePart = cleanName.Length > 6 ? cleanName.Substring(0, 6) : cleanName;
+                if (string.IsNullOrEmpty(namePart))
+                    namePart = "Layer"; // 防止为空
+
+                // 4. 生成6位时间戳：MMddHHmm → 例如 12041530（8位太长，改为 ddHHmm 刚好6位）
+                string timePart = DateTime.Now.ToString("ddHHmm");  // 04日15时30分 → 041530
+
+                // 5. 拼接最终类名：前6位 + _GInv + 6位时间  → 总长 ≤ 6+5+6 = 17个字符
+                string finalName = $"{namePart}_MInv_{timePart}";
+
+                textBoxSavePath.Text = finalName;
             }
             else
             {
+                // 非栅格图层时清空，防止误用旧名称
                 textBoxSavePath.Text = "";
             }
         }
