@@ -18,45 +18,61 @@ namespace MapGISPlugin3
             InitializeComponent();
         }
 
-        // --- 核心入口 ---
         public void Initialize(MapLayer layer)
         {
-            // 1. 【清场】把旧的界面拆下来
             this.Controls.Clear();
-
             if (layer == null) return;
 
-            // 2. 【转换】把图层转成 DataTable
-            DataTable dt = LayerToDataTable(layer);
+            // 1. 获取图层名称并转大写，方便判断
+            string layerName = layer.Name.Trim().ToUpper();
+            // 假设命名格式：MT_测线1_2023... 或 CSAMT_工区B_...
 
+            // 2. 转 DataTable (这个方法保持不变)
+            DataTable dt = LayerToDataTable(layer);
             if (dt == null || dt.Rows.Count == 0)
             {
-                ShowMessage($"图层 [{layer.Name}] 没有属性数据或无法读取。");
+                ShowMessage($"图层 [{layer.Name}] 无数据。");
                 return;
             }
 
-            // 3. 【分诊】判断是用哪个界面
             UserControl viewToLoad = null;
 
-            if (IsMTData(dt))
+            // 3. 【核心修改】根据名字分发
+            if (layerName.StartsWith("MT"))
             {
-                // ---> 是 MT 数据，挂载 Preview_MT
-                var mtView = new Preview_MT();
-                mtView.Dock = DockStyle.Fill;
-                mtView.LoadData(dt);
-                viewToLoad = mtView;
+                // ---> MT (大地电磁)
+                var view = new Preview_MT();
+                view.LoadData(dt);
+                viewToLoad = view;
+            }
+            else if (layerName.StartsWith("CSAMT"))
+            {
+                // ---> CSAMT (可控源音频大地电磁)
+                var view = new Preview_CSAMT(); // 稍后创建这个类
+                view.LoadData(dt);
+                viewToLoad = view;
+            }
+            else if (layerName.StartsWith("TEM"))
+            {
+                // ---> TEM (瞬变电磁)
+                var view = new Preview_TEM(); // 稍后创建这个类
+                view.LoadData(dt);
+                viewToLoad = view;
             }
             else
             {
-                // ---> 普通数据，挂载 Preview_Table
-                var tableView = new Preview_Table();
-                tableView.Dock = DockStyle.Fill;
-                tableView.LoadData(dt);
-                viewToLoad = tableView;
+                // ---> 其他数据 (普通表格)
+                var view = new Preview_Table();
+                view.LoadData(dt);
+                viewToLoad = view;
             }
 
-            // 4. 【挂载】上墙
-            this.Controls.Add(viewToLoad);
+            // 4. 挂载
+            if (viewToLoad != null)
+            {
+                viewToLoad.Dock = DockStyle.Fill;
+                this.Controls.Add(viewToLoad);
+            }
         }
 
         // --- 判断逻辑 ---
@@ -128,7 +144,7 @@ namespace MapGISPlugin3
 
                 // 4. 填充数据
                 rs.MoveFirst();
-                int maxRows = 5000;
+                int maxRows = 1000000;
                 int current = 0;
 
                 while (!rs.IsEOF && current < maxRows)
