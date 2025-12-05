@@ -41,7 +41,10 @@ namespace MapGISPlugin3
         private bool _isCalculationCompleted = false;
         private Process _aExeProcess = null;
         private readonly object _processLock = new object(); // 锁对象，确保线程安全
-        private Point _mouseDownPoint = new Point(); // 用于记录鼠标按下时的位置
+        private Point _mouseDownPoint = new Point(); // 用于记录鼠标按下时的位置                                                 
+        private Dictionary<string, double> _cachedCalcResults = new Dictionary<string, double>();// 存储拟合数据：Key = "测点名_时间索引", Value = 拟合Z值
+        // 【新增】用来记住最后一次计算结果文件的路径
+        private string _lastCalcResultPath = null;
 
         public Form_TEMProcess(IApplication hook)
         {
@@ -71,6 +74,10 @@ namespace MapGISPlugin3
         {
             LoadLayersFromMap();
             timerProgress.Interval = 1000;
+            // ================= 【新增这一行】 =================
+            // 清除图例，腾出空间显示曲线
+            chartZProfile.Legends.Clear();
+            // =================================================
         }
         /// <summary>
         /// 标题栏鼠标按下：记录鼠标相对窗口的位置
@@ -226,9 +233,9 @@ namespace MapGISPlugin3
 
                         // 读取坐标
                         double x = 0, y = 0, z = 0;
-                        if (att["X"] != null && att["X"] != DBNull.Value)
+                        if (att["X坐标"] != null && att["X坐标"] != DBNull.Value)
                             double.TryParse(att["X"].ToString(), out x);
-                        if (att["Y"] != null && att["Y"] != DBNull.Value)
+                        if (att["Y坐标"] != null && att["Y坐标"] != DBNull.Value)
                             double.TryParse(att["Y"].ToString(), out y);
                         if (att["Z"] != null && att["Z"] != DBNull.Value)
                             double.TryParse(att["Z"].ToString(), out z);
@@ -332,6 +339,8 @@ namespace MapGISPlugin3
                 {
                     string firstStation = m_CurrentLineStations[0].StationName;
                     SelectStationAndRefreshCharts(firstStation);
+                    InitTimeSliderAndGrids();
+                    UpdateZDataGrid(null);
                 }
                 Console.WriteLine($"=== 测线 '{selectedLine}' 数据加载完成 ===");
             }
@@ -375,24 +384,21 @@ namespace MapGISPlugin3
         }
 
         /// <summary>
-        /// 【新增】开始计算按钮事件（TEM 特有）
-        /// 与 MT 的区别：
-        /// 1. 导出两个文件（观测数据和发射源）
-        /// 2. 调用 a.exe 时参数为：a.exe knowed.dat tran.dat workspace
-        /// 3. 工作空间必须为 6 字符
-        /// 【优化】添加计算流程日志
+        /// 【修改】开始计算按钮事件
+        /// 1. 获取界面输入的5个反演参数
+        /// 2. 导出观测数据和发射源数据
+        /// 3. 调用 a.exe (带8个参数)
+        /// 4. 计算完成后读取 record 文件并显示拟合误差
         /// </summary>
-        /// 
-        // 方法声明添加 async 关键字
         private async void btnCalculate_Click(object sender, EventArgs e)
         {
+            // 0. 基础前置检查
             if (string.IsNullOrEmpty(m_CurrentSelectedStationName))
             {
                 MessageBox.Show("请先在小地图上选择一个测点再计算。", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
-            // 1. 基础数据校验
             if (m_CurrentLineData == null || m_CurrentLineData.Rows.Count == 0)
             {
                 MessageBox.Show("没有加载任何测线数据，无法计算。", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -405,10 +411,32 @@ namespace MapGISPlugin3
                 return;
             }
 
+            // ==================== 【新增：读取界面参数】 ====================
+            // 根据你的描述：
+            // 模型光滑因子(textBox1), 反演深度(textBox2), 模型层厚度递增因子(textBox4)
+            // 模型初始电阻率(textBox3), 期望拟合误差(textBox6)
+
+            double valSmooth, valDepth, valGrowth, valInitRes, valExpError;
+            try
+            {
+                if (!double.TryParse(textBox1.Text, out valSmooth)) throw new Exception("模型光滑因子(textBox1)必须为数字");
+                if (!double.TryParse(textBox2.Text, out valDepth)) throw new Exception("反演深度(textBox2)必须为数字");
+                if (!double.TryParse(textBox4.Text, out valGrowth)) throw new Exception("模型层厚度递增因子(textBox4)必须为数字");
+                if (!double.TryParse(textBox3.Text, out valInitRes)) throw new Exception("模型初始电阻率(textBox3)必须为数字");
+                if (!double.TryParse(textBox6.Text, out valExpError)) throw new Exception("期望拟合误差(textBox6)必须为数字");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"参数输入格式错误：\n{ex.Message}", "参数检查", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            // ==============================================================
+
             // 初始化进度条
             progressBarCalculate.Visible = true;
             progressBarCalculate.Value = 0;
             _isCalculationCompleted = false;
+            textBox5.Text = ""; // 清空之前的误差显示
 
             string tempKnowedFile = null;
             string tempTranFile = null;
@@ -419,9 +447,7 @@ namespace MapGISPlugin3
 
             try
             {
-                //MessageBox.Show("=== 开始 TEM 计算流程 ===", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                // 2. 路径初始化与校验
+                // 1. 路径初始化与校验
                 pluginDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
                 if (string.IsNullOrEmpty(pluginDir))
                     throw new Exception("无法获取插件目录，请检查程序部署。");
@@ -431,37 +457,38 @@ namespace MapGISPlugin3
                 if (!File.Exists(exePath))
                     throw new FileNotFoundException($"计算程序 'a.exe' 未找到！\n预期路径: {exePath}");
 
-                // 3. 生成工作空间
+                // 2. 生成工作空间 (6字符)
                 string selectedLine = cmbLineName.SelectedItem?.ToString() ?? "TEM";
                 string linePrefix = selectedLine.Length >= 3 ? selectedLine.Substring(0, 3) : selectedLine.PadRight(3, '0');
                 string randomPart = Path.GetRandomFileName().Replace(".", "").Substring(0, 3);
                 workspaceName = $"{linePrefix}{randomPart}".ToUpper();
+
+                // 结果文件夹完整路径
                 fullWorkspacePath = Path.Combine(pluginDir, workspaceName);
 
-                // 4. 生成临时文件并导出数据
+                // 3. 生成临时文件并导出数据
                 tempKnowedFile = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}_knowed.dat");
                 tempTranFile = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}_tran.dat");
+
                 ExportObservationDataToFile(tempKnowedFile);
                 ExportTransmitterInfoToFile(tempTranFile);
 
-                if (new FileInfo(tempKnowedFile).Length == 0)
-                    throw new Exception($"观测数据文件导出为空：{tempKnowedFile}");
-                if (new FileInfo(tempTranFile).Length == 0)
-                    throw new Exception($"发射源文件导出为空：{tempTranFile}");
+                if (new FileInfo(tempKnowedFile).Length == 0) throw new Exception($"观测数据文件导出为空");
+                if (new FileInfo(tempTranFile).Length == 0) throw new Exception($"发射源文件导出为空");
 
-                // 5. 异步执行 a.exe（线程安全的进程追踪）
-                string commandLine = $".\\a.exe \"{tempKnowedFile}\" \"{tempTranFile}\" {workspaceName}";
-                //MessageBox.Show($"即将执行命令：\n{commandLine}", "执行命令", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                // 4. 【修改：构造命令行参数】
+                // 格式: a.exe knowed tran workspace smooth depth growth initRes expError
+                string arguments = $"\"{tempKnowedFile}\" \"{tempTranFile}\" \"{workspaceName}\" {valSmooth} {valDepth} {valGrowth} {valInitRes} {valExpError}";
 
                 // 启动进度条定时器
                 timerProgress.Start();
 
-                // 异步等待 a.exe 完成（带线程安全的进程引用）
+                // 5. 异步执行 a.exe
                 bool isSuccess = await Task.Run(() =>
                 {
                     using (Process process = new Process())
                     {
-                        // 加锁赋值，确保主线程能获取到进程引用
+                        // 加锁赋值，确保 UI 线程能获取到进程引用(用于强制停止)
                         lock (_processLock)
                         {
                             _aExeProcess = process;
@@ -470,8 +497,8 @@ namespace MapGISPlugin3
                         process.StartInfo = new ProcessStartInfo
                         {
                             FileName = exePath,
-                            Arguments = $"\"{tempKnowedFile}\" \"{tempTranFile}\" {workspaceName}",
-                            WorkingDirectory = pluginDir,
+                            Arguments = arguments,
+                            WorkingDirectory = pluginDir, // 工作目录设为插件目录
                             UseShellExecute = false,
                             RedirectStandardOutput = true,
                             RedirectStandardError = true,
@@ -481,38 +508,111 @@ namespace MapGISPlugin3
                         };
 
                         process.Start();
-                        const int timeoutMs = 30 * 60 * 1000; // 30分钟超时
-                        if (!process.WaitForExit(timeoutMs))
+                        //const int timeoutMs = 30 * 60 * 1000; // 30分钟超时
+                        //if (!process.WaitForExit(timeoutMs))
+                        //{
+                        //    process.Kill();
+                        //    throw new Exception($"a.exe 运行超时（超过 {timeoutMs / 1000} 秒），已强制终止。");
+                        //}
+
+                        // 读取输出
+                        string error = process.StandardError.ReadToEnd();
+
+                        // 如果有标准错误输出，在主线程弹窗提示
+                        if (!string.IsNullOrEmpty(error))
                         {
-                            process.Kill();
-                            throw new Exception($"a.exe 运行超时（超过 {timeoutMs / 1000} 秒），已强制终止。");
+                            this.Invoke((Action)(() =>
+                            {
+                                MessageBox.Show($"警告信息：\n{error}", "计算警告", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            }));
                         }
 
-                        // 读取输出（UI线程显示）
-                        string error = process.StandardError.ReadToEnd();
-                        string output = process.StandardOutput.ReadToEnd();
-
-                        this.Invoke((Action)(() =>
-                        {
-                            //MessageBox.Show($"程序输出：\n{output}", "计算输出", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                            if (!string.IsNullOrEmpty(error))
-                                MessageBox.Show($"错误信息：\n{error}", "警告", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        }));
-
                         if (process.ExitCode != 0)
-                            throw new Exception($"a.exe 运行失败（退出码：{process.ExitCode}）\n错误信息：\n{error}");
+                            throw new Exception($"a.exe 运行失败（退出码：{process.ExitCode}）\n{error}");
 
                         return true;
                     }
                 });
 
-                // 计算完成后更新状态
+                // 6. 计算后处理
                 _isCalculationCompleted = true;
                 timerProgress.Stop();
                 progressBarCalculate.Value = 100;
 
                 if (isSuccess)
                 {
+                    // ==================== 【修改：读取 record 文件显示误差】 ====================
+                    // 假设输出的 record 文件名为 "record" 且位于生成的工作空间内
+                    string recordFilePath = Path.Combine(fullWorkspacePath, "record");
+                    // 刷新数据列表（显示拟合值）
+                    string calcResultPath = Path.Combine(fullWorkspacePath, "calc_z.dat");
+                    // 【新增】把路径存下来，给点击事件用
+                    _lastCalcResultPath = calcResultPath;
+                    // --- 读取数据到缓存 ---
+                    _cachedCalcResults.Clear();
+                    if (File.Exists(calcResultPath))
+                    {
+                        var lines = File.ReadAllLines(calcResultPath);
+                        foreach (var line in lines)
+                        {
+                            var parts = line.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+                            if (parts.Length >= 3)
+                            {
+                                // Key 格式: "S1_0" (测点S1的第0个时间道)
+                                string key = $"{parts[0].Trim()}_{parts[1].Trim()}";
+                                if (double.TryParse(parts[2], out double v)) _cachedCalcResults[key] = v;
+                            }
+                        }
+                    }
+                    // ---------------------
+
+                    UpdateZDataGrid(calcResultPath);
+                    // 【新增】绘制断面图
+                    string knowResultPath = Path.Combine(fullWorkspacePath, "KNOW");
+                    UpdateResistivitySection(knowResultPath);
+                    // 重新触发一次绘图，把拟合线画出来
+                    TrackBarTime_Scroll(null, null);
+
+                    if (File.Exists(recordFilePath))
+                    {
+                        try
+                        {
+                            // 1. 读取文件内容，例如 "1 1 0.154632"
+                            string fileContent = File.ReadAllText(recordFilePath, Encoding.Default).Trim();
+
+                            // 2. 按空格或Tab分割字符串
+                            string[] parts = fileContent.Split(new char[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+
+                            // 3. 提取我们需要的值
+                            // 如果格式固定是 "数字 数字 误差"，我们可以取最后一个值，或者取第3个值(索引2)
+                            if (parts.Length >= 3)
+                            {
+                                // 取第3个值 (0.154632)
+                                textBox5.Text = parts[2];
+                            }
+                            else if (parts.Length > 0)
+                            {
+                                // 如果格式不对，尝试取最后一个值作为兜底
+                                textBox5.Text = parts[parts.Length - 1];
+                            }
+                            else
+                            {
+                                textBox5.Text = fileContent; // 分割失败，显示原始内容
+                            }
+                        }
+                        catch (Exception readEx)
+                        {
+                            textBox5.Text = "读取失败";
+                            Console.WriteLine($"读取 record 文件失败: {readEx.Message}");
+                        }
+                    }
+                    else
+                    {
+                        textBox5.Text = "无结果";
+                        Console.WriteLine($"未找到 record 文件: {recordFilePath}");
+                    }
+                    // ========================================================================
+
                     if (!Directory.Exists(fullWorkspacePath))
                     {
                         MessageBox.Show($"计算成功，但未找到结果目录！\n预期路径：{fullWorkspacePath}", "警告", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -520,14 +620,14 @@ namespace MapGISPlugin3
                     else
                     {
                         MessageBox.Show($"计算成功！\n结果已保存到：\n{fullWorkspacePath}", "计算完成", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                        // 询问是否打开文件夹
                         if (MessageBox.Show("是否立即打开结果目录？", "提示", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                         {
                             Process.Start("explorer.exe", fullWorkspacePath);
                         }
                     }
                 }
-
-                //MessageBox.Show("=== TEM 计算流程完成 ===", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
@@ -537,19 +637,17 @@ namespace MapGISPlugin3
             }
             finally
             {
-                // 清理临时文件
+                // 7. 清理临时文件
                 if (!string.IsNullOrEmpty(tempKnowedFile) && File.Exists(tempKnowedFile))
                 {
-                    try { File.Delete(tempKnowedFile); }
-                    catch (Exception ex) { MessageBox.Show($"删除临时文件失败：{ex.Message}", "警告"); }
+                    try { File.Delete(tempKnowedFile); } catch { }
                 }
                 if (!string.IsNullOrEmpty(tempTranFile) && File.Exists(tempTranFile))
                 {
-                    try { File.Delete(tempTranFile); }
-                    catch (Exception ex) { MessageBox.Show($"删除临时文件失败：{ex.Message}", "警告"); }
+                    try { File.Delete(tempTranFile); } catch { }
                 }
 
-                // 加锁清空进程引用（确保线程安全）
+                // 清空进程引用
                 lock (_processLock)
                 {
                     _aExeProcess = null;
@@ -582,8 +680,7 @@ namespace MapGISPlugin3
         #region --- 数据导出（新增） ---
 
         /// <summary>
-        /// 【新增】导出观测数据到文件（TEM 特有）
-        /// 格式：LineName StationName X Y SamplingTime_us EffectiveArea InducedVoltage_mV
+        /// 【修改后】导出当前测线的所有测点数据到文件
         /// </summary>
         private void ExportObservationDataToFile(string filePath)
         {
@@ -592,22 +689,24 @@ namespace MapGISPlugin3
                 // 写入表头
                 writer.WriteLine("PROFILE\tSTATION\tCOORX\tCOORY\tTIMES\tRAREA\tCHZ");
 
-                // 只导出选中测点的数据（核心修改）
+                // 遍历当前测线数据表 (m_CurrentLineData 里面已经是当前测线的所有数据了)
                 foreach (DataRow row in m_CurrentLineData.Rows)
                 {
-                    string stationName = row["测点号"].ToString();
-                    // 仅保留选中测点的数据
-                    if (stationName == m_CurrentSelectedStationName)
-                    {
-                        string lineName = row["测线号"].ToString();
-                        double x = Convert.ToDouble(row["X"]);
-                        double y = Convert.ToDouble(row["Y"]);
-                        double samplingTime = Convert.ToDouble(row["采样时间_us"]);
-                        double area = Convert.ToDouble(row["有效面积"]);
-                        double voltage = Convert.ToDouble(row["感应电压_mV"]);
+                    // 【核心修改】移除了 if (stationName == m_CurrentSelectedStationName) 判断
+                    // 这样会将该测线下的所有测点都写入文件
 
-                        writer.WriteLine($"{lineName} {stationName} {x} {y} {samplingTime} {area} {voltage}");
-                    }
+                    string lineName = row["测线号"].ToString();
+                    string stationName = row["测点号"].ToString();
+
+                    // 数据类型转换建议加上 TryParse 防止空值报错，这里沿用你的逻辑
+                    double x = Convert.ToDouble(row["X坐标"]);
+                    double y = Convert.ToDouble(row["Y坐标"]);
+                    double samplingTime = Convert.ToDouble(row["采样时间_us"]);
+                    double area = Convert.ToDouble(row["有效面积"]);
+                    double voltage = Convert.ToDouble(row["感应电压_mV"]);
+
+                    // 写入一行数据
+                    writer.WriteLine($"{lineName} {stationName} {x} {y} {samplingTime} {area} {voltage}");
                 }
             }
         }
@@ -1236,6 +1335,10 @@ namespace MapGISPlugin3
             }
 
             UpdateRightPanelCharts();
+            // 【新增】这行代码！更新右下角的表格
+            // 如果 _lastCalcResultPath 是 null（还没计算），表格就只显示实测数据
+            // 如果有路径（算过了），表格就会显示实测+拟合数据
+            UpdateZDataGrid(_lastCalcResultPath);
         }
 
         /// <summary>
@@ -1261,8 +1364,8 @@ namespace MapGISPlugin3
 
             // 3. 添加列
             gridData.Columns.Add("colPointName", "点名");
-            gridData.Columns.Add("colX", "X");
-            gridData.Columns.Add("colY", "Y");
+            gridData.Columns.Add("colX", "X坐标");
+            gridData.Columns.Add("colY", "Y坐标");
             gridData.Columns.Add("colZ", "Z");
 
             if (m_TransmitterInfo == null)
@@ -1398,8 +1501,12 @@ namespace MapGISPlugin3
         private void ClearAllDisplays()
         {
             Console.WriteLine("=== 开始清空所有显示 ===");
+            if (chartResistivity.Series != null) chartResistivity.Series.Clear();
             if (chartProfileView.Series != null) chartProfileView.Series.Clear();
             if (chartVoltage.Series != null) chartVoltage.Series.Clear();
+            // 【新增这行】清空 Z 剖面图和颜色缓存
+            if (chartZProfile.Series != null) chartZProfile.Series.Clear();
+            _seriesOriginalColors.Clear();
 
             if (chartProfileView.ChartAreas.Count > 0)
             {
@@ -1500,5 +1607,425 @@ namespace MapGISPlugin3
         }
 
         #endregion
+        // 1. 初始化滑动条 (在 cmbLineName_SelectedIndexChanged 数据加载成功后调用)
+        private void InitTimeSliderAndGrids()
+        {
+            if (m_CurrentLineStations.Count > 0 && m_CurrentLineData.Rows.Count > 0)
+            {
+                // 获取所有不重复的采样时间
+                DataView view = new DataView(m_CurrentLineData);
+                DataTable distinctTimes = view.ToTable(true, "采样时间_us");
+
+                // 排序时间
+                var times = distinctTimes.AsEnumerable()
+                                         .Select(r => r.Field<double>("采样时间_us"))
+                                         .OrderBy(t => t)
+                                         .ToList();
+
+                if (times.Count > 0)
+                {
+                    trackBarTime.Minimum = 0;
+                    trackBarTime.Maximum = times.Count - 1;
+                    trackBarTime.Value = 0;
+                    trackBarTime.Tag = times; // 将时间列表存入 Tag 方便调用
+
+                    // 手动绑定事件（如果 Designer 没绑）
+                    trackBarTime.Scroll -= TrackBarTime_Scroll;
+                    trackBarTime.Scroll += TrackBarTime_Scroll;
+
+                    // 触发一次初始绘制
+                    TrackBarTime_Scroll(null, null);
+                }
+            }
+        }
+
+        // 2. 滑动条事件：更新 Z 剖面图
+        private void TrackBarTime_Scroll(object sender, EventArgs e)
+        {
+            if (trackBarTime.Tag is List<double> times && times.Count > 0)
+            {
+                int index = trackBarTime.Value;
+                double currentTime = times[index];
+                lblTimeInfo.Text = $"采样延时时间: {currentTime} μs (第 {index + 1} 道)";
+
+                UpdateZProfileChart(currentTime);
+            }
+        }
+
+        // 3. 绘制剖面图核心逻辑 (多测道彩虹图 + 高亮当前道)
+        // 辅助：存储原始颜色
+        private Dictionary<string, System.Drawing.Color> _seriesOriginalColors = new Dictionary<string, System.Drawing.Color>();
+
+        private void UpdateZProfileChart(double selectedTime)
+        {
+            // A. 初始化绘制所有线条
+            if (chartZProfile.Series.Count == 0)
+            {
+                _seriesOriginalColors.Clear(); // 清空颜色缓存
+
+                DataView view = new DataView(m_CurrentLineData);
+                DataTable distinctTimes = view.ToTable(true, "采样时间_us");
+                var timeList = distinctTimes.AsEnumerable()
+                                            .Select(r => r.Field<double>("采样时间_us"))
+                                            .OrderBy(t => t)
+                                            .ToList();
+
+                // 准备计算 X 轴的范围，用于手动设置（可选）
+                double minX = double.MaxValue;
+                double maxX = double.MinValue;
+
+                for (int i = 0; i < timeList.Count; i++)
+                {
+                    double t = timeList[i];
+                    string seriesName = $"T_{t}";
+                    Series series = chartZProfile.Series.Add(seriesName);
+                    series.ChartType = SeriesChartType.Line;
+                    series.Tag = t;
+
+                    // 生成并保存颜色
+                    System.Drawing.Color c = GetRainbowColor(i, timeList.Count);
+                    series.Color = c;
+                    _seriesOriginalColors[seriesName] = c; // 记住这个颜色
+
+                    series.BorderWidth = 1;
+                    series.MarkerStyle = MarkerStyle.None;
+
+                    foreach (var station in m_CurrentLineStations)
+                    {
+                        var rows = m_CurrentLineData.Select($"测点号='{station.StationName}' AND 采样时间_us={t}");
+                        if (rows.Length > 0)
+                        {
+                            double zVal = Convert.ToDouble(rows[0]["感应电压_mV"]);
+                            // 这里添加的点：X 是测点坐标，Y 是感应电压
+                            // 如果你想让横坐标变成“相对距离”，需要在这里转换 X
+
+                            // === 【关键修改点 1：计算相对距离】 ===
+                            // 假设第一个测点是起点 (0米)
+                            double startX = m_CurrentLineStations[0].X;
+                            double relativeDist = station.X - startX;
+
+                            // 使用相对距离作为 X 轴
+                            series.Points.AddXY(relativeDist, zVal);
+
+                            // 更新最大最小值
+                            if (relativeDist < minX) minX = relativeDist;
+                            if (relativeDist > maxX) maxX = relativeDist;
+                        }
+                    }
+                }
+
+                // === 【关键修改点 2：设置 X 轴从 0 开始】 ===
+                var area = chartZProfile.ChartAreas[0];
+                area.AxisX.Title = "距离 (m)";
+                area.AxisX.Minimum = 0; // 强制从 0 开始
+
+                // 如果需要，可以设置最大值稍微大一点，留出边距
+                if (maxX > minX)
+                {
+                    area.AxisX.Maximum = maxX * 1.05;
+                }
+
+                area.AxisY.Title = "感应电压 (mV)";
+                area.RecalculateAxesScale();
+            }
+
+            // B. 高亮逻辑 (保持不变)
+            double epsilon = 1e-9;
+            foreach (Series s in chartZProfile.Series)
+            {
+                if (s.Tag != null && double.TryParse(s.Tag.ToString(), out double seriesTime))
+                {
+                    if (Math.Abs(seriesTime - selectedTime) < epsilon)
+                    {
+                        // 选中：变粗、变黑（或红）、带点
+                        s.BorderWidth = 3;
+                        s.Color = System.Drawing.Color.Black;
+                        s.MarkerStyle = MarkerStyle.Circle;
+                        s.MarkerSize = 7;
+                    }
+                    else
+                    {
+                        // 未选中：恢复原始颜色、变细
+                        s.BorderWidth = 1;
+                        if (_seriesOriginalColors.ContainsKey(s.Name))
+                        {
+                            s.Color = _seriesOriginalColors[s.Name];
+                        }
+                        s.MarkerStyle = MarkerStyle.None;
+                    }
+                }
+            }
+        }
+        // 生成彩虹渐变色
+        private System.Drawing.Color GetRainbowColor(int index, int total)
+        {
+            if (total <= 0) return System.Drawing.Color.Blue;
+
+            // 简单的蓝->红渐变 (HSV模型更佳，但这里用RGB简单模拟)
+            // 0 -> Blue, 0.5 -> Green, 1 -> Red
+            double ratio = (double)index / (total - 1);
+            int r = 0, g = 0, b = 0;
+
+            if (ratio < 0.5)
+            {
+                // Blue to Green
+                b = (int)(255 * (1 - 2 * ratio));
+                g = (int)(255 * 2 * ratio);
+            }
+            else
+            {
+                // Green to Red
+                g = (int)(255 * (2 - 2 * ratio));
+                r = (int)(255 * (2 * ratio - 1));
+            }
+
+            // 限制范围 0-255
+            r = Math.Min(255, Math.Max(0, r));
+            g = Math.Min(255, Math.Max(0, g));
+            b = Math.Min(255, Math.Max(0, b));
+
+            return System.Drawing.Color.FromArgb(r, g, b);
+        }
+        private void UpdateZDataGrid(string calcFilePath = null)
+        {
+            // 基础清理
+            gridZData.DataSource = null;
+            gridZData.Rows.Clear();
+            gridZData.Columns.Clear();
+
+            // 自动选中逻辑
+            if (string.IsNullOrEmpty(m_CurrentSelectedStationName))
+            {
+                if (m_CurrentLineStations != null && m_CurrentLineStations.Count > 0)
+                    m_CurrentSelectedStationName = m_CurrentLineStations[0].StationName;
+                else
+                    return;
+            }
+
+            // 读取拟合结果 (如果路径存在)
+            Dictionary<int, double> calcValues = new Dictionary<int, double>();
+            if (!string.IsNullOrEmpty(calcFilePath) && File.Exists(calcFilePath))
+            {
+                try
+                {
+                    string[] lines = File.ReadAllLines(calcFilePath);
+                    foreach (string line in lines)
+                    {
+                        if (string.IsNullOrWhiteSpace(line)) continue;
+                        string[] parts = line.Split(new char[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+                        if (parts.Length >= 3 && parts[0].Trim() == m_CurrentSelectedStationName.Trim())
+                        {
+                            if (int.TryParse(parts[1], out int tIdx) && double.TryParse(parts[2], out double val))
+                                calcValues[tIdx] = val;
+                        }
+                    }
+                }
+                catch { /* 忽略读取错误 */ }
+            }
+
+            // 准备实测数据
+            DataRow[] rows = m_CurrentLineData.Select($"测点号='{m_CurrentSelectedStationName}'", "采样时间_us ASC");
+
+            // 构建列
+            gridZData.Columns.Add("colT", "采样延时(μs)");
+            gridZData.Columns.Add("colZ", "实测感应电动势");
+            gridZData.Columns.Add("colCalcZ", "拟合感应电动势");
+
+            for (int i = 0; i < rows.Length; i++)
+            {
+                double t = Convert.ToDouble(rows[i]["采样时间_us"]);
+                double z = Convert.ToDouble(rows[i]["感应电压_mV"]);
+
+                string calcZStr = "-"; // 默认无数据
+                if (calcValues.ContainsKey(i))
+                    calcZStr = calcValues[i].ToString("G5");
+
+                gridZData.Rows.Add(t, z, calcZStr);
+            }
+            gridZData.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+        }
+        /// <summary>
+        /// 【修改版】绘制电阻率断面图
+        /// 1. X轴改为“相对距离”
+        /// 2. 添加右侧颜色刻度图例
+        /// </summary>
+        private void UpdateResistivitySection(string knowFilePath)
+        {
+            // 1. 清理旧数据
+            chartResistivity.Series.Clear();
+            chartResistivity.Legends.Clear(); // 清除旧图例
+            chartResistivity.Titles.Clear();
+
+            if (!File.Exists(knowFilePath)) return;
+
+            List<InversionPoint> points = new List<InversionPoint>();
+            double minLogRes = double.MaxValue;
+            double maxLogRes = double.MinValue;
+
+            // 2. 读取数据
+            try
+            {
+                string[] lines = File.ReadAllLines(knowFilePath);
+                foreach (string line in lines)
+                {
+                    string[] parts = line.Split(new char[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+                    if (parts.Length >= 6)
+                    {
+                        // KNOW文件格式：测线 测点 X Y Depth Res
+                        // 注意：这里我们读取 X 和 Y 用于计算距离
+                        if (double.TryParse(parts[2], out double x) &&
+                            double.TryParse(parts[3], out double y) &&
+                            double.TryParse(parts[4], out double depth) &&
+                            double.TryParse(parts[5], out double res))
+                        {
+                            if (res <= 0) continue;
+
+                            double logRes = Math.Log10(res);
+
+                            // 这里仍然保存原始X，但在下面会计算 Distance
+                            points.Add(new InversionPoint { X = x, Y = y, Depth = depth, Res = res, LogRes = logRes });
+
+                            if (logRes < minLogRes) minLogRes = logRes;
+                            if (logRes > maxLogRes) maxLogRes = logRes;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("读取 KNOW 文件失败: " + ex.Message);
+                return;
+            }
+
+            if (points.Count == 0) return;
+
+            // ==========================================================
+            // 【核心修改 1】：计算相对距离 (Distance)
+            // 假设数据是按测线顺序排列的（通常 a.exe 输出顺序与输入一致）
+            // ==========================================================
+
+            // 如果需要，可以先按 X 或 Y 排序，这里假设已经有序
+            // points = points.OrderBy(p => p.X).ToList(); 
+
+            double currentDist = 0;
+            // 记录每个点的计算距离，为了处理多个深度对应同一个测点的情况
+            // 我们认为 X,Y 相同的点，距离也相同
+            Dictionary<string, double> distMap = new Dictionary<string, double>();
+
+            // 临时列表用于存储计算好距离的点
+            var plotPoints = new List<dynamic>();
+
+            // 找到第一个点的坐标作为起点
+            double startX = points[0].X;
+            double startY = points[0].Y;
+
+            foreach (var p in points)
+            {
+                // 简单的欧氏距离计算：sqrt((x-x0)^2 + (y-y0)^2)
+                // 这种方式计算的是“距起点的直线距离”
+                double dist = Math.Sqrt(Math.Pow(p.X - startX, 2) + Math.Pow(p.Y - startY, 2));
+
+                // 或者：如果你的测线是弯曲的，应该用累加距离（Point_i 到 Point_i-1），但这里用距起点距离通常够用了
+
+                plotPoints.Add(new { Dist = dist, Depth = p.Depth, LogRes = p.LogRes, Res = p.Res });
+            }
+
+            // ==========================================================
+            // 3. 配置图表系列
+            // ==========================================================
+            Series series = chartResistivity.Series.Add("ResSection");
+            series.ChartType = SeriesChartType.Point;
+            series.MarkerStyle = MarkerStyle.Square;
+            // 调整 MarkerSize：根据数据量调整，让点看起来像连续的色块
+            // 如果点很密，可以设小一点；如果稀疏，设大一点
+            series.MarkerSize = 10;
+            series.BorderWidth = 0;
+
+            // 填充数据到图表
+            foreach (var p in plotPoints)
+            {
+                int idx = series.Points.AddXY(p.Dist, p.Depth);
+                DataPoint dp = series.Points[idx];
+
+                // 获取颜色
+                dp.Color = GetColorForValue(p.LogRes, minLogRes, maxLogRes);
+                // Tooltip 显示：距离、深度、电阻率
+                dp.ToolTip = $"距离: {p.Dist:F1} m\n深度: {p.Depth:F1} m\n电阻率: {p.Res:F1} Ω·m\nLog10: {p.LogRes:F2}";
+            }
+
+            // 设置轴标题
+            chartResistivity.ChartAreas[0].AxisX.Title = "相对距离 (m)";
+            chartResistivity.ChartAreas[0].AxisY.Title = "深度 (m)";
+            chartResistivity.ChartAreas[0].RecalculateAxesScale();
+
+            // ==========================================================
+            // 【核心修改 2】：手动创建颜色图例 (Legend)
+            // ==========================================================
+            Legend legend = new Legend("ColorScale");
+            legend.Docking = Docking.Right; // 停靠在右侧
+            legend.Title = "lg(Res) [Ω·m]"; // 图例标题
+            legend.IsTextAutoFit = false;
+            legend.InterlacedRows = false;
+
+            // 我们手动添加 5 个刻度来模拟颜色条
+            // 从 Max 到 Min 添加，这样在图例上是从上到下排列
+            int steps = 5;
+            for (int i = 0; i <= steps; i++)
+            {
+                // 计算当前步骤的 Log 值
+                double val = maxLogRes - (maxLogRes - minLogRes) * i / steps;
+
+                // 获取对应颜色
+                System.Drawing.Color c = GetColorForValue(val, minLogRes, maxLogRes);
+
+                System.Windows.Forms.DataVisualization.Charting.LegendItem item = new System.Windows.Forms.DataVisualization.Charting.LegendItem();
+                // 显示数值：10^val (原始电阻率) 或者 val (对数值)
+                // 这里显示 10^val 比较直观，但数字可能很大，用 F1 或科学计数法
+                // 如果想显示对数值，直接用 val.ToString("F2")
+                item.Name = $"10^{val:F1}";
+                item.Color = c;
+                item.MarkerStyle = MarkerStyle.Square; // 色块
+
+                legend.CustomItems.Add(item);
+            }
+
+            chartResistivity.Legends.Add(legend);
+        }
+
+        // 辅助类需要补充 Y 字段（如果你之前没有加的话）
+        public class InversionPoint
+        {
+            public double X { get; set; }
+            public double Y { get; set; } // 新增 Y
+            public double Depth { get; set; }
+            public double Res { get; set; }
+            public double LogRes { get; set; }
+        }
+
+        private System.Drawing.Color GetColorForValue(double val, double min, double max)
+        {
+            if (max == min) return System.Drawing.Color.Green;
+            double ratio = (val - min) / (max - min);
+            int r = 0, g = 0, b = 0;
+
+            if (ratio <= 0.5)
+            {
+                double local = ratio / 0.5;
+                b = (int)(255 * (1 - local));
+                g = (int)(255 * local);
+            }
+            else
+            {
+                double local = (ratio - 0.5) / 0.5;
+                g = (int)(255 * (1 - local));
+                r = (int)(255 * local);
+            }
+            return System.Drawing.Color.FromArgb(r, g, b);
+        }
+
+        private void label3_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }

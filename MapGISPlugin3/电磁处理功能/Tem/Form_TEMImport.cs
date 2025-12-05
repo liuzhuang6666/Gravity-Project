@@ -403,8 +403,8 @@ namespace MapGISPlugin3
                     Fields stationFields = new Fields();
                     stationFields.AppendField(new Field { FieldName = "测线号", FieldType = FieldType.FldString, MskLength = 50 });
                     stationFields.AppendField(new Field { FieldName = "测点号", FieldType = FieldType.FldString, MskLength = 50 });
-                    stationFields.AppendField(new Field { FieldName = "X", FieldType = FieldType.FldDouble, MskLength = 20, PointLength = 8 });
-                    stationFields.AppendField(new Field { FieldName = "Y", FieldType = FieldType.FldDouble, MskLength = 20, PointLength = 8 });
+                    stationFields.AppendField(new Field { FieldName = "X坐标", FieldType = FieldType.FldDouble, MskLength = 20, PointLength = 8 });
+                    stationFields.AppendField(new Field { FieldName = "Y坐标", FieldType = FieldType.FldDouble, MskLength = 20, PointLength = 8 });
 
                     if (stationSfc.UpdateFields(stationFields) <= 0)
                     {
@@ -424,8 +424,8 @@ namespace MapGISPlugin3
 
                         stationRecord["测线号"] = stationInfo.LineName;
                         stationRecord["测点号"] = stationInfo.StationName;
-                        stationRecord["X"] = stationInfo.X;
-                        stationRecord["Y"] = stationInfo.Y;
+                        stationRecord["X坐标"] = stationInfo.X;
+                        stationRecord["Y坐标"] = stationInfo.Y;
 
                         if (stationSfc.Append(currentPnts, stationRecord, null) <= 0)
                         {
