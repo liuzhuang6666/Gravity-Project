@@ -476,7 +476,16 @@ namespace MapGISPlugin3
             }
 
             int its = (int)nudIterationCount.Value;
-
+            int layerCount = (int)nudLayerCount.Value;
+            double initialThickness = (double)nudInitialThickness.Value;
+            double growthRate = (double)nudGrowthRate.Value;
+            double initialResistivity = (double)nudInitialResistivity.Value;
+            double allowError = SafeParseDouble(txtAllowError.Text);
+            if (allowError <= 0) // 确保 eps 有效
+            {
+                MessageBox.Show("允许误差容忍度 (eps) 必须大于 0。", "输入错误");
+                return;
+            }
             this.Cursor = Cursors.WaitCursor;
 
             string tempRunDir = Path.Combine(Path.GetTempPath(), "CSAMT1di_run_" + Guid.NewGuid().ToString("N").Substring(0, 8));
@@ -535,7 +544,21 @@ namespace MapGISPlugin3
 
                 ProcessStartInfo startInfo = new ProcessStartInfo();
                 startInfo.FileName = exePath;
-                startInfo.Arguments = $"\"{tempDataFile}\" \"{tempTranFile}\" \"{workspaceName}\" {its}";
+
+
+                string arguments = $"\"{tempDataFile}\" \"{tempTranFile}\" \"{workspaceName}\" {its} {layerCount} {initialThickness} {growthRate} {initialResistivity} {allowError}";
+
+                // 【关键调试代码】—— 让你亲眼看到传给 a.exe 的完整命令行
+                MessageBox.Show(
+                    "即将执行的命令行：\n\n" +
+                    exePath + "\n\n参数：\n" + arguments + "\n\n" +
+                    "工作目录：\n" + tempRunDir,
+                    "调试：a.exe 命令行参数",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+
+                startInfo.Arguments = $"\"{tempDataFile}\" \"{tempTranFile}\" \"{workspaceName}\" {its} {layerCount} {initialThickness} {growthRate} {initialResistivity} {allowError}";
+
                 startInfo.WorkingDirectory = tempRunDir;
                 startInfo.UseShellExecute = false;
                 startInfo.RedirectStandardOutput = true;
