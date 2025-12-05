@@ -384,23 +384,17 @@ namespace MapGISPlugin3
 
         private string GenerateClassName(string baseName, string typeSuffix)
         {
-            // 1. 提取原始文件名（不带路径、不带扩展名）
-            string fileName = Path.GetFileNameWithoutExtension(baseName ?? "Unknown");
+            // baseName 已经是不带扩展名的文件名了，无需再次处理
+            string cleanName = baseName ?? "Unknown";
 
-            // 2. 清理非法字符，只保留字母、数字、下划线
-            string cleanName = Regex.Replace(fileName, @"[^\w]", "_");
+            // 清理非法字符，只保留字母、数字、下划线
+            cleanName = Regex.Replace(cleanName, @"[^\w]", "_");
             cleanName = Regex.Replace(cleanName, @"_+", "_").Trim('_');
 
             if (string.IsNullOrWhiteSpace(cleanName))
                 cleanName = "Data";
 
-            // 3. 生成时间戳（精确到秒，足够区分）
             string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-
-            // 4. 关键：统一前缀 CSAMT_ + 文件名 + 类型 + 时间戳
-            //    测点      → CSAMT_L100_测点_20250405143022
-            //    发射源    → CSAMT_L100_发射源_20250405143022
-            //    测深数据  → CSAMT_L100_测深数据_20250405143022
             string finalName = $"CSAMT_{cleanName}_{typeSuffix}_{timestamp}";
 
             // 5. MapGIS 类名最大长度 64（实测 64 没问题，保险起见留 1 位余量）
