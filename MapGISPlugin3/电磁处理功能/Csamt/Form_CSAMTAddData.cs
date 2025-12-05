@@ -110,9 +110,9 @@ namespace MapGISPlugin3
 
             // 2. 生成名称和路径
             string baseName = Path.GetFileNameWithoutExtension(inputFile);
-            string stationClassName = GenerateClassName(baseName, "CSAMT测点");
-            string transmitterClassName = GenerateClassName(baseName, "CSAMT发射源"); // 【新增】
-            string soundingClassName = GenerateClassName(baseName, "CSAMT测深数据");
+            string stationClassName = GenerateClassName(baseName, "测点");
+            string transmitterClassName = GenerateClassName(baseName, "发射源"); // 【新增】
+            string soundingClassName = GenerateClassName(baseName, "测深数据");
 
             string cleanGdbDirectory = "/" + gdbDirectory.Trim('/');
             string stationClassUrl = $"gdbp://{dataSource}{cleanGdbDirectory}/sfcls/{stationClassName}";

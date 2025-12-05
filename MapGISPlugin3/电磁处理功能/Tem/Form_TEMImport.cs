@@ -246,10 +246,12 @@ namespace MapGISPlugin3
             }
 
             // 【复用】生成类名称
-            string baseName = "TEM_" + DateTime.Now.ToString("yyyyMMdd_HHmmss");
-            string stationClassName = baseName + "_测点";
-            string transmitterClassName = baseName + "_发射源";
-            string observationTableName = baseName + "_观测数据";
+            string baseName = Path.GetFileNameWithoutExtension(knowedFile);
+
+            // 生成三个统一风格的名字
+            string stationClassName = GenerateClassName(baseName, "测点");
+            string transmitterClassName = GenerateClassName(baseName, "发射源");
+            string observationTableName = GenerateClassName(baseName, "观测数据");
 
             string cleanGdbDirectory = "/" + gdbDirectory.Trim('/');
             string stationClassUrl = $"gdbp://{dataSource}{cleanGdbDirectory}/sfcls/{stationClassName}";
@@ -691,27 +693,49 @@ namespace MapGISPlugin3
         /// <summary>
         /// 【复用】生成类名称，逻辑参考 Form_MTAddData
         /// </summary>
+        /// <summary>
+        /// 统一命名函数：TEM_L100_测点_20250405143022
+        /// </summary>
         private string GenerateClassName(string baseName, string typeSuffix)
         {
-            string sanitizedBase = Regex.Replace(baseName ?? "Import", @"[^\w]", "_");
-            sanitizedBase = Regex.Replace(sanitizedBase, "_+", "_").Trim('_');
-            if (string.IsNullOrWhiteSpace(sanitizedBase)) sanitizedBase = "Data";
+            // 1. 提取原始文件名（不带路径、不带扩展名）
+            string fileName = Path.GetFileNameWithoutExtension(baseName ?? "Unknown");
+
+            // 2. 清理非法字符，只保留字母、数字、下划线
+            string cleanName = Regex.Replace(fileName, @"[^\w]", "_");
+            cleanName = Regex.Replace(cleanName, @"_+", "_").Trim('_');
+
+            if (string.IsNullOrWhiteSpace(cleanName))
+                cleanName = "Data";
+
+            // 3. 生成时间戳（精确到秒，足够区分）
             string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-            string finalName = $"{sanitizedBase}_{typeSuffix}_{timestamp}";
+
+            // 4. 关键：统一前缀 TEM_ + 文件名 + 类型 + 时间戳
+            string finalName = $"TEM_{cleanName}_{typeSuffix}_{timestamp}";
+
+            // 5. MapGIS 类名最大长度 64（实测 64 没问题，保险起见留 1 位余量）
             if (finalName.Length > 64)
             {
-                string prefix = $"{sanitizedBase}_{typeSuffix}_".Substring(0, Math.Min($"{sanitizedBase}_{typeSuffix}_".Length, 64 - timestamp.Length - 1));
+                // 优先保留：TEM_ + 文件名 + 类型 + 部分时间戳
+                int available = 64 - timestamp.Length + 1; // +1 是下划线
+                string prefix = $"TEM_{cleanName}_{typeSuffix}_";
+                if (prefix.Length > available)
+                {
+                    // 如果连前缀都放不下，就狠心截断文件名
+                    string shortName = cleanName.Substring(0, Math.Max(5, available - prefix.Length + cleanName.Length));
+                    prefix = $"TEM_{shortName}_{typeSuffix}_";
+                }
                 finalName = prefix + timestamp;
-                if (finalName.Length > 64) finalName = finalName.Substring(0, 64);
+                if (finalName.Length > 64)
+                    finalName = finalName.Substring(0, 64);
             }
-            if (!char.IsLetter(finalName[0]))
-            {
-                finalName = "TEM_" + finalName.Substring(0, Math.Min(finalName.Length, 61));
-            }
+
+            // 6. 去掉可能末尾残留的下划线（美观）
             finalName = finalName.TrimEnd('_');
+
             return finalName;
         }
-
         /// <summary>
         /// 【复用】检测标题行，逻辑参考 Form_MTAddData
         /// </summary>

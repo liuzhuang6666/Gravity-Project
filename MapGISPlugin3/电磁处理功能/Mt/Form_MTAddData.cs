@@ -354,10 +354,9 @@ namespace MapGISPlugin3 // 确保命名空间正确
                 finalName = prefix + timestamp;
                 if (finalName.Length > 64) finalName = finalName.Substring(0, 64);
             }
-            if (!char.IsLetter(finalName[0]))
-            {
-                finalName = "MT_" + finalName.Substring(0, Math.Min(finalName.Length, 61));
-            }
+
+            finalName = "MT_" + finalName.Substring(0, Math.Min(finalName.Length, 61));
+
             finalName = finalName.TrimEnd('_');
             return finalName;
         }
