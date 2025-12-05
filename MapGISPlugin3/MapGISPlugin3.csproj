@@ -308,6 +308,27 @@
     <Compile Include="工程相关\ProjectManage.cs" />
     <Compile Include="查看属性\DocumentItemPropertiesManage.cs" />
     <Compile Include="菜单\PopupMenuBar.cs" />
+    <Compile Include="追加数据\CSAMTAppendDataCommand.cs" />
+    <Compile Include="追加数据\Form_CSAMTAppendData.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="追加数据\Form_CSAMTAppendData.Designer.cs">
+      <DependentUpon>Form_CSAMTAppendData.cs</DependentUpon>
+    </Compile>
+    <Compile Include="追加数据\Form_MTAppendData.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="追加数据\Form_MTAppendData.Designer.cs">
+      <DependentUpon>Form_MTAppendData.cs</DependentUpon>
+    </Compile>
+    <Compile Include="追加数据\Form_TEMAppendData.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="追加数据\Form_TEMAppendData.Designer.cs">
+      <DependentUpon>Form_TEMAppendData.cs</DependentUpon>
+    </Compile>
+    <Compile Include="追加数据\MTAppendDataCommand.cs" />
+    <Compile Include="追加数据\TEMAppendDataCommand.cs" />
     <Compile Include="重磁处理功能\AddDataForm.cs">
       <SubType>Form</SubType>
     </Compile>
