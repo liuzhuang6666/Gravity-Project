@@ -4,15 +4,8 @@ namespace MapGISPlugin3
 {
     partial class Form_CSAMT1di
     {
-        /// <summary>
-        /// Required designer variable.
-        /// </summary>
         private System.ComponentModel.IContainer components = null;
 
-        /// <summary>
-        /// Clean up any resources being used.
-        /// </summary>
-        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
         protected override void Dispose(bool disposing)
         {
             if (disposing && (components != null))
@@ -24,112 +17,141 @@ namespace MapGISPlugin3
 
         #region Windows Form Designer generated code
 
-        /// <summary>
-        /// Required method for Designer support - do not modify
-        /// the contents of this method with the code editor.
-        /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea1 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.Series series1 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea2 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.Legend legend1 = new System.Windows.Forms.DataVisualization.Charting.Legend();
-            System.Windows.Forms.DataVisualization.Charting.Series series2 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea3 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.Legend legend2 = new System.Windows.Forms.DataVisualization.Charting.Legend();
-            System.Windows.Forms.DataVisualization.Charting.Series series3 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea4 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.Legend legend3 = new System.Windows.Forms.DataVisualization.Charting.Legend();
-            System.Windows.Forms.DataVisualization.Charting.Series series4 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea5 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.Legend legend4 = new System.Windows.Forms.DataVisualization.Charting.Legend();
-            System.Windows.Forms.DataVisualization.Charting.Series series5 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea6 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.Series series6 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea7 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.Legend legend5 = new System.Windows.Forms.DataVisualization.Charting.Legend();
+            System.Windows.Forms.DataVisualization.Charting.Series series7 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea8 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.Legend legend6 = new System.Windows.Forms.DataVisualization.Charting.Legend();
+            System.Windows.Forms.DataVisualization.Charting.Series series8 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea9 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.Legend legend7 = new System.Windows.Forms.DataVisualization.Charting.Legend();
+            System.Windows.Forms.DataVisualization.Charting.Series series9 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea10 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.Legend legend8 = new System.Windows.Forms.DataVisualization.Charting.Legend();
+            System.Windows.Forms.DataVisualization.Charting.Series series10 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            this.splitContainerMain = new System.Windows.Forms.SplitContainer();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPageCalculate = new System.Windows.Forms.TabPage();
-            this.groupBoxParams = new System.Windows.Forms.GroupBox();
-            this.nudIterationCount = new System.Windows.Forms.NumericUpDown();
-            this.label4 = new System.Windows.Forms.Label();
-            this.btnCalculate = new System.Windows.Forms.Button();
+            this.gridCalc = new System.Windows.Forms.DataGridView();
             this.chartProfileView = new System.Windows.Forms.DataVisualization.Charting.Chart();
+            this.groupBoxCalcParams = new System.Windows.Forms.GroupBox();
+            this.txtActualError = new System.Windows.Forms.TextBox();
+            this.labelActualError = new System.Windows.Forms.Label();
+            this.txtAllowError = new System.Windows.Forms.TextBox();
+            this.labelAllowError = new System.Windows.Forms.Label();
+            this.chkJointInversion = new System.Windows.Forms.CheckBox();
+            this.chkUseCurrentStation = new System.Windows.Forms.CheckBox();
+            this.nudIterationCount = new System.Windows.Forms.NumericUpDown();
+            this.labelIter = new System.Windows.Forms.Label();
+            this.btnCalculate = new System.Windows.Forms.Button();
             this.tabPageLayout = new System.Windows.Forms.TabPage();
-            this.groupBoxTransmitter = new System.Windows.Forms.GroupBox();
-            this.btnLoadTranFile = new System.Windows.Forms.Button();
-            this.labelAz = new System.Windows.Forms.Label();
-            this.txtAz = new System.Windows.Forms.TextBox();
-            this.labelAy = new System.Windows.Forms.Label();
-            this.txtAy = new System.Windows.Forms.TextBox();
-            this.labelAx = new System.Windows.Forms.Label();
-            this.txtAx = new System.Windows.Forms.TextBox();
-            this.labelBz = new System.Windows.Forms.Label();
-            this.txtBz = new System.Windows.Forms.TextBox();
-            this.labelBy = new System.Windows.Forms.Label();
-            this.txtBy = new System.Windows.Forms.TextBox();
-            this.labelBx = new System.Windows.Forms.Label();
-            this.txtBx = new System.Windows.Forms.TextBox();
-            this.btnUpdateDistances = new System.Windows.Forms.Button();
-            this.gridLayout = new System.Windows.Forms.DataGridView();
             this.chartLayout = new System.Windows.Forms.DataVisualization.Charting.Chart();
+            this.panelLayoutTop = new System.Windows.Forms.Panel();
+            this.labelOffsetFromCenter = new System.Windows.Forms.Label();
+            this.txtOffsetFromCenter = new System.Windows.Forms.TextBox();
+            this.labelTxRxDistance = new System.Windows.Forms.Label();
+            this.txtTxRxDistance = new System.Windows.Forms.TextBox();
+            this.labelCurrentInversionStation = new System.Windows.Forms.Label();
+            this.txtCurrentInversionStation = new System.Windows.Forms.TextBox();
+            this.labelCurrentSelectedStation = new System.Windows.Forms.Label();
+            this.txtCurrentSelectedStation = new System.Windows.Forms.TextBox();
             this.tabPageData = new System.Windows.Forms.TabPage();
             this.gridData = new System.Windows.Forms.DataGridView();
-            this.label1 = new System.Windows.Forms.Label();
-            this.label2 = new System.Windows.Forms.Label();
+            this.tabPageModel = new System.Windows.Forms.TabPage();
+            this.gridModelLayers = new System.Windows.Forms.DataGridView();
+            this.groupBoxModelParams = new System.Windows.Forms.GroupBox();
+            this.btnGenerateModel = new System.Windows.Forms.Button();
+            this.nudInitialResistivity = new System.Windows.Forms.NumericUpDown();
+            this.labelInitialResistivity = new System.Windows.Forms.Label();
+            this.nudGrowthRate = new System.Windows.Forms.NumericUpDown();
+            this.labelGrowthRate = new System.Windows.Forms.Label();
+            this.nudInitialThickness = new System.Windows.Forms.NumericUpDown();
+            this.labelInitialThickness = new System.Windows.Forms.Label();
+            this.nudLayerCount = new System.Windows.Forms.NumericUpDown();
+            this.labelLayerCount = new System.Windows.Forms.Label();
+            this.labelStationLayer = new System.Windows.Forms.Label();
+            this.labelLineName = new System.Windows.Forms.Label();
             this.cmbLineName = new System.Windows.Forms.ComboBox();
             this.cmbStationLayer = new System.Windows.Forms.ComboBox();
-            this.chartResultSection = new System.Windows.Forms.DataVisualization.Charting.Chart();
-            this.splitContainer2 = new System.Windows.Forms.SplitContainer();
+            this.splitContainerRightMain = new System.Windows.Forms.SplitContainer();
+            this.splitContainerRight = new System.Windows.Forms.SplitContainer();
             this.chartResistivity = new System.Windows.Forms.DataVisualization.Charting.Chart();
             this.chartPhase = new System.Windows.Forms.DataVisualization.Charting.Chart();
-            this.panel1 = new System.Windows.Forms.Panel();
+            this.chartResultSection = new System.Windows.Forms.DataVisualization.Charting.Chart();
+            this.panelTitle = new System.Windows.Forms.Panel();
             this.labelTitle = new System.Windows.Forms.Label();
             this.btnClose = new System.Windows.Forms.Button();
             this.openFileDialogTran = new System.Windows.Forms.OpenFileDialog();
-            ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
-            this.splitContainer1.Panel1.SuspendLayout();
-            this.splitContainer1.Panel2.SuspendLayout();
-            this.splitContainer1.SuspendLayout();
+            this.txtAz = new System.Windows.Forms.TextBox();
+            this.txtAy = new System.Windows.Forms.TextBox();
+            this.txtAx = new System.Windows.Forms.TextBox();
+            this.txtBz = new System.Windows.Forms.TextBox();
+            this.txtBy = new System.Windows.Forms.TextBox();
+            this.txtBx = new System.Windows.Forms.TextBox();
+            this.gridLayout = new System.Windows.Forms.DataGridView();
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainerMain)).BeginInit();
+            this.splitContainerMain.Panel1.SuspendLayout();
+            this.splitContainerMain.Panel2.SuspendLayout();
+            this.splitContainerMain.SuspendLayout();
             this.tabControl1.SuspendLayout();
             this.tabPageCalculate.SuspendLayout();
-            this.groupBoxParams.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.nudIterationCount)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.gridCalc)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.chartProfileView)).BeginInit();
+            this.groupBoxCalcParams.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.nudIterationCount)).BeginInit();
             this.tabPageLayout.SuspendLayout();
-            this.groupBoxTransmitter.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.gridLayout)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.chartLayout)).BeginInit();
+            this.panelLayoutTop.SuspendLayout();
             this.tabPageData.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.gridData)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.chartResultSection)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.splitContainer2)).BeginInit();
-            this.splitContainer2.Panel1.SuspendLayout();
-            this.splitContainer2.Panel2.SuspendLayout();
-            this.splitContainer2.SuspendLayout();
+            this.tabPageModel.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.gridModelLayers)).BeginInit();
+            this.groupBoxModelParams.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.nudInitialResistivity)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nudGrowthRate)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nudInitialThickness)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nudLayerCount)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainerRightMain)).BeginInit();
+            this.splitContainerRightMain.Panel1.SuspendLayout();
+            this.splitContainerRightMain.Panel2.SuspendLayout();
+            this.splitContainerRightMain.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainerRight)).BeginInit();
+            this.splitContainerRight.Panel1.SuspendLayout();
+            this.splitContainerRight.Panel2.SuspendLayout();
+            this.splitContainerRight.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.chartResistivity)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.chartPhase)).BeginInit();
-            this.panel1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.chartResultSection)).BeginInit();
+            this.panelTitle.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.gridLayout)).BeginInit();
             this.SuspendLayout();
             // 
-            // splitContainer1
+            // splitContainerMain
             // 
-            this.splitContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.splitContainer1.Location = new System.Drawing.Point(0, 48);
-            this.splitContainer1.Name = "splitContainer1";
+            this.splitContainerMain.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.splitContainerMain.Location = new System.Drawing.Point(0, 32);
+            this.splitContainerMain.Margin = new System.Windows.Forms.Padding(2);
+            this.splitContainerMain.Name = "splitContainerMain";
             // 
-            // splitContainer1.Panel1
+            // splitContainerMain.Panel1
             // 
-            this.splitContainer1.Panel1.Controls.Add(this.tabControl1);
-            this.splitContainer1.Panel1.Controls.Add(this.label1);
-            this.splitContainer1.Panel1.Controls.Add(this.label2);
-            this.splitContainer1.Panel1.Controls.Add(this.cmbLineName);
-            this.splitContainer1.Panel1.Controls.Add(this.cmbStationLayer);
+            this.splitContainerMain.Panel1.Controls.Add(this.tabControl1);
+            this.splitContainerMain.Panel1.Controls.Add(this.labelStationLayer);
+            this.splitContainerMain.Panel1.Controls.Add(this.labelLineName);
+            this.splitContainerMain.Panel1.Controls.Add(this.cmbLineName);
+            this.splitContainerMain.Panel1.Controls.Add(this.cmbStationLayer);
             // 
-            // splitContainer1.Panel2
+            // splitContainerMain.Panel2
             // 
-            this.splitContainer1.Panel2.Controls.Add(this.chartResultSection);
-            this.splitContainer1.Panel2.Controls.Add(this.splitContainer2);
-            this.splitContainer1.Size = new System.Drawing.Size(1596, 810);
-            this.splitContainer1.SplitterDistance = 750;
-            this.splitContainer1.TabIndex = 0;
+            this.splitContainerMain.Panel2.Controls.Add(this.splitContainerRightMain);
+            this.splitContainerMain.Size = new System.Drawing.Size(1267, 635);
+            this.splitContainerMain.SplitterDistance = 666;
+            this.splitContainerMain.SplitterWidth = 3;
+            this.splitContainerMain.TabIndex = 0;
             // 
             // tabControl1
             // 
@@ -139,302 +161,330 @@ namespace MapGISPlugin3
             this.tabControl1.Controls.Add(this.tabPageCalculate);
             this.tabControl1.Controls.Add(this.tabPageLayout);
             this.tabControl1.Controls.Add(this.tabPageData);
-            this.tabControl1.Location = new System.Drawing.Point(0, 66);
+            this.tabControl1.Controls.Add(this.tabPageModel);
+            this.tabControl1.Location = new System.Drawing.Point(0, 44);
+            this.tabControl1.Margin = new System.Windows.Forms.Padding(2);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(750, 744);
+            this.tabControl1.Size = new System.Drawing.Size(666, 591);
             this.tabControl1.TabIndex = 5;
+            this.tabControl1.SelectedIndexChanged += new System.EventHandler(this.tabControl1_SelectedIndexChanged);
             // 
             // tabPageCalculate
             // 
             this.tabPageCalculate.BackColor = System.Drawing.SystemColors.Control;
-            this.tabPageCalculate.Controls.Add(this.groupBoxParams);
+            this.tabPageCalculate.Controls.Add(this.gridCalc);
             this.tabPageCalculate.Controls.Add(this.chartProfileView);
-            this.tabPageCalculate.Location = new System.Drawing.Point(4, 28);
+            this.tabPageCalculate.Controls.Add(this.groupBoxCalcParams);
+            this.tabPageCalculate.Location = new System.Drawing.Point(4, 22);
+            this.tabPageCalculate.Margin = new System.Windows.Forms.Padding(2);
             this.tabPageCalculate.Name = "tabPageCalculate";
-            this.tabPageCalculate.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPageCalculate.Size = new System.Drawing.Size(742, 712);
+            this.tabPageCalculate.Padding = new System.Windows.Forms.Padding(2);
+            this.tabPageCalculate.Size = new System.Drawing.Size(658, 565);
             this.tabPageCalculate.TabIndex = 0;
             this.tabPageCalculate.Text = "计算";
             // 
-            // groupBoxParams
+            // gridCalc
             // 
-            this.groupBoxParams.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            this.gridCalc.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.groupBoxParams.Controls.Add(this.nudIterationCount);
-            this.groupBoxParams.Controls.Add(this.label4);
-            this.groupBoxParams.Controls.Add(this.btnCalculate);
-            this.groupBoxParams.Location = new System.Drawing.Point(14, 15);
-            this.groupBoxParams.Name = "groupBoxParams";
-            this.groupBoxParams.Size = new System.Drawing.Size(714, 116);
-            this.groupBoxParams.TabIndex = 1;
-            this.groupBoxParams.TabStop = false;
-            this.groupBoxParams.Text = "计算参数";
+            this.gridCalc.BackgroundColor = System.Drawing.SystemColors.Control;
+            this.gridCalc.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.gridCalc.Location = new System.Drawing.Point(7, 317);
+            this.gridCalc.Margin = new System.Windows.Forms.Padding(2);
+            this.gridCalc.Name = "gridCalc";
+            this.gridCalc.RowHeadersWidth = 62;
+            this.gridCalc.RowTemplate.Height = 30;
+            this.gridCalc.Size = new System.Drawing.Size(647, 250);
+            this.gridCalc.TabIndex = 3;
+            // 
+            // chartProfileView
+            // 
+            this.chartProfileView.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            chartArea6.Name = "ChartArea1";
+            this.chartProfileView.ChartAreas.Add(chartArea6);
+            this.chartProfileView.Location = new System.Drawing.Point(7, 104);
+            this.chartProfileView.Margin = new System.Windows.Forms.Padding(2);
+            this.chartProfileView.Name = "chartProfileView";
+            series6.ChartArea = "ChartArea1";
+            series6.Name = "Series1";
+            this.chartProfileView.Series.Add(series6);
+            this.chartProfileView.Size = new System.Drawing.Size(647, 200);
+            this.chartProfileView.TabIndex = 2;
+            this.chartProfileView.Text = "chartProfileView";
+            this.chartProfileView.MouseClick += new System.Windows.Forms.MouseEventHandler(this.chartProfileView_MouseClick);
+            // 
+            // groupBoxCalcParams
+            // 
+            this.groupBoxCalcParams.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.groupBoxCalcParams.Controls.Add(this.txtActualError);
+            this.groupBoxCalcParams.Controls.Add(this.labelActualError);
+            this.groupBoxCalcParams.Controls.Add(this.txtAllowError);
+            this.groupBoxCalcParams.Controls.Add(this.labelAllowError);
+            this.groupBoxCalcParams.Controls.Add(this.chkJointInversion);
+            this.groupBoxCalcParams.Controls.Add(this.chkUseCurrentStation);
+            this.groupBoxCalcParams.Controls.Add(this.nudIterationCount);
+            this.groupBoxCalcParams.Controls.Add(this.labelIter);
+            this.groupBoxCalcParams.Controls.Add(this.btnCalculate);
+            this.groupBoxCalcParams.Location = new System.Drawing.Point(7, 7);
+            this.groupBoxCalcParams.Margin = new System.Windows.Forms.Padding(2);
+            this.groupBoxCalcParams.Name = "groupBoxCalcParams";
+            this.groupBoxCalcParams.Padding = new System.Windows.Forms.Padding(2);
+            this.groupBoxCalcParams.Size = new System.Drawing.Size(647, 93);
+            this.groupBoxCalcParams.TabIndex = 1;
+            this.groupBoxCalcParams.TabStop = false;
+            this.groupBoxCalcParams.Text = "计算参数";
+            // 
+            // txtActualError
+            // 
+            this.txtActualError.BackColor = System.Drawing.SystemColors.Control;
+            this.txtActualError.Location = new System.Drawing.Point(320, 63);
+            this.txtActualError.Margin = new System.Windows.Forms.Padding(2);
+            this.txtActualError.Name = "txtActualError";
+            this.txtActualError.ReadOnly = true;
+            this.txtActualError.Size = new System.Drawing.Size(101, 21);
+            this.txtActualError.TabIndex = 9;
+            // 
+            // labelActualError
+            // 
+            this.labelActualError.AutoSize = true;
+            this.labelActualError.Location = new System.Drawing.Point(229, 67);
+            this.labelActualError.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.labelActualError.Name = "labelActualError";
+            this.labelActualError.Size = new System.Drawing.Size(89, 12);
+            this.labelActualError.TabIndex = 8;
+            this.labelActualError.Text = "实际迭代误差：";
+            // 
+            // txtAllowError
+            // 
+            this.txtAllowError.BackColor = System.Drawing.SystemColors.Control;
+            this.txtAllowError.Location = new System.Drawing.Point(320, 37);
+            this.txtAllowError.Margin = new System.Windows.Forms.Padding(2);
+            this.txtAllowError.Name = "txtAllowError";
+            this.txtAllowError.Size = new System.Drawing.Size(101, 21);
+            this.txtAllowError.TabIndex = 7;
+            // 
+            // labelAllowError
+            // 
+            this.labelAllowError.AutoSize = true;
+            this.labelAllowError.Location = new System.Drawing.Point(229, 41);
+            this.labelAllowError.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.labelAllowError.Name = "labelAllowError";
+            this.labelAllowError.Size = new System.Drawing.Size(89, 12);
+            this.labelAllowError.TabIndex = 6;
+            this.labelAllowError.Text = "允许迭代误差：";
+            // 
+            // chkJointInversion
+            // 
+            this.chkJointInversion.AutoSize = true;
+            this.chkJointInversion.Location = new System.Drawing.Point(17, 65);
+            this.chkJointInversion.Margin = new System.Windows.Forms.Padding(2);
+            this.chkJointInversion.Name = "chkJointInversion";
+            this.chkJointInversion.Size = new System.Drawing.Size(72, 16);
+            this.chkJointInversion.TabIndex = 5;
+            this.chkJointInversion.Text = "联合反演";
+            this.chkJointInversion.UseVisualStyleBackColor = true;
+            // 
+            // chkUseCurrentStation
+            // 
+            this.chkUseCurrentStation.AutoSize = true;
+            this.chkUseCurrentStation.Location = new System.Drawing.Point(17, 40);
+            this.chkUseCurrentStation.Margin = new System.Windows.Forms.Padding(2);
+            this.chkUseCurrentStation.Name = "chkUseCurrentStation";
+            this.chkUseCurrentStation.Size = new System.Drawing.Size(84, 16);
+            this.chkUseCurrentStation.TabIndex = 4;
+            this.chkUseCurrentStation.Text = "仅当前测点";
+            this.chkUseCurrentStation.UseVisualStyleBackColor = true;
             // 
             // nudIterationCount
             // 
             this.nudIterationCount.BackColor = System.Drawing.SystemColors.Control;
-            this.nudIterationCount.Location = new System.Drawing.Point(129, 52);
+            this.nudIterationCount.Location = new System.Drawing.Point(320, 13);
+            this.nudIterationCount.Margin = new System.Windows.Forms.Padding(2);
+            this.nudIterationCount.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
             this.nudIterationCount.Name = "nudIterationCount";
-            this.nudIterationCount.Size = new System.Drawing.Size(198, 28);
-            this.nudIterationCount.TabIndex = 5;
+            this.nudIterationCount.Size = new System.Drawing.Size(100, 21);
+            this.nudIterationCount.TabIndex = 3;
             this.nudIterationCount.Value = new decimal(new int[] {
             10,
             0,
             0,
             0});
             // 
-            // label4
+            // labelIter
             // 
-            this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(26, 58);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(98, 18);
-            this.label4.TabIndex = 4;
-            this.label4.Text = "迭代次数：";
+            this.labelIter.AutoSize = true;
+            this.labelIter.Location = new System.Drawing.Point(229, 17);
+            this.labelIter.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.labelIter.Name = "labelIter";
+            this.labelIter.Size = new System.Drawing.Size(65, 12);
+            this.labelIter.TabIndex = 2;
+            this.labelIter.Text = "迭代次数：";
             // 
             // btnCalculate
             // 
             this.btnCalculate.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.btnCalculate.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.btnCalculate.Location = new System.Drawing.Point(576, 46);
+            this.btnCalculate.Location = new System.Drawing.Point(569, 35);
+            this.btnCalculate.Margin = new System.Windows.Forms.Padding(2);
             this.btnCalculate.Name = "btnCalculate";
-            this.btnCalculate.Size = new System.Drawing.Size(100, 40);
+            this.btnCalculate.Size = new System.Drawing.Size(67, 27);
             this.btnCalculate.TabIndex = 0;
             this.btnCalculate.Text = "计算";
             this.btnCalculate.UseVisualStyleBackColor = true;
             this.btnCalculate.Click += new System.EventHandler(this.btnCalculate_Click);
             // 
-            // chartProfileView
-            // 
-            this.chartProfileView.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            chartArea1.Name = "ChartArea1";
-            this.chartProfileView.ChartAreas.Add(chartArea1);
-            this.chartProfileView.Location = new System.Drawing.Point(10, 136);
-            this.chartProfileView.Name = "chartProfileView";
-            series1.ChartArea = "ChartArea1";
-            series1.Legend = "Legend1";
-            series1.Name = "Series1";
-            this.chartProfileView.Series.Add(series1);
-            this.chartProfileView.Size = new System.Drawing.Size(717, 561);
-            this.chartProfileView.TabIndex = 0;
-            this.chartProfileView.Text = "chart1";
-            this.chartProfileView.MouseClick += new System.Windows.Forms.MouseEventHandler(this.chartProfileView_MouseClick);
-            // 
             // tabPageLayout
             // 
             this.tabPageLayout.BackColor = System.Drawing.SystemColors.Control;
-            this.tabPageLayout.Controls.Add(this.groupBoxTransmitter);
-            this.tabPageLayout.Controls.Add(this.gridLayout);
             this.tabPageLayout.Controls.Add(this.chartLayout);
-            this.tabPageLayout.Location = new System.Drawing.Point(4, 28);
+            this.tabPageLayout.Controls.Add(this.panelLayoutTop);
+            this.tabPageLayout.Location = new System.Drawing.Point(4, 22);
+            this.tabPageLayout.Margin = new System.Windows.Forms.Padding(2);
             this.tabPageLayout.Name = "tabPageLayout";
-            this.tabPageLayout.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPageLayout.Size = new System.Drawing.Size(742, 727);
+            this.tabPageLayout.Padding = new System.Windows.Forms.Padding(2);
+            this.tabPageLayout.Size = new System.Drawing.Size(658, 565);
             this.tabPageLayout.TabIndex = 1;
             this.tabPageLayout.Text = "布置图";
             // 
-            // groupBoxTransmitter
-            // 
-            this.groupBoxTransmitter.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.groupBoxTransmitter.Controls.Add(this.btnLoadTranFile);
-            this.groupBoxTransmitter.Controls.Add(this.labelAz);
-            this.groupBoxTransmitter.Controls.Add(this.txtAz);
-            this.groupBoxTransmitter.Controls.Add(this.labelAy);
-            this.groupBoxTransmitter.Controls.Add(this.txtAy);
-            this.groupBoxTransmitter.Controls.Add(this.labelAx);
-            this.groupBoxTransmitter.Controls.Add(this.txtAx);
-            this.groupBoxTransmitter.Controls.Add(this.labelBz);
-            this.groupBoxTransmitter.Controls.Add(this.txtBz);
-            this.groupBoxTransmitter.Controls.Add(this.labelBy);
-            this.groupBoxTransmitter.Controls.Add(this.txtBy);
-            this.groupBoxTransmitter.Controls.Add(this.labelBx);
-            this.groupBoxTransmitter.Controls.Add(this.txtBx);
-            this.groupBoxTransmitter.Controls.Add(this.btnUpdateDistances);
-            this.groupBoxTransmitter.Location = new System.Drawing.Point(14, 15);
-            this.groupBoxTransmitter.Name = "groupBoxTransmitter";
-            this.groupBoxTransmitter.Size = new System.Drawing.Size(714, 116);
-            this.groupBoxTransmitter.TabIndex = 2;
-            this.groupBoxTransmitter.TabStop = false;
-            this.groupBoxTransmitter.Text = "发射源位置";
-            // 
-            // btnLoadTranFile
-            // 
-            this.btnLoadTranFile.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnLoadTranFile.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.btnLoadTranFile.Location = new System.Drawing.Point(477, 46);
-            this.btnLoadTranFile.Name = "btnLoadTranFile";
-            this.btnLoadTranFile.Size = new System.Drawing.Size(124, 40);
-            this.btnLoadTranFile.TabIndex = 13;
-            this.btnLoadTranFile.Text = "上传发射源";
-            this.btnLoadTranFile.UseVisualStyleBackColor = true;
-            this.btnLoadTranFile.Click += new System.EventHandler(this.btnLoadTranFile_Click);
-            // 
-            // labelAz
-            // 
-            this.labelAz.AutoSize = true;
-            this.labelAz.Location = new System.Drawing.Point(312, 86);
-            this.labelAz.Name = "labelAz";
-            this.labelAz.Size = new System.Drawing.Size(35, 18);
-            this.labelAz.TabIndex = 12;
-            this.labelAz.Text = "Az:";
-            // 
-            // txtAz
-            // 
-            this.txtAz.BackColor = System.Drawing.SystemColors.Control;
-            this.txtAz.Location = new System.Drawing.Point(354, 78);
-            this.txtAz.Name = "txtAz";
-            this.txtAz.Size = new System.Drawing.Size(100, 28);
-            this.txtAz.TabIndex = 11;
-            this.txtAz.Text = "0";
-            // 
-            // labelAy
-            // 
-            this.labelAy.AutoSize = true;
-            this.labelAy.Location = new System.Drawing.Point(164, 86);
-            this.labelAy.Name = "labelAy";
-            this.labelAy.Size = new System.Drawing.Size(35, 18);
-            this.labelAy.TabIndex = 10;
-            this.labelAy.Text = "Ay:";
-            // 
-            // txtAy
-            // 
-            this.txtAy.BackColor = System.Drawing.SystemColors.Control;
-            this.txtAy.Location = new System.Drawing.Point(204, 78);
-            this.txtAy.Name = "txtAy";
-            this.txtAy.Size = new System.Drawing.Size(100, 28);
-            this.txtAy.TabIndex = 9;
-            this.txtAy.Text = "0";
-            // 
-            // labelAx
-            // 
-            this.labelAx.AutoSize = true;
-            this.labelAx.Location = new System.Drawing.Point(16, 86);
-            this.labelAx.Name = "labelAx";
-            this.labelAx.Size = new System.Drawing.Size(35, 18);
-            this.labelAx.TabIndex = 8;
-            this.labelAx.Text = "Ax:";
-            // 
-            // txtAx
-            // 
-            this.txtAx.BackColor = System.Drawing.SystemColors.Control;
-            this.txtAx.Location = new System.Drawing.Point(57, 78);
-            this.txtAx.Name = "txtAx";
-            this.txtAx.Size = new System.Drawing.Size(100, 28);
-            this.txtAx.TabIndex = 7;
-            this.txtAx.Text = "0";
-            // 
-            // labelBz
-            // 
-            this.labelBz.AutoSize = true;
-            this.labelBz.Location = new System.Drawing.Point(312, 32);
-            this.labelBz.Name = "labelBz";
-            this.labelBz.Size = new System.Drawing.Size(35, 18);
-            this.labelBz.TabIndex = 6;
-            this.labelBz.Text = "Bz:";
-            // 
-            // txtBz
-            // 
-            this.txtBz.BackColor = System.Drawing.SystemColors.Control;
-            this.txtBz.Location = new System.Drawing.Point(354, 27);
-            this.txtBz.Name = "txtBz";
-            this.txtBz.Size = new System.Drawing.Size(100, 28);
-            this.txtBz.TabIndex = 5;
-            this.txtBz.Text = "0";
-            // 
-            // labelBy
-            // 
-            this.labelBy.AutoSize = true;
-            this.labelBy.Location = new System.Drawing.Point(164, 32);
-            this.labelBy.Name = "labelBy";
-            this.labelBy.Size = new System.Drawing.Size(35, 18);
-            this.labelBy.TabIndex = 4;
-            this.labelBy.Text = "By:";
-            // 
-            // txtBy
-            // 
-            this.txtBy.BackColor = System.Drawing.SystemColors.Control;
-            this.txtBy.Location = new System.Drawing.Point(204, 27);
-            this.txtBy.Name = "txtBy";
-            this.txtBy.Size = new System.Drawing.Size(100, 28);
-            this.txtBy.TabIndex = 3;
-            this.txtBy.Text = "0";
-            // 
-            // labelBx
-            // 
-            this.labelBx.AutoSize = true;
-            this.labelBx.Location = new System.Drawing.Point(16, 32);
-            this.labelBx.Name = "labelBx";
-            this.labelBx.Size = new System.Drawing.Size(35, 18);
-            this.labelBx.TabIndex = 2;
-            this.labelBx.Text = "Bx:";
-            // 
-            // txtBx
-            // 
-            this.txtBx.BackColor = System.Drawing.SystemColors.Control;
-            this.txtBx.Location = new System.Drawing.Point(57, 27);
-            this.txtBx.Name = "txtBx";
-            this.txtBx.Size = new System.Drawing.Size(100, 28);
-            this.txtBx.TabIndex = 1;
-            this.txtBx.Text = "0";
-            // 
-            // btnUpdateDistances
-            // 
-            this.btnUpdateDistances.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btnUpdateDistances.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.btnUpdateDistances.Location = new System.Drawing.Point(608, 46);
-            this.btnUpdateDistances.Name = "btnUpdateDistances";
-            this.btnUpdateDistances.Size = new System.Drawing.Size(100, 40);
-            this.btnUpdateDistances.TabIndex = 0;
-            this.btnUpdateDistances.Text = "更新距离";
-            this.btnUpdateDistances.UseVisualStyleBackColor = true;
-            this.btnUpdateDistances.Click += new System.EventHandler(this.btnUpdateDistances_Click);
-            // 
-            // gridLayout
-            // 
-            this.gridLayout.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.gridLayout.BackgroundColor = System.Drawing.SystemColors.Control;
-            this.gridLayout.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.gridLayout.Location = new System.Drawing.Point(10, 136);
-            this.gridLayout.Name = "gridLayout";
-            this.gridLayout.RowHeadersWidth = 62;
-            this.gridLayout.RowTemplate.Height = 30;
-            this.gridLayout.Size = new System.Drawing.Size(717, 291);
-            this.gridLayout.TabIndex = 1;
-            // 
             // chartLayout
             // 
-            this.chartLayout.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
+            this.chartLayout.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            chartArea2.Name = "ChartArea1";
-            this.chartLayout.ChartAreas.Add(chartArea2);
-            legend1.BackColor = System.Drawing.SystemColors.Control;
-            legend1.Enabled = false;
-            legend1.Name = "Legend1";
-            this.chartLayout.Legends.Add(legend1);
-            this.chartLayout.Location = new System.Drawing.Point(10, 434);
+            chartArea7.Name = "ChartArea1";
+            this.chartLayout.ChartAreas.Add(chartArea7);
+            legend5.BackColor = System.Drawing.SystemColors.Control;
+            legend5.Enabled = false;
+            legend5.Name = "Legend1";
+            this.chartLayout.Legends.Add(legend5);
+            this.chartLayout.Location = new System.Drawing.Point(7, 80);
+            this.chartLayout.Margin = new System.Windows.Forms.Padding(2);
             this.chartLayout.Name = "chartLayout";
-            series2.ChartArea = "ChartArea1";
-            series2.Legend = "Legend1";
-            series2.Name = "Series1";
-            this.chartLayout.Series.Add(series2);
-            this.chartLayout.Size = new System.Drawing.Size(717, 279);
-            this.chartLayout.TabIndex = 0;
+            series7.ChartArea = "ChartArea1";
+            series7.Legend = "Legend1";
+            series7.Name = "Series1";
+            this.chartLayout.Series.Add(series7);
+            this.chartLayout.Size = new System.Drawing.Size(647, 489);
+            this.chartLayout.TabIndex = 1;
             this.chartLayout.Text = "chartLayout";
+            this.chartLayout.MouseClick += new System.Windows.Forms.MouseEventHandler(this.chartLayout_MouseClick);
+            // 
+            // panelLayoutTop
+            // 
+            this.panelLayoutTop.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.panelLayoutTop.Controls.Add(this.labelOffsetFromCenter);
+            this.panelLayoutTop.Controls.Add(this.txtOffsetFromCenter);
+            this.panelLayoutTop.Controls.Add(this.labelTxRxDistance);
+            this.panelLayoutTop.Controls.Add(this.txtTxRxDistance);
+            this.panelLayoutTop.Controls.Add(this.labelCurrentInversionStation);
+            this.panelLayoutTop.Controls.Add(this.txtCurrentInversionStation);
+            this.panelLayoutTop.Controls.Add(this.labelCurrentSelectedStation);
+            this.panelLayoutTop.Controls.Add(this.txtCurrentSelectedStation);
+            this.panelLayoutTop.Location = new System.Drawing.Point(7, 7);
+            this.panelLayoutTop.Margin = new System.Windows.Forms.Padding(2);
+            this.panelLayoutTop.Name = "panelLayoutTop";
+            this.panelLayoutTop.Size = new System.Drawing.Size(647, 67);
+            this.panelLayoutTop.TabIndex = 0;
+            // 
+            // labelOffsetFromCenter
+            // 
+            this.labelOffsetFromCenter.AutoSize = true;
+            this.labelOffsetFromCenter.Location = new System.Drawing.Point(320, 41);
+            this.labelOffsetFromCenter.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.labelOffsetFromCenter.Name = "labelOffsetFromCenter";
+            this.labelOffsetFromCenter.Size = new System.Drawing.Size(125, 12);
+            this.labelOffsetFromCenter.TabIndex = 8;
+            this.labelOffsetFromCenter.Text = "偏移发射源中心距离：";
+            this.labelOffsetFromCenter.Click += new System.EventHandler(this.labelOffsetFromCenter_Click);
+            // 
+            // txtOffsetFromCenter
+            // 
+            this.txtOffsetFromCenter.BackColor = System.Drawing.SystemColors.Control;
+            this.txtOffsetFromCenter.Location = new System.Drawing.Point(449, 37);
+            this.txtOffsetFromCenter.Margin = new System.Windows.Forms.Padding(2);
+            this.txtOffsetFromCenter.Name = "txtOffsetFromCenter";
+            this.txtOffsetFromCenter.ReadOnly = true;
+            this.txtOffsetFromCenter.Size = new System.Drawing.Size(81, 21);
+            this.txtOffsetFromCenter.TabIndex = 7;
+            // 
+            // labelTxRxDistance
+            // 
+            this.labelTxRxDistance.AutoSize = true;
+            this.labelTxRxDistance.Location = new System.Drawing.Point(320, 13);
+            this.labelTxRxDistance.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.labelTxRxDistance.Name = "labelTxRxDistance";
+            this.labelTxRxDistance.Size = new System.Drawing.Size(65, 12);
+            this.labelTxRxDistance.TabIndex = 6;
+            this.labelTxRxDistance.Text = "收发距离：";
+            this.labelTxRxDistance.Click += new System.EventHandler(this.labelTxRxDistance_Click);
+            // 
+            // txtTxRxDistance
+            // 
+            this.txtTxRxDistance.BackColor = System.Drawing.SystemColors.Control;
+            this.txtTxRxDistance.Location = new System.Drawing.Point(449, 9);
+            this.txtTxRxDistance.Margin = new System.Windows.Forms.Padding(2);
+            this.txtTxRxDistance.Name = "txtTxRxDistance";
+            this.txtTxRxDistance.ReadOnly = true;
+            this.txtTxRxDistance.Size = new System.Drawing.Size(81, 21);
+            this.txtTxRxDistance.TabIndex = 5;
+            // 
+            // labelCurrentInversionStation
+            // 
+            this.labelCurrentInversionStation.AutoSize = true;
+            this.labelCurrentInversionStation.Location = new System.Drawing.Point(5, 41);
+            this.labelCurrentInversionStation.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.labelCurrentInversionStation.Name = "labelCurrentInversionStation";
+            this.labelCurrentInversionStation.Size = new System.Drawing.Size(89, 12);
+            this.labelCurrentInversionStation.TabIndex = 4;
+            this.labelCurrentInversionStation.Text = "当前反演测点：";
+            // 
+            // txtCurrentInversionStation
+            // 
+            this.txtCurrentInversionStation.BackColor = System.Drawing.SystemColors.Control;
+            this.txtCurrentInversionStation.Location = new System.Drawing.Point(99, 37);
+            this.txtCurrentInversionStation.Margin = new System.Windows.Forms.Padding(2);
+            this.txtCurrentInversionStation.Name = "txtCurrentInversionStation";
+            this.txtCurrentInversionStation.ReadOnly = true;
+            this.txtCurrentInversionStation.Size = new System.Drawing.Size(55, 21);
+            this.txtCurrentInversionStation.TabIndex = 3;
+            // 
+            // labelCurrentSelectedStation
+            // 
+            this.labelCurrentSelectedStation.AutoSize = true;
+            this.labelCurrentSelectedStation.Location = new System.Drawing.Point(5, 13);
+            this.labelCurrentSelectedStation.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.labelCurrentSelectedStation.Name = "labelCurrentSelectedStation";
+            this.labelCurrentSelectedStation.Size = new System.Drawing.Size(89, 12);
+            this.labelCurrentSelectedStation.TabIndex = 2;
+            this.labelCurrentSelectedStation.Text = "当前选择测点：";
+            // 
+            // txtCurrentSelectedStation
+            // 
+            this.txtCurrentSelectedStation.BackColor = System.Drawing.SystemColors.Control;
+            this.txtCurrentSelectedStation.Location = new System.Drawing.Point(99, 9);
+            this.txtCurrentSelectedStation.Margin = new System.Windows.Forms.Padding(2);
+            this.txtCurrentSelectedStation.Name = "txtCurrentSelectedStation";
+            this.txtCurrentSelectedStation.ReadOnly = true;
+            this.txtCurrentSelectedStation.Size = new System.Drawing.Size(55, 21);
+            this.txtCurrentSelectedStation.TabIndex = 1;
             // 
             // tabPageData
             // 
             this.tabPageData.BackColor = System.Drawing.SystemColors.Control;
             this.tabPageData.Controls.Add(this.gridData);
-            this.tabPageData.Location = new System.Drawing.Point(4, 28);
+            this.tabPageData.Location = new System.Drawing.Point(4, 22);
+            this.tabPageData.Margin = new System.Windows.Forms.Padding(2);
             this.tabPageData.Name = "tabPageData";
-            this.tabPageData.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPageData.Size = new System.Drawing.Size(742, 727);
+            this.tabPageData.Padding = new System.Windows.Forms.Padding(2);
+            this.tabPageData.Size = new System.Drawing.Size(658, 565);
             this.tabPageData.TabIndex = 2;
             this.tabPageData.Text = "数据";
             // 
@@ -443,30 +493,231 @@ namespace MapGISPlugin3
             this.gridData.BackgroundColor = System.Drawing.SystemColors.Control;
             this.gridData.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.gridData.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.gridData.Location = new System.Drawing.Point(3, 3);
+            this.gridData.Location = new System.Drawing.Point(2, 2);
+            this.gridData.Margin = new System.Windows.Forms.Padding(2);
             this.gridData.Name = "gridData";
             this.gridData.RowHeadersWidth = 62;
             this.gridData.RowTemplate.Height = 30;
-            this.gridData.Size = new System.Drawing.Size(736, 721);
+            this.gridData.Size = new System.Drawing.Size(654, 561);
             this.gridData.TabIndex = 0;
             // 
-            // label1
+            // tabPageModel
             // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(12, 27);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(125, 18);
-            this.label1.TabIndex = 4;
-            this.label1.Text = "选择测点图层:";
+            this.tabPageModel.BackColor = System.Drawing.SystemColors.Control;
+            this.tabPageModel.Controls.Add(this.gridModelLayers);
+            this.tabPageModel.Controls.Add(this.groupBoxModelParams);
+            this.tabPageModel.Location = new System.Drawing.Point(4, 22);
+            this.tabPageModel.Margin = new System.Windows.Forms.Padding(2);
+            this.tabPageModel.Name = "tabPageModel";
+            this.tabPageModel.Padding = new System.Windows.Forms.Padding(2);
+            this.tabPageModel.Size = new System.Drawing.Size(658, 565);
+            this.tabPageModel.TabIndex = 3;
+            this.tabPageModel.Text = "模型";
             // 
-            // label2
+            // gridModelLayers
             // 
-            this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(400, 27);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(89, 18);
-            this.label2.TabIndex = 3;
-            this.label2.Text = "选择测线:";
+            this.gridModelLayers.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.gridModelLayers.BackgroundColor = System.Drawing.SystemColors.Control;
+            this.gridModelLayers.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.gridModelLayers.Location = new System.Drawing.Point(7, 91);
+            this.gridModelLayers.Margin = new System.Windows.Forms.Padding(2);
+            this.gridModelLayers.Name = "gridModelLayers";
+            this.gridModelLayers.RowHeadersWidth = 62;
+            this.gridModelLayers.RowTemplate.Height = 30;
+            this.gridModelLayers.Size = new System.Drawing.Size(647, 476);
+            this.gridModelLayers.TabIndex = 1;
+            // 
+            // groupBoxModelParams
+            // 
+            this.groupBoxModelParams.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.groupBoxModelParams.Controls.Add(this.btnGenerateModel);
+            this.groupBoxModelParams.Controls.Add(this.nudInitialResistivity);
+            this.groupBoxModelParams.Controls.Add(this.labelInitialResistivity);
+            this.groupBoxModelParams.Controls.Add(this.nudGrowthRate);
+            this.groupBoxModelParams.Controls.Add(this.labelGrowthRate);
+            this.groupBoxModelParams.Controls.Add(this.nudInitialThickness);
+            this.groupBoxModelParams.Controls.Add(this.labelInitialThickness);
+            this.groupBoxModelParams.Controls.Add(this.nudLayerCount);
+            this.groupBoxModelParams.Controls.Add(this.labelLayerCount);
+            this.groupBoxModelParams.Location = new System.Drawing.Point(7, 7);
+            this.groupBoxModelParams.Margin = new System.Windows.Forms.Padding(2);
+            this.groupBoxModelParams.Name = "groupBoxModelParams";
+            this.groupBoxModelParams.Padding = new System.Windows.Forms.Padding(2);
+            this.groupBoxModelParams.Size = new System.Drawing.Size(647, 80);
+            this.groupBoxModelParams.TabIndex = 0;
+            this.groupBoxModelParams.TabStop = false;
+            this.groupBoxModelParams.Text = "模型参数";
+            // 
+            // btnGenerateModel
+            // 
+            this.btnGenerateModel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnGenerateModel.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.btnGenerateModel.Location = new System.Drawing.Point(570, 30);
+            this.btnGenerateModel.Margin = new System.Windows.Forms.Padding(2);
+            this.btnGenerateModel.Name = "btnGenerateModel";
+            this.btnGenerateModel.Size = new System.Drawing.Size(67, 27);
+            this.btnGenerateModel.TabIndex = 8;
+            this.btnGenerateModel.Text = "生成模型";
+            this.btnGenerateModel.UseVisualStyleBackColor = true;
+            this.btnGenerateModel.Click += new System.EventHandler(this.btnGenerateModel_Click);
+            // 
+            // nudInitialResistivity
+            // 
+            this.nudInitialResistivity.DecimalPlaces = 1;
+            this.nudInitialResistivity.Location = new System.Drawing.Point(355, 48);
+            this.nudInitialResistivity.Margin = new System.Windows.Forms.Padding(2);
+            this.nudInitialResistivity.Maximum = new decimal(new int[] {
+            100000,
+            0,
+            0,
+            0});
+            this.nudInitialResistivity.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.nudInitialResistivity.Name = "nudInitialResistivity";
+            this.nudInitialResistivity.Size = new System.Drawing.Size(100, 21);
+            this.nudInitialResistivity.TabIndex = 7;
+            this.nudInitialResistivity.Value = new decimal(new int[] {
+            100,
+            0,
+            0,
+            0});
+            // 
+            // labelInitialResistivity
+            // 
+            this.labelInitialResistivity.AutoSize = true;
+            this.labelInitialResistivity.Location = new System.Drawing.Point(244, 52);
+            this.labelInitialResistivity.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.labelInitialResistivity.Name = "labelInitialResistivity";
+            this.labelInitialResistivity.Size = new System.Drawing.Size(107, 12);
+            this.labelInitialResistivity.TabIndex = 6;
+            this.labelInitialResistivity.Text = "初始电阻率(Ω·m)";
+            // 
+            // nudGrowthRate
+            // 
+            this.nudGrowthRate.DecimalPlaces = 4;
+            this.nudGrowthRate.Increment = new decimal(new int[] {
+            1,
+            0,
+            0,
+            262144});
+            this.nudGrowthRate.Location = new System.Drawing.Point(355, 21);
+            this.nudGrowthRate.Margin = new System.Windows.Forms.Padding(2);
+            this.nudGrowthRate.Maximum = new decimal(new int[] {
+            3,
+            0,
+            0,
+            0});
+            this.nudGrowthRate.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            131072});
+            this.nudGrowthRate.Name = "nudGrowthRate";
+            this.nudGrowthRate.Size = new System.Drawing.Size(100, 21);
+            this.nudGrowthRate.TabIndex = 5;
+            this.nudGrowthRate.Value = new decimal(new int[] {
+            12589,
+            0,
+            0,
+            262144});
+            // 
+            // labelGrowthRate
+            // 
+            this.labelGrowthRate.AutoSize = true;
+            this.labelGrowthRate.Location = new System.Drawing.Point(244, 25);
+            this.labelGrowthRate.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.labelGrowthRate.Name = "labelGrowthRate";
+            this.labelGrowthRate.Size = new System.Drawing.Size(71, 12);
+            this.labelGrowthRate.TabIndex = 4;
+            this.labelGrowthRate.Text = "厚度增长倍:";
+            // 
+            // nudInitialThickness
+            // 
+            this.nudInitialThickness.DecimalPlaces = 1;
+            this.nudInitialThickness.Location = new System.Drawing.Point(97, 48);
+            this.nudInitialThickness.Margin = new System.Windows.Forms.Padding(2);
+            this.nudInitialThickness.Maximum = new decimal(new int[] {
+            1000,
+            0,
+            0,
+            0});
+            this.nudInitialThickness.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.nudInitialThickness.Name = "nudInitialThickness";
+            this.nudInitialThickness.Size = new System.Drawing.Size(100, 21);
+            this.nudInitialThickness.TabIndex = 3;
+            this.nudInitialThickness.Value = new decimal(new int[] {
+            5,
+            0,
+            0,
+            0});
+            // 
+            // labelInitialThickness
+            // 
+            this.labelInitialThickness.AutoSize = true;
+            this.labelInitialThickness.Location = new System.Drawing.Point(11, 52);
+            this.labelInitialThickness.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.labelInitialThickness.Name = "labelInitialThickness";
+            this.labelInitialThickness.Size = new System.Drawing.Size(71, 12);
+            this.labelInitialThickness.TabIndex = 2;
+            this.labelInitialThickness.Text = "首层厚度(m)";
+            // 
+            // nudLayerCount
+            // 
+            this.nudLayerCount.Location = new System.Drawing.Point(97, 21);
+            this.nudLayerCount.Margin = new System.Windows.Forms.Padding(2);
+            this.nudLayerCount.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.nudLayerCount.Name = "nudLayerCount";
+            this.nudLayerCount.Size = new System.Drawing.Size(100, 21);
+            this.nudLayerCount.TabIndex = 1;
+            this.nudLayerCount.Value = new decimal(new int[] {
+            20,
+            0,
+            0,
+            0});
+            // 
+            // labelLayerCount
+            // 
+            this.labelLayerCount.AutoSize = true;
+            this.labelLayerCount.Location = new System.Drawing.Point(11, 25);
+            this.labelLayerCount.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.labelLayerCount.Name = "labelLayerCount";
+            this.labelLayerCount.Size = new System.Drawing.Size(53, 12);
+            this.labelLayerCount.TabIndex = 0;
+            this.labelLayerCount.Text = "层数(nL)";
+            // 
+            // labelStationLayer
+            // 
+            this.labelStationLayer.AutoSize = true;
+            this.labelStationLayer.Location = new System.Drawing.Point(8, 18);
+            this.labelStationLayer.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.labelStationLayer.Name = "labelStationLayer";
+            this.labelStationLayer.Size = new System.Drawing.Size(83, 12);
+            this.labelStationLayer.TabIndex = 4;
+            this.labelStationLayer.Text = "选择测点图层:";
+            // 
+            // labelLineName
+            // 
+            this.labelLineName.AutoSize = true;
+            this.labelLineName.Location = new System.Drawing.Point(280, 18);
+            this.labelLineName.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.labelLineName.Name = "labelLineName";
+            this.labelLineName.Size = new System.Drawing.Size(59, 12);
+            this.labelLineName.TabIndex = 3;
+            this.labelLineName.Text = "选择测线:";
             // 
             // cmbLineName
             // 
@@ -476,9 +727,10 @@ namespace MapGISPlugin3
             this.cmbLineName.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbLineName.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.cmbLineName.FormattingEnabled = true;
-            this.cmbLineName.Location = new System.Drawing.Point(496, 20);
+            this.cmbLineName.Location = new System.Drawing.Point(344, 13);
+            this.cmbLineName.Margin = new System.Windows.Forms.Padding(2);
             this.cmbLineName.Name = "cmbLineName";
-            this.cmbLineName.Size = new System.Drawing.Size(236, 26);
+            this.cmbLineName.Size = new System.Drawing.Size(312, 20);
             this.cmbLineName.TabIndex = 1;
             this.cmbLineName.SelectedIndexChanged += new System.EventHandler(this.cmbLineName_SelectedIndexChanged);
             // 
@@ -488,108 +740,128 @@ namespace MapGISPlugin3
             this.cmbStationLayer.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbStationLayer.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.cmbStationLayer.FormattingEnabled = true;
-            this.cmbStationLayer.Location = new System.Drawing.Point(147, 20);
+            this.cmbStationLayer.Location = new System.Drawing.Point(98, 13);
+            this.cmbStationLayer.Margin = new System.Windows.Forms.Padding(2);
             this.cmbStationLayer.Name = "cmbStationLayer";
-            this.cmbStationLayer.Size = new System.Drawing.Size(236, 26);
+            this.cmbStationLayer.Size = new System.Drawing.Size(173, 20);
             this.cmbStationLayer.TabIndex = 0;
             this.cmbStationLayer.SelectedIndexChanged += new System.EventHandler(this.cmbStationLayer_SelectedIndexChanged);
+            // 
+            // splitContainerRightMain
+            // 
+            this.splitContainerRightMain.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.splitContainerRightMain.Location = new System.Drawing.Point(0, 0);
+            this.splitContainerRightMain.Name = "splitContainerRightMain";
+            this.splitContainerRightMain.Orientation = System.Windows.Forms.Orientation.Horizontal;
+            // 
+            // splitContainerRightMain.Panel1
+            // 
+            this.splitContainerRightMain.Panel1.Controls.Add(this.splitContainerRight);
+            // 
+            // splitContainerRightMain.Panel2
+            // 
+            this.splitContainerRightMain.Panel2.Controls.Add(this.chartResultSection);
+            this.splitContainerRightMain.Size = new System.Drawing.Size(598, 635);
+            this.splitContainerRightMain.SplitterDistance = 320;
+            this.splitContainerRightMain.TabIndex = 0;
+            // 
+            // splitContainerRight
+            // 
+            this.splitContainerRight.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.splitContainerRight.Location = new System.Drawing.Point(0, 0);
+            this.splitContainerRight.Name = "splitContainerRight";
+            // 
+            // splitContainerRight.Panel1
+            // 
+            this.splitContainerRight.Panel1.Controls.Add(this.chartResistivity);
+            // 
+            // splitContainerRight.Panel2
+            // 
+            this.splitContainerRight.Panel2.Controls.Add(this.chartPhase);
+            this.splitContainerRight.Size = new System.Drawing.Size(598, 320);
+            this.splitContainerRight.SplitterDistance = 299;
+            this.splitContainerRight.TabIndex = 0;
+            // 
+            // chartResistivity
+            // 
+            chartArea8.Name = "ChartArea1";
+            this.chartResistivity.ChartAreas.Add(chartArea8);
+            this.chartResistivity.Dock = System.Windows.Forms.DockStyle.Fill;
+            legend6.BackColor = System.Drawing.SystemColors.Control;
+            legend6.Name = "Legend1";
+            this.chartResistivity.Legends.Add(legend6);
+            this.chartResistivity.Location = new System.Drawing.Point(0, 0);
+            this.chartResistivity.Margin = new System.Windows.Forms.Padding(2);
+            this.chartResistivity.Name = "chartResistivity";
+            series8.ChartArea = "ChartArea1";
+            series8.Legend = "Legend1";
+            series8.Name = "Series1";
+            this.chartResistivity.Series.Add(series8);
+            this.chartResistivity.Size = new System.Drawing.Size(299, 320);
+            this.chartResistivity.TabIndex = 1;
+            this.chartResistivity.Text = "chartResistivity";
+            // 
+            // chartPhase
+            // 
+            chartArea9.Name = "ChartArea1";
+            this.chartPhase.ChartAreas.Add(chartArea9);
+            this.chartPhase.Dock = System.Windows.Forms.DockStyle.Fill;
+            legend7.BackColor = System.Drawing.SystemColors.Control;
+            legend7.Name = "Legend1";
+            this.chartPhase.Legends.Add(legend7);
+            this.chartPhase.Location = new System.Drawing.Point(0, 0);
+            this.chartPhase.Margin = new System.Windows.Forms.Padding(2);
+            this.chartPhase.Name = "chartPhase";
+            series9.ChartArea = "ChartArea1";
+            series9.Legend = "Legend1";
+            series9.Name = "Series1";
+            this.chartPhase.Series.Add(series9);
+            this.chartPhase.Size = new System.Drawing.Size(295, 320);
+            this.chartPhase.TabIndex = 2;
+            this.chartPhase.Text = "chartPhase";
             // 
             // chartResultSection
             // 
             this.chartResultSection.BackColor = System.Drawing.SystemColors.Control;
-            chartArea3.Name = "ChartArea1";
-            this.chartResultSection.ChartAreas.Add(chartArea3);
+            chartArea10.Name = "ChartArea1";
+            this.chartResultSection.ChartAreas.Add(chartArea10);
             this.chartResultSection.Dock = System.Windows.Forms.DockStyle.Fill;
-            legend2.BackColor = System.Drawing.SystemColors.Control;
-            legend2.Name = "Legend1";
-            this.chartResultSection.Legends.Add(legend2);
-            this.chartResultSection.Location = new System.Drawing.Point(0, 420);
-            this.chartResultSection.Margin = new System.Windows.Forms.Padding(4);
+            legend8.BackColor = System.Drawing.SystemColors.Control;
+            legend8.Name = "Legend1";
+            this.chartResultSection.Legends.Add(legend8);
+            this.chartResultSection.Location = new System.Drawing.Point(0, 0);
             this.chartResultSection.Name = "chartResultSection";
-            series3.ChartArea = "ChartArea1";
-            series3.Legend = "Legend1";
-            series3.Name = "Series1";
-            this.chartResultSection.Series.Add(series3);
-            this.chartResultSection.Size = new System.Drawing.Size(842, 390);
-            this.chartResultSection.TabIndex = 1;
+            series10.ChartArea = "ChartArea1";
+            series10.Legend = "Legend1";
+            series10.Name = "Series1";
+            this.chartResultSection.Series.Add(series10);
+            this.chartResultSection.Size = new System.Drawing.Size(598, 311);
+            this.chartResultSection.TabIndex = 0;
             this.chartResultSection.Text = "chartResultSection";
             // 
-            // splitContainer2
+            // panelTitle
             // 
-            this.splitContainer2.Dock = System.Windows.Forms.DockStyle.Top;
-            this.splitContainer2.Location = new System.Drawing.Point(0, 0);
-            this.splitContainer2.Margin = new System.Windows.Forms.Padding(4);
-            this.splitContainer2.Name = "splitContainer2";
-            // 
-            // splitContainer2.Panel1
-            // 
-            this.splitContainer2.Panel1.Controls.Add(this.chartResistivity);
-            // 
-            // splitContainer2.Panel2
-            // 
-            this.splitContainer2.Panel2.Controls.Add(this.chartPhase);
-            this.splitContainer2.Size = new System.Drawing.Size(842, 420);
-            this.splitContainer2.SplitterDistance = 418;
-            this.splitContainer2.SplitterWidth = 6;
-            this.splitContainer2.TabIndex = 0;
-            // 
-            // chartResistivity
-            // 
-            chartArea4.Name = "ChartArea1";
-            this.chartResistivity.ChartAreas.Add(chartArea4);
-            this.chartResistivity.Dock = System.Windows.Forms.DockStyle.Fill;
-            legend3.BackColor = System.Drawing.SystemColors.Control;
-            legend3.Name = "Legend1";
-            this.chartResistivity.Legends.Add(legend3);
-            this.chartResistivity.Location = new System.Drawing.Point(0, 0);
-            this.chartResistivity.Name = "chartResistivity";
-            series4.ChartArea = "ChartArea1";
-            series4.Legend = "Legend1";
-            series4.Name = "Series1";
-            this.chartResistivity.Series.Add(series4);
-            this.chartResistivity.Size = new System.Drawing.Size(418, 420);
-            this.chartResistivity.TabIndex = 1;
-            this.chartResistivity.Text = "chart2";
-            // 
-            // chartPhase
-            // 
-            chartArea5.Name = "ChartArea1";
-            this.chartPhase.ChartAreas.Add(chartArea5);
-            this.chartPhase.Dock = System.Windows.Forms.DockStyle.Fill;
-            legend4.BackColor = System.Drawing.SystemColors.Control;
-            legend4.Name = "Legend1";
-            this.chartPhase.Legends.Add(legend4);
-            this.chartPhase.Location = new System.Drawing.Point(0, 0);
-            this.chartPhase.Name = "chartPhase";
-            series5.ChartArea = "ChartArea1";
-            series5.Legend = "Legend1";
-            series5.Name = "Series1";
-            this.chartPhase.Series.Add(series5);
-            this.chartPhase.Size = new System.Drawing.Size(418, 420);
-            this.chartPhase.TabIndex = 2;
-            this.chartPhase.Text = "chart3";
-            // 
-            // panel1
-            // 
-            this.panel1.BackColor = System.Drawing.SystemColors.Control;
-            this.panel1.Controls.Add(this.labelTitle);
-            this.panel1.Controls.Add(this.btnClose);
-            this.panel1.Dock = System.Windows.Forms.DockStyle.Top;
-            this.panel1.Location = new System.Drawing.Point(0, 0);
-            this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(1596, 48);
-            this.panel1.TabIndex = 6;
+            this.panelTitle.BackColor = System.Drawing.SystemColors.Control;
+            this.panelTitle.Controls.Add(this.labelTitle);
+            this.panelTitle.Controls.Add(this.btnClose);
+            this.panelTitle.Dock = System.Windows.Forms.DockStyle.Top;
+            this.panelTitle.Location = new System.Drawing.Point(0, 0);
+            this.panelTitle.Margin = new System.Windows.Forms.Padding(2);
+            this.panelTitle.Name = "panelTitle";
+            this.panelTitle.Size = new System.Drawing.Size(1267, 32);
+            this.panelTitle.TabIndex = 6;
             // 
             // labelTitle
             // 
             this.labelTitle.Dock = System.Windows.Forms.DockStyle.Left;
             this.labelTitle.ForeColor = System.Drawing.SystemColors.ControlText;
             this.labelTitle.Location = new System.Drawing.Point(0, 0);
+            this.labelTitle.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.labelTitle.Name = "labelTitle";
-            this.labelTitle.Size = new System.Drawing.Size(150, 48);
+            this.labelTitle.Size = new System.Drawing.Size(133, 32);
             this.labelTitle.TabIndex = 1;
-            this.labelTitle.Text = "CSAMT一维反演";
-            this.labelTitle.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.labelTitle.Text = "CSAMT 一维反演";
+            this.labelTitle.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // btnClose
             // 
@@ -597,9 +869,10 @@ namespace MapGISPlugin3
             this.btnClose.FlatAppearance.BorderColor = System.Drawing.SystemColors.ControlLight;
             this.btnClose.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnClose.Font = new System.Drawing.Font("宋体", 6.75F);
-            this.btnClose.Location = new System.Drawing.Point(1552, 0);
+            this.btnClose.Location = new System.Drawing.Point(1238, 0);
+            this.btnClose.Margin = new System.Windows.Forms.Padding(2);
             this.btnClose.Name = "btnClose";
-            this.btnClose.Size = new System.Drawing.Size(44, 48);
+            this.btnClose.Size = new System.Drawing.Size(29, 32);
             this.btnClose.TabIndex = 0;
             this.btnClose.Text = "X";
             this.btnClose.UseVisualStyleBackColor = true;
@@ -611,89 +884,182 @@ namespace MapGISPlugin3
             this.openFileDialogTran.Filter = "发射源文件 (*.dat)|*.dat|所有文件 (*.*)|*.*";
             this.openFileDialogTran.Title = "请选择发射源文件";
             // 
+            // txtAz
+            // 
+            this.txtAz.Location = new System.Drawing.Point(0, 0);
+            this.txtAz.Name = "txtAz";
+            this.txtAz.Size = new System.Drawing.Size(10, 21);
+            this.txtAz.TabIndex = 0;
+            this.txtAz.Visible = false;
+            // 
+            // txtAy
+            // 
+            this.txtAy.Location = new System.Drawing.Point(0, 0);
+            this.txtAy.Name = "txtAy";
+            this.txtAy.Size = new System.Drawing.Size(10, 21);
+            this.txtAy.TabIndex = 0;
+            this.txtAy.Visible = false;
+            // 
+            // txtAx
+            // 
+            this.txtAx.Location = new System.Drawing.Point(0, 0);
+            this.txtAx.Name = "txtAx";
+            this.txtAx.Size = new System.Drawing.Size(10, 21);
+            this.txtAx.TabIndex = 0;
+            this.txtAx.Visible = false;
+            // 
+            // txtBz
+            // 
+            this.txtBz.Location = new System.Drawing.Point(0, 0);
+            this.txtBz.Name = "txtBz";
+            this.txtBz.Size = new System.Drawing.Size(10, 21);
+            this.txtBz.TabIndex = 0;
+            this.txtBz.Visible = false;
+            // 
+            // txtBy
+            // 
+            this.txtBy.Location = new System.Drawing.Point(0, 0);
+            this.txtBy.Name = "txtBy";
+            this.txtBy.Size = new System.Drawing.Size(10, 21);
+            this.txtBy.TabIndex = 0;
+            this.txtBy.Visible = false;
+            // 
+            // txtBx
+            // 
+            this.txtBx.Location = new System.Drawing.Point(0, 0);
+            this.txtBx.Name = "txtBx";
+            this.txtBx.Size = new System.Drawing.Size(10, 21);
+            this.txtBx.TabIndex = 0;
+            this.txtBx.Visible = false;
+            // 
+            // gridLayout
+            // 
+            this.gridLayout.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.gridLayout.Location = new System.Drawing.Point(0, 0);
+            this.gridLayout.Name = "gridLayout";
+            this.gridLayout.RowHeadersWidth = 62;
+            this.gridLayout.RowTemplate.Height = 30;
+            this.gridLayout.Size = new System.Drawing.Size(240, 150);
+            this.gridLayout.TabIndex = 0;
+            this.gridLayout.Visible = false;
+            // 
             // Form_CSAMT1di
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 18F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1596, 858);
-            this.Controls.Add(this.splitContainer1);
-            this.Controls.Add(this.panel1);
+            this.ClientSize = new System.Drawing.Size(1267, 667);
+            this.Controls.Add(this.splitContainerMain);
+            this.Controls.Add(this.panelTitle);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
+            this.Margin = new System.Windows.Forms.Padding(2);
             this.Name = "Form_CSAMT1di";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "可控源音频大地电磁法一维反演";
             this.Load += new System.EventHandler(this.Form_CSAMT1di_Load);
-            this.splitContainer1.Panel1.ResumeLayout(false);
-            this.splitContainer1.Panel1.PerformLayout();
-            this.splitContainer1.Panel2.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
-            this.splitContainer1.ResumeLayout(false);
+            this.splitContainerMain.Panel1.ResumeLayout(false);
+            this.splitContainerMain.Panel1.PerformLayout();
+            this.splitContainerMain.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainerMain)).EndInit();
+            this.splitContainerMain.ResumeLayout(false);
             this.tabControl1.ResumeLayout(false);
             this.tabPageCalculate.ResumeLayout(false);
-            this.groupBoxParams.ResumeLayout(false);
-            this.groupBoxParams.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.nudIterationCount)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.gridCalc)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.chartProfileView)).EndInit();
+            this.groupBoxCalcParams.ResumeLayout(false);
+            this.groupBoxCalcParams.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.nudIterationCount)).EndInit();
             this.tabPageLayout.ResumeLayout(false);
-            this.groupBoxTransmitter.ResumeLayout(false);
-            this.groupBoxTransmitter.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.gridLayout)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.chartLayout)).EndInit();
+            this.panelLayoutTop.ResumeLayout(false);
+            this.panelLayoutTop.PerformLayout();
             this.tabPageData.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.gridData)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.chartResultSection)).EndInit();
-            this.splitContainer2.Panel1.ResumeLayout(false);
-            this.splitContainer2.Panel2.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.splitContainer2)).EndInit();
-            this.splitContainer2.ResumeLayout(false);
+            this.tabPageModel.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.gridModelLayers)).EndInit();
+            this.groupBoxModelParams.ResumeLayout(false);
+            this.groupBoxModelParams.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.nudInitialResistivity)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nudGrowthRate)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nudInitialThickness)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nudLayerCount)).EndInit();
+            this.splitContainerRightMain.Panel1.ResumeLayout(false);
+            this.splitContainerRightMain.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainerRightMain)).EndInit();
+            this.splitContainerRightMain.ResumeLayout(false);
+            this.splitContainerRight.Panel1.ResumeLayout(false);
+            this.splitContainerRight.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainerRight)).EndInit();
+            this.splitContainerRight.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.chartResistivity)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.chartPhase)).EndInit();
-            this.panel1.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.chartResultSection)).EndInit();
+            this.panelTitle.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.gridLayout)).EndInit();
             this.ResumeLayout(false);
 
         }
 
         #endregion
 
-        private System.Windows.Forms.SplitContainer splitContainer1;
+        private System.Windows.Forms.SplitContainer splitContainerMain;
         private System.Windows.Forms.TabControl tabControl1;
         private System.Windows.Forms.TabPage tabPageCalculate;
-        private System.Windows.Forms.GroupBox groupBoxParams;
         private System.Windows.Forms.DataVisualization.Charting.Chart chartProfileView;
         private System.Windows.Forms.TabPage tabPageLayout;
-        private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.Label labelStationLayer;
+        private System.Windows.Forms.Label labelLineName;
         private System.Windows.Forms.ComboBox cmbLineName;
         private System.Windows.Forms.ComboBox cmbStationLayer;
         private System.Windows.Forms.TabPage tabPageData;
-        private System.Windows.Forms.NumericUpDown nudIterationCount;
-        private System.Windows.Forms.Label label4;
-        private System.Windows.Forms.Button btnCalculate;
         private System.Windows.Forms.DataGridView gridData;
-        private System.Windows.Forms.DataVisualization.Charting.Chart chartPhase;
-        private System.Windows.Forms.DataVisualization.Charting.Chart chartResistivity;
-        private System.Windows.Forms.GroupBox groupBoxTransmitter;
-        private System.Windows.Forms.Label labelAz;
-        private System.Windows.Forms.TextBox txtAz;
-        private System.Windows.Forms.Label labelAy;
-        private System.Windows.Forms.TextBox txtAy;
-        private System.Windows.Forms.Label labelAx;
-        private System.Windows.Forms.TextBox txtAx;
-        private System.Windows.Forms.Label labelBz;
-        private System.Windows.Forms.TextBox txtBz;
-        private System.Windows.Forms.Label labelBy;
-        private System.Windows.Forms.TextBox txtBy;
-        private System.Windows.Forms.Label labelBx;
-        private System.Windows.Forms.TextBox txtBx;
-        private System.Windows.Forms.Button btnUpdateDistances;
-        private System.Windows.Forms.DataGridView gridLayout;
+        private System.Windows.Forms.TabPage tabPageModel;
+        private System.Windows.Forms.DataGridView gridModelLayers;
+        private System.Windows.Forms.GroupBox groupBoxModelParams;
+        private System.Windows.Forms.Button btnGenerateModel;
+        private System.Windows.Forms.NumericUpDown nudInitialResistivity;
+        private System.Windows.Forms.Label labelInitialResistivity;
+        private System.Windows.Forms.NumericUpDown nudGrowthRate;
+        private System.Windows.Forms.Label labelGrowthRate;
+        private System.Windows.Forms.NumericUpDown nudInitialThickness;
+        private System.Windows.Forms.Label labelInitialThickness;
+        private System.Windows.Forms.NumericUpDown nudLayerCount;
+        private System.Windows.Forms.Label labelLayerCount;
+        private System.Windows.Forms.GroupBox groupBoxCalcParams;
+        private System.Windows.Forms.NumericUpDown nudIterationCount;
+        private System.Windows.Forms.Label labelIter;
+        private System.Windows.Forms.Button btnCalculate;
+        private System.Windows.Forms.CheckBox chkJointInversion;
+        private System.Windows.Forms.CheckBox chkUseCurrentStation;
+        private System.Windows.Forms.TextBox txtAllowError;
+        private System.Windows.Forms.Label labelAllowError;
+        private System.Windows.Forms.TextBox txtActualError;
+        private System.Windows.Forms.Label labelActualError;
+        private System.Windows.Forms.Panel panelLayoutTop;
+        private System.Windows.Forms.Label labelCurrentSelectedStation;
+        private System.Windows.Forms.TextBox txtCurrentSelectedStation;
+        private System.Windows.Forms.Label labelCurrentInversionStation;
+        private System.Windows.Forms.TextBox txtCurrentInversionStation;
+        private System.Windows.Forms.Label labelTxRxDistance;
+        private System.Windows.Forms.TextBox txtTxRxDistance;
+        private System.Windows.Forms.Label labelOffsetFromCenter;
+        private System.Windows.Forms.TextBox txtOffsetFromCenter;
+        private System.Windows.Forms.DataGridView gridCalc;
         private System.Windows.Forms.DataVisualization.Charting.Chart chartLayout;
-        private System.Windows.Forms.Button btnLoadTranFile;
-        private System.Windows.Forms.OpenFileDialog openFileDialogTran;
-        private System.Windows.Forms.SplitContainer splitContainer2;
+        private System.Windows.Forms.SplitContainer splitContainerRightMain; // 新增
+        private System.Windows.Forms.SplitContainer splitContainerRight;
+        private System.Windows.Forms.DataVisualization.Charting.Chart chartResistivity;
+        private System.Windows.Forms.DataVisualization.Charting.Chart chartPhase;
         private System.Windows.Forms.DataVisualization.Charting.Chart chartResultSection;
-        private System.Windows.Forms.Panel panel1;
+        private System.Windows.Forms.Panel panelTitle;
         private System.Windows.Forms.Label labelTitle;
         private System.Windows.Forms.Button btnClose;
+        private System.Windows.Forms.OpenFileDialog openFileDialogTran;
+        private System.Windows.Forms.TextBox txtAz;
+        private System.Windows.Forms.TextBox txtAy;
+        private System.Windows.Forms.TextBox txtAx;
+        private System.Windows.Forms.TextBox txtBz;
+        private System.Windows.Forms.TextBox txtBy;
+        private System.Windows.Forms.TextBox txtBx;
+        private System.Windows.Forms.DataGridView gridLayout;
     }
 }

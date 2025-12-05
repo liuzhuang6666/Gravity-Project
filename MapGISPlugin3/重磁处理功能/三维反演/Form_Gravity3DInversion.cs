@@ -345,11 +345,11 @@ namespace MapGISPlugin3
 
         private void treeViewLayers_AfterSelect(object sender, TreeViewEventArgs e)
         {
-            // 检查用户是否选中了一个栅格图层
             if (e.Node.Tag is RasterLayer layer)
             {
-                // 1. 获取原始文件名 (不含扩展名)
-                string sourceName = layer.Name; // 默认使用图层名
+                // 1. 获取图层原始名称（优先从文件路径取文件名，没有则用图层名）
+                string sourceName = layer.Name; // 默认使用图层显示名称
+
                 try
                 {
                     if (!string.IsNullOrEmpty(layer.URL))
@@ -361,20 +361,27 @@ namespace MapGISPlugin3
                         }
                     }
                 }
-                catch { /* 如果URL解析失败，保持使用图层名 */ }
+                catch { /* 解析失败时保持使用图层名 */ }
 
-                // 2. 清理非法字符 (将空格、特殊符号替换为下划线，防止类名报错)
-                sourceName = System.Text.RegularExpressions.Regex.Replace(sourceName, @"[^\w]", "_");
+                // 2. 清理非法字符，只保留字母、数字、下划线
+                string cleanName = System.Text.RegularExpressions.Regex.Replace(sourceName, @"[^\w]", "");
 
-                // 3. 生成时间戳
-                string timeStamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+                // 3. 取前6位（如果不足6位则全部使用）
+                string namePart = cleanName.Length > 6 ? cleanName.Substring(0, 6) : cleanName;
+                if (string.IsNullOrEmpty(namePart))
+                    namePart = "Layer"; // 防止为空
 
-                // 4. 组合类名: [文件名]_Gra_Inv_[时间戳]
-                textBoxSavePath.Text = $"{sourceName}_Gra_Inv_{timeStamp}";
+                // 4. 生成6位时间戳：MMddHHmm → 例如 12041530（8位太长，改为 ddHHmm 刚好6位）
+                string timePart = DateTime.Now.ToString("ddHHmm");  // 04日15时30分 → 041530
+
+                // 5. 拼接最终类名：前6位 + _GInv + 6位时间  → 总长 ≤ 6+5+6 = 17个字符
+                string finalName = $"{namePart}_GInv_{timePart}";
+
+                textBoxSavePath.Text = finalName;
             }
             else
             {
-                // 如果选中的不是栅格图层(比如选了地图节点)，清空输入框
+                // 非栅格图层时清空，防止误用旧名称
                 textBoxSavePath.Text = "";
             }
         }
