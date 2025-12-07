@@ -450,8 +450,8 @@ namespace MapGISPlugin3
 
                     Fields transmitterFields = new Fields();
                     transmitterFields.AppendField(new Field { FieldName = "点名", FieldType = FieldType.FldString, MskLength = 10 });
-                    transmitterFields.AppendField(new Field { FieldName = "X", FieldType = FieldType.FldDouble, MskLength = 20, PointLength = 8 });
-                    transmitterFields.AppendField(new Field { FieldName = "Y", FieldType = FieldType.FldDouble, MskLength = 20, PointLength = 8 });
+                    transmitterFields.AppendField(new Field { FieldName = "X坐标", FieldType = FieldType.FldDouble, MskLength = 20, PointLength = 8 });
+                    transmitterFields.AppendField(new Field { FieldName = "Y坐标", FieldType = FieldType.FldDouble, MskLength = 20, PointLength = 8 });
                     transmitterFields.AppendField(new Field { FieldName = "Z", FieldType = FieldType.FldDouble, MskLength = 20, PointLength = 8 });
 
                     if (transmitterSfc.UpdateFields(transmitterFields) <= 0)
@@ -481,8 +481,8 @@ namespace MapGISPlugin3
                             currentPnts = new GeoPoints();
                             currentPnts.Append(pnt3D);
                             transmitterRecord["点名"] = point.Name;
-                            transmitterRecord["X"] = point.X;
-                            transmitterRecord["Y"] = point.Y;
+                            transmitterRecord["X坐标"] = point.X;
+                            transmitterRecord["Y坐标"] = point.Y;
                             transmitterRecord["Z"] = point.Z;
 
                             if (transmitterSfc.Append(currentPnts, transmitterRecord, null) <= 0)

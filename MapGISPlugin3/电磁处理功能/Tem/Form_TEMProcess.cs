@@ -234,9 +234,9 @@ namespace MapGISPlugin3
                         // 读取坐标
                         double x = 0, y = 0, z = 0;
                         if (att["X坐标"] != null && att["X坐标"] != DBNull.Value)
-                            double.TryParse(att["X"].ToString(), out x);
+                            double.TryParse(att["X坐标"].ToString(), out x);
                         if (att["Y坐标"] != null && att["Y坐标"] != DBNull.Value)
-                            double.TryParse(att["Y"].ToString(), out y);
+                            double.TryParse(att["Y坐标"].ToString(), out y);
                         if (att["Z"] != null && att["Z"] != DBNull.Value)
                             double.TryParse(att["Z"].ToString(), out z);
 
