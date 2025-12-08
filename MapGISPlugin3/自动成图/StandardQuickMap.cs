@@ -178,7 +178,7 @@ namespace MapGISPlugin3
             else
             {
                 // [调试] 如果弹这个框，说明读取成功了
-                // MessageBox.Show("成功读取步长: " + autoStep);
+                MessageBox.Show("成功读取步长: " + autoStep);
             }
 
             // --- 生成层级列表 ---
@@ -979,7 +979,9 @@ namespace MapGISPlugin3
             // 绘制注记 (标题、坐标等)
             if (drawAnnCls != null)
             {
-                // 绘制标题
+                // =========================================================
+                // ★★★ 核心修改：绘制主标题 ★★★
+                // =========================================================
                 if (texts.ContainsKey("主标题"))
                 {
                     string titleText = texts["主标题"].ToString();
@@ -987,18 +989,32 @@ namespace MapGISPlugin3
                     {
                         TextAnno titleAnn = new TextAnno();
                         titleAnn.Text = titleText;
-                        float titleH = (float)(12.0 * scaleUnit);
+
+                        // 设置字号 (标题通常很大，例如 12mm - 15mm)
+                        float titleH = (float)(15.0 * scaleUnit);
                         titleAnn.Height = titleH;
-                        titleAnn.Width = titleH;
+                        titleAnn.Width = titleH; // 正方字
+
+                        // 字体设置 (黑体索引通常为2，根据MapGIS字库调整，这里使用默认或指定)
+                        // titleAnn.FontID = 2; // 如果需要强制黑体可以取消注释
+
+                        // 计算居中位置
                         double centerX = (outerRect.XMin + outerRect.XMax) / 2.0;
-                        double textLen = titleText.Length * titleH;
+                        // 计算文字总长度 (简单估算：字数 * 字宽)
+                        // 如果包含数字字母，宽度计算可以更精细，这里按全角字符估算居中
+                        double textLen = 0;
+                        foreach (char c in titleText) textLen += (c < 128 ? 0.5 : 1.0) * titleH;
+
+                        // 定位：外框顶部上方 15mm 处
                         titleAnn.AnchorDot = new Dot(centerX - (textLen / 2.0), outerRect.YMax + (15.0 * scaleUnit));
+
                         drawAnnCls.Append(titleAnn, null, new TextAnnInfo { Ovprnt = true });
                     }
                 }
+                // =========================================================
 
                 // 绘制坐标标注
-                if (selectedStyleIndex == 200 || selectedStyleIndex != -1)
+                if (selectedStyleIndex == 200 || selectedStyleIndex == 300) // 样式200和300都画坐标注记
                 {
                     DrawGridLabels(drawAnnCls, innerRect, scaleUnit);
                 }
@@ -2480,6 +2496,19 @@ namespace MapGISPlugin3
             {
                 int num = (int)listView_Style.FocusedItem.Tag;
                 commonMapDecoration.SetProperty("SetAutoMapDecoration", num);
+
+                // ========================================================
+                // 【核心修改】切换样式时，强制清除已缓存的“主标题”
+                // 这样 RefreshTextList 才会去调用 GetDefaultValueForKey 获取新标题
+                // ========================================================
+                if (texts.ContainsKey("主标题"))
+                {
+                    texts.Remove("主标题");
+                }
+
+                // 如果需要连带“制图单位”也刷新，可以把下面这行解开注释
+                // if (texts.ContainsKey("制图单位")) texts.Remove("制图单位");
+
                 RefreshTextList();
             }
         }
@@ -2698,24 +2727,41 @@ namespace MapGISPlugin3
             annCls.Append(unitAnn, null, txtInfo);
         }
 
-        // 配合修改默认值获取逻辑
-        private string GetDefaultValueForKey(string key)
+        // 【核心修改】根据选中的样式ID返回对应的默认标题
+        // 【修改】根据当前选中的样式，返回不同的默认标题
+        private string GetDefaultValueForKey(string key)
         {
-            if (key == "主标题") return "标准分幅地图";
+            // 获取当前选中的样式索引
+            int selectedStyleTag = 0;
+            if (listView_Style.SelectedItems.Count > 0 && listView_Style.SelectedItems[0].Tag != null)
+            {
+                selectedStyleTag = (int)listView_Style.SelectedItems[0].Tag;
+            }
+
+            // ---------------------------------------------------------
+            // ★★★ 核心修改：根据样式ID返回不同的主标题 ★★★
+            // ---------------------------------------------------------
+            if (key == "主标题")
+            {
+                if (selectedStyleTag == 200) return "工区磁测平面图";      // 样式200
+                if (selectedStyleTag == 300) return "重磁异常平面图";      // 样式300
+                return "标准分幅地图"; // 其他默认
+            }
+
             if (key == "左下角附注") return "2025年12月航测";
             if (key == "右下角附注") return "制图单位: ***单位";
 
-            // 【新增】测线成图的默认值
-            if (key == "制图单位") return "工区磁测平面图"; // 表格最上面的大标题
-            if (key == "编    图") return "×××";
-            if (key == "审    核") return "×××";
+            // 表格内的字段
+            if (key == "制图单位") return "XX地质大队";
+            if (key == "编    图") return "×××";
+            if (key == "审    核") return "×××";
             if (key == "数字制图") return "×××";
             if (key == "技术负责") return "×××";
             if (key == "单位负责人") return "×××";
             if (key == "顺序号") return "××";
-            if (key == "图    号") return "××";
-            if (key == "比例尺") return "1:" + scale.ToString(); // 自动获取当前比例尺
-            if (key == "编图日期") return DateTime.Now.ToString("yyyy年MM月");
+            if (key == "图    号") return "××";
+            if (key == "比例尺") return "1:" + scale.ToString();
+            if (key == "编图日期") return DateTime.Now.ToString("yyyy年MM月");
             if (key == "资料来源") return "实测";
             if (key == "等值线间距") return "0.2";
 
@@ -3243,7 +3289,7 @@ namespace MapGISPlugin3
             // 
             // labelControl_Sacle
             // 
-            this.labelControl_Sacle.Location = new System.Drawing.Point(10, 7);
+            this.labelControl_Sacle.Location = new System.Drawing.Point(10, -12);
             this.labelControl_Sacle.Name = "labelControl_Sacle";
             this.labelControl_Sacle.Size = new System.Drawing.Size(40, 14);
             this.labelControl_Sacle.TabIndex = 1;
