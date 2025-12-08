@@ -25,12 +25,12 @@ namespace MapGISPlugin3
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea1 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea2 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.Legend legend1 = new System.Windows.Forms.DataVisualization.Charting.Legend();
-            System.Windows.Forms.DataVisualization.Charting.Series series1 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea3 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea4 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea12 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea9 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.Legend legend3 = new System.Windows.Forms.DataVisualization.Charting.Legend();
+            System.Windows.Forms.DataVisualization.Charting.Series series3 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea10 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea11 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
@@ -161,23 +161,25 @@ namespace MapGISPlugin3
             this.lblResultPhaseError.AutoSize = true;
             this.lblResultPhaseError.Location = new System.Drawing.Point(582, 58);
             this.lblResultPhaseError.Name = "lblResultPhaseError";
-            this.lblResultPhaseError.Size = new System.Drawing.Size(71, 18);
+            this.lblResultPhaseError.Size = new System.Drawing.Size(152, 18);
             this.lblResultPhaseError.TabIndex = 7;
-            this.lblResultPhaseError.Text = "RMS: --";
+            this.lblResultPhaseError.Text = "相位迭代误差: --";
+            this.lblResultPhaseError.Visible = false;
             // 
             // lblResultResError
             // 
             this.lblResultResError.AutoSize = true;
             this.lblResultResError.Location = new System.Drawing.Point(582, 26);
             this.lblResultResError.Name = "lblResultResError";
-            this.lblResultResError.Size = new System.Drawing.Size(71, 18);
+            this.lblResultResError.Size = new System.Drawing.Size(188, 18);
             this.lblResultResError.TabIndex = 6;
-            this.lblResultResError.Text = "RMS: --";
+            this.lblResultResError.Text = "视电阻率迭代误差: --";
+            this.lblResultResError.Visible = false;
             // 
             // nudIterationCount
             // 
             this.nudIterationCount.BackColor = System.Drawing.SystemColors.Control;
-            this.nudIterationCount.Location = new System.Drawing.Point(359, 38);
+            this.nudIterationCount.Location = new System.Drawing.Point(487, 42);
             this.nudIterationCount.Name = "nudIterationCount";
             this.nudIterationCount.Size = new System.Drawing.Size(89, 28);
             this.nudIterationCount.TabIndex = 5;
@@ -185,7 +187,7 @@ namespace MapGISPlugin3
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(267, 44);
+            this.label4.Location = new System.Drawing.Point(395, 48);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(98, 18);
             this.label4.TabIndex = 4;
@@ -225,7 +227,7 @@ namespace MapGISPlugin3
             // btnCalculate
             // 
             this.btnCalculate.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.btnCalculate.Location = new System.Drawing.Point(476, 33);
+            this.btnCalculate.Location = new System.Drawing.Point(604, 37);
             this.btnCalculate.Name = "btnCalculate";
             this.btnCalculate.Size = new System.Drawing.Size(78, 40);
             this.btnCalculate.TabIndex = 0;
@@ -235,8 +237,8 @@ namespace MapGISPlugin3
             // 
             // chartProfileView
             // 
-            chartArea1.Name = "ChartArea1";
-            this.chartProfileView.ChartAreas.Add(chartArea1);
+            chartArea12.Name = "ChartArea1";
+            this.chartProfileView.ChartAreas.Add(chartArea12);
             this.chartProfileView.Location = new System.Drawing.Point(10, 115);
             this.chartProfileView.Name = "chartProfileView";
             this.chartProfileView.Size = new System.Drawing.Size(820, 700);
@@ -344,17 +346,17 @@ namespace MapGISPlugin3
             // 
             // chartResultSection
             // 
-            chartArea2.Name = "ChartArea1";
-            this.chartResultSection.ChartAreas.Add(chartArea2);
+            chartArea9.Name = "ChartArea1";
+            this.chartResultSection.ChartAreas.Add(chartArea9);
             this.chartResultSection.Dock = System.Windows.Forms.DockStyle.Fill;
-            legend1.Name = "Legend1";
-            this.chartResultSection.Legends.Add(legend1);
+            legend3.Name = "Legend1";
+            this.chartResultSection.Legends.Add(legend3);
             this.chartResultSection.Location = new System.Drawing.Point(0, 0);
             this.chartResultSection.Name = "chartResultSection";
-            series1.ChartArea = "ChartArea1";
-            series1.Legend = "Legend1";
-            series1.Name = "Series1";
-            this.chartResultSection.Series.Add(series1);
+            series3.ChartArea = "ChartArea1";
+            series3.Legend = "Legend1";
+            series3.Name = "Series1";
+            this.chartResultSection.Series.Add(series3);
             this.chartResultSection.Size = new System.Drawing.Size(748, 450);
             this.chartResultSection.TabIndex = 2;
             this.chartResultSection.Text = "chart1";
@@ -396,15 +398,15 @@ namespace MapGISPlugin3
             this.progressBar1.Dock = System.Windows.Forms.DockStyle.Left;
             this.progressBar1.Location = new System.Drawing.Point(0, 0);
             this.progressBar1.Name = "progressBar1";
-            this.progressBar1.Size = new System.Drawing.Size(632, 30);
+            this.progressBar1.Size = new System.Drawing.Size(676, 30);
             this.progressBar1.TabIndex = 0;
             this.progressBar1.Click += new System.EventHandler(this.progressBar2_Click);
             // 
             // chartPhase
             // 
             this.chartPhase.Anchor = System.Windows.Forms.AnchorStyles.Left;
-            chartArea3.Name = "ChartArea1";
-            this.chartPhase.ChartAreas.Add(chartArea3);
+            chartArea10.Name = "ChartArea1";
+            this.chartPhase.ChartAreas.Add(chartArea10);
             this.chartPhase.Location = new System.Drawing.Point(395, 27);
             this.chartPhase.Name = "chartPhase";
             this.chartPhase.Size = new System.Drawing.Size(385, 414);
@@ -413,8 +415,8 @@ namespace MapGISPlugin3
             // 
             // chartResistivity
             // 
-            chartArea4.Name = "ChartArea1";
-            this.chartResistivity.ChartAreas.Add(chartArea4);
+            chartArea11.Name = "ChartArea1";
+            this.chartResistivity.ChartAreas.Add(chartArea11);
             this.chartResistivity.Location = new System.Drawing.Point(3, 27);
             this.chartResistivity.Name = "chartResistivity";
             this.chartResistivity.Size = new System.Drawing.Size(385, 414);

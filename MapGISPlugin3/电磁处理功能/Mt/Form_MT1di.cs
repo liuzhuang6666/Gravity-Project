@@ -194,78 +194,80 @@ namespace MapGISPlugin3
             // 1. 基础校验
             if (m_CurrentLineData == null || m_CurrentLineData.Rows.Count == 0)
             {
-                MessageBox.Show("请先选择测线并加载数据！", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("请先选择测线并加载数据！", "提示");
                 return;
             }
 
-            // 2. 准备路径和文件
+            // 2. 准备路径
             string pluginDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             string exePath = Path.Combine(pluginDir, "Algorithm", "MT1di", "a.exe");
 
             if (!File.Exists(exePath))
             {
-                MessageBox.Show($"找不到计算程序: {exePath}\n请确认插件安装完整。", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"找不到计算程序: {exePath}");
                 return;
             }
 
-            // 创建工作空间
+            // 3. 生成工作空间名称（但不创建目录！）
             string workspaceName = Guid.NewGuid().ToString("N").Substring(0, 6);
             m_CurrentWorkspacePath = Path.Combine(pluginDir, workspaceName);
-            if (!Directory.Exists(m_CurrentWorkspacePath)) Directory.CreateDirectory(m_CurrentWorkspacePath);
 
+            // ❌ 删除这两行！
+            // if (!Directory.Exists(m_CurrentWorkspacePath)) 
+            //     Directory.CreateDirectory(m_CurrentWorkspacePath);
+
+            // 4. 生成输入文件
             string inputFileName = "input.dat";
             string fullInputPath = Path.Combine(pluginDir, inputFileName);
 
-            // ========================================================================
-            // 3. 【核心】生成符合 C++ 程序要求的 9 列数据文件 (无表头)
-            // ========================================================================
             try
             {
-                Dictionary<string, StationInfo> stationCoords = m_CurrentLineStations.ToDictionary(s => s.StationName);
+                Dictionary<string, StationInfo> stationCoords =
+                    m_CurrentLineStations.ToDictionary(s => s.StationName);
 
                 using (StreamWriter writer = new StreamWriter(fullInputPath))
                 {
-                    // 注意：这里绝对不能写表头，C++ 程序第一行就会开始读数据
                     foreach (DataRow row in m_CurrentLineData.Rows)
                     {
                         string stationName = row["测点编号"].ToString();
+                        if (!stationCoords.TryGetValue(stationName, out StationInfo station))
+                            continue;
 
-                        // 获取坐标 (必须有)
-                        if (!stationCoords.TryGetValue(stationName, out StationInfo station)) continue;
-
-                        // 获取周期并转频率
                         double period = GetDoubleFromRow(row, "周期", 0);
-                        if (period <= 0) period = 1e-9; // 防止除零
+                        if (period <= 0) period = 1e-9;
                         double freq = 1.0 / period;
 
-                        // 获取四个分量的数据 (无论选什么模式，都要把4个分量写进去，没有填0)
                         double r_te = GetDoubleFromRow(row, "视电阻率_TE", 0);
                         double p_te = GetDoubleFromRow(row, "相位_TE", 0);
                         double r_tm = GetDoubleFromRow(row, "视电阻率_TM", 0);
                         double p_tm = GetDoubleFromRow(row, "相位_TM", 0);
-
-                        // 假设 Z 坐标为 0 (如果数据表里有高程，这里可以改)
                         double z_coord = 0;
 
-                        // 写入格式: 测点名 X Y Z 频率 TE电阻率 TE相位 TM电阻率 TM相位
                         writer.WriteLine($"{stationName} {station.X} {station.Y} {z_coord} {freq:F6} {r_te:F4} {p_te:F4} {r_tm:F4} {p_tm:F4}");
                     }
                 }
+
+                // 验证文件生成
+                if (!File.Exists(fullInputPath))
+                {
+                    MessageBox.Show("生成输入文件失败！");
+                    return;
+                }
+
+                Console.WriteLine($"✅ 输入文件已生成: {fullInputPath}");
+                Console.WriteLine($"   文件大小: {new FileInfo(fullInputPath).Length} bytes");
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"生成输入文件失败: {ex.Message}", "错误");
+                MessageBox.Show($"生成输入文件失败: {ex.Message}");
                 return;
             }
 
-            // ========================================================================
-            // 4. 配置参数并执行 (4个参数)
-            // ========================================================================
+            // 5. 配置参数
             int its = (int)nudIterationCount.Value;
-            // 模式映射：根据你的成功代码，TE=0, TM=1
             int iwd = rbInversionTE.Checked ? 0 : 1;
 
-            // UI 锁定
+            // 6. UI准备
             this.Cursor = Cursors.WaitCursor;
             btnCalculate.Enabled = false;
             progressBar1.Value = 0;
@@ -276,36 +278,45 @@ namespace MapGISPlugin3
             m_IsCalculating = true;
             timerProgress.Start();
 
-            // 异步调用
+            // 7. 异步执行
             bool success = await Task.Run(() =>
             {
                 try
                 {
-                    ProcessStartInfo startInfo = new ProcessStartInfo();
-                    startInfo.FileName = exePath;
+                    ProcessStartInfo startInfo = new ProcessStartInfo
+                    {
+                        FileName = exePath,
+                        // 使用相对路径（因为WorkingDirectory已设置）
+                        Arguments = $"\"{inputFileName}\" \"{workspaceName}\" {iwd} {its}",
+                        WorkingDirectory = pluginDir,
+                        UseShellExecute = false,
+                        CreateNoWindow = true,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true
+                    };
 
-                    // 参数：文件 目录 模式 迭代
-                    startInfo.Arguments = $"\"{inputFileName}\" \"{workspaceName}\" {iwd} {its}";
-
-                    // 必须设置工作目录，否则找不到 input.dat 或 dll
-                    startInfo.WorkingDirectory = pluginDir;
-
-                    startInfo.UseShellExecute = false;
-                    startInfo.CreateNoWindow = true;
-                    startInfo.RedirectStandardOutput = true;
-                    startInfo.RedirectStandardError = true; // 建议捕获错误流以防万一
+                    Console.WriteLine($"🚀 执行命令:");
+                    Console.WriteLine($"   程序: {startInfo.FileName}");
+                    Console.WriteLine($"   参数: {startInfo.Arguments}");
+                    Console.WriteLine($"   工作目录: {startInfo.WorkingDirectory}");
 
                     using (Process process = Process.Start(startInfo))
                     {
-                        // 读取输出防止死锁
                         string stdOut = process.StandardOutput.ReadToEnd();
                         string stdErr = process.StandardError.ReadToEnd();
                         process.WaitForExit();
 
-                        // 如果非0退出，可以把 stdErr 打印出来调试
+                        Console.WriteLine($"📤 标准输出:\n{stdOut}");
+                        Console.WriteLine($"❌ 错误输出:\n{stdErr}");
+                        Console.WriteLine($"🔢 退出码: {process.ExitCode}");
+
                         if (process.ExitCode != 0)
                         {
-                            Console.WriteLine($"ExitCode: {process.ExitCode}, Error: {stdErr}");
+                            // 详细错误信息
+                            Console.WriteLine($"⚠️ 程序执行失败");
+                            Console.WriteLine($"   退出码: {process.ExitCode}");
+                            if (!string.IsNullOrEmpty(stdErr))
+                                Console.WriteLine($"   错误: {stdErr}");
                         }
 
                         return process.ExitCode == 0;
@@ -313,46 +324,76 @@ namespace MapGISPlugin3
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(ex.Message);
+                    Console.WriteLine($"💥 异常: {ex.Message}\n{ex.StackTrace}");
                     return false;
                 }
             });
 
-            // 恢复 UI
+            // 8. 恢复UI
             timerProgress.Stop();
             m_IsCalculating = false;
             this.Cursor = Cursors.Default;
             btnCalculate.Enabled = true;
             progressBar1.Value = 100;
 
-            // 删除临时输入文件
-            try { if (File.Exists(fullInputPath)) File.Delete(fullInputPath); } catch { }
+            // 9. 清理临时文件
+            try
+            {
+                if (File.Exists(fullInputPath))
+                    File.Delete(fullInputPath);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"⚠️ 删除临时文件失败: {ex.Message}");
+            }
 
+            // 10. 处理结果
             if (success)
             {
                 lblStatus.Text = "计算完成";
+
                 // 查找结果文件
                 string resultFile = Path.Combine(m_CurrentWorkspacePath, "KNOW");
+
+                // 如果精确文件不存在，模糊查找
                 if (!File.Exists(resultFile))
                 {
-                    // 模糊查找
-                    var files = Directory.GetFiles(m_CurrentWorkspacePath, "KNOW*");
-                    if (files.Length > 0) resultFile = files[0];
+                    try
+                    {
+                        var files = Directory.GetFiles(m_CurrentWorkspacePath, "KNOW*");
+                        if (files.Length > 0)
+                        {
+                            resultFile = files[0];
+                            Console.WriteLine($"✅ 找到结果文件: {resultFile}");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"⚠️ 搜索结果文件失败: {ex.Message}");
+                    }
                 }
 
                 if (File.Exists(resultFile))
                 {
                     DrawInversionResultChart(resultFile);
+                    MessageBox.Show($"计算成功！\n\n结果路径: {m_CurrentWorkspacePath}",
+                                  "完成", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 else
                 {
-                    MessageBox.Show($"计算成功，但未找到结果文件 (KNOW*)。\n路径: {m_CurrentWorkspacePath}");
+                    MessageBox.Show($"计算成功，但未找到结果文件 (KNOW*)。\n路径: {m_CurrentWorkspacePath}",
+                                  "警告", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
             }
             else
             {
                 lblStatus.Text = "计算失败";
-                MessageBox.Show("计算程序返回错误，请检查 DLL 是否齐全或数据格式是否正确。");
+                MessageBox.Show("计算程序返回错误。\n\n可能原因：\n" +
+                               "1. 输入数据格式不正确\n" +
+                               "2. 缺少必需的DLL文件\n" +
+                               "3. 工作空间路径问题\n\n" +
+                               "请查看控制台输出获取详细信息。",
+                               "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 

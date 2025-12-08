@@ -30,11 +30,11 @@
         {
             this.components = new System.ComponentModel.Container();
             System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea1 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea3 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea4 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
             System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea2 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
             System.Windows.Forms.DataVisualization.Charting.Legend legend1 = new System.Windows.Forms.DataVisualization.Charting.Legend();
             System.Windows.Forms.DataVisualization.Charting.Series series1 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea3 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea4 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
@@ -55,8 +55,6 @@
             this.label2 = new System.Windows.Forms.Label();
             this.cmbLineName = new System.Windows.Forms.ComboBox();
             this.cmbStationLayer = new System.Windows.Forms.ComboBox();
-            this.chartResultSection = new System.Windows.Forms.DataVisualization.Charting.Chart();
-            this.progressBar1 = new System.Windows.Forms.ProgressBar();
             this.chartPhase = new System.Windows.Forms.DataVisualization.Charting.Chart();
             this.chartResistivity = new System.Windows.Forms.DataVisualization.Charting.Chart();
             this.tabControl2 = new System.Windows.Forms.TabControl();
@@ -66,6 +64,11 @@
             this.labelTitle = new System.Windows.Forms.Label();
             this.btnClose = new System.Windows.Forms.Button();
             this.timerProgress = new System.Windows.Forms.Timer(this.components);
+            this.lblRMS = new System.Windows.Forms.Label();
+            this.panelResultBottom = new System.Windows.Forms.Panel();
+            this.lblStatus = new System.Windows.Forms.Label();
+            this.progressBar1 = new System.Windows.Forms.ProgressBar();
+            this.chartResultSection = new System.Windows.Forms.DataVisualization.Charting.Chart();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -79,11 +82,12 @@
             ((System.ComponentModel.ISupportInitialize)(this.gridTE)).BeginInit();
             this.tabPage3.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.gridTM)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.chartResultSection)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.chartPhase)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.chartResistivity)).BeginInit();
             this.tabControl2.SuspendLayout();
             this.panelTitle.SuspendLayout();
+            this.panelResultBottom.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.chartResultSection)).BeginInit();
             this.SuspendLayout();
             // 
             // splitContainer1
@@ -103,7 +107,7 @@
             // splitContainer1.Panel2
             // 
             this.splitContainer1.Panel2.Controls.Add(this.chartResultSection);
-            this.splitContainer1.Panel2.Controls.Add(this.progressBar1);
+            this.splitContainer1.Panel2.Controls.Add(this.panelResultBottom);
             this.splitContainer1.Panel2.Controls.Add(this.chartPhase);
             this.splitContainer1.Panel2.Controls.Add(this.chartResistivity);
             this.splitContainer1.Panel2.Controls.Add(this.tabControl2);
@@ -137,6 +141,7 @@
             // 
             // groupBoxParams
             // 
+            this.groupBoxParams.Controls.Add(this.lblRMS);
             this.groupBoxParams.Controls.Add(this.rbInversionTETM);
             this.groupBoxParams.Controls.Add(this.nudIterationCount);
             this.groupBoxParams.Controls.Add(this.label4);
@@ -155,7 +160,7 @@
             // 
             this.rbInversionTETM.AutoSize = true;
             this.rbInversionTETM.Checked = true;
-            this.rbInversionTETM.Location = new System.Drawing.Point(155, 17);
+            this.rbInversionTETM.Location = new System.Drawing.Point(111, 18);
             this.rbInversionTETM.Name = "rbInversionTETM";
             this.rbInversionTETM.Size = new System.Drawing.Size(78, 22);
             this.rbInversionTETM.TabIndex = 6;
@@ -166,7 +171,7 @@
             // nudIterationCount
             // 
             this.nudIterationCount.BackColor = System.Drawing.SystemColors.Control;
-            this.nudIterationCount.Location = new System.Drawing.Point(379, 28);
+            this.nudIterationCount.Location = new System.Drawing.Point(281, 41);
             this.nudIterationCount.Name = "nudIterationCount";
             this.nudIterationCount.Size = new System.Drawing.Size(198, 28);
             this.nudIterationCount.TabIndex = 5;
@@ -174,7 +179,7 @@
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(287, 34);
+            this.label4.Location = new System.Drawing.Point(189, 47);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(98, 18);
             this.label4.TabIndex = 4;
@@ -183,7 +188,7 @@
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(41, 34);
+            this.label3.Location = new System.Drawing.Point(15, 35);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(98, 18);
             this.label3.TabIndex = 3;
@@ -192,7 +197,7 @@
             // rbInversionTM
             // 
             this.rbInversionTM.AutoSize = true;
-            this.rbInversionTM.Location = new System.Drawing.Point(155, 46);
+            this.rbInversionTM.Location = new System.Drawing.Point(111, 47);
             this.rbInversionTM.Name = "rbInversionTM";
             this.rbInversionTM.Size = new System.Drawing.Size(51, 22);
             this.rbInversionTM.TabIndex = 2;
@@ -202,7 +207,7 @@
             // rbInversionTE
             // 
             this.rbInversionTE.AutoSize = true;
-            this.rbInversionTE.Location = new System.Drawing.Point(155, 74);
+            this.rbInversionTE.Location = new System.Drawing.Point(111, 75);
             this.rbInversionTE.Name = "rbInversionTE";
             this.rbInversionTE.Size = new System.Drawing.Size(51, 22);
             this.rbInversionTE.TabIndex = 1;
@@ -213,7 +218,7 @@
             // btnCalculate
             // 
             this.btnCalculate.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.btnCalculate.Location = new System.Drawing.Point(637, 22);
+            this.btnCalculate.Location = new System.Drawing.Point(497, 35);
             this.btnCalculate.Name = "btnCalculate";
             this.btnCalculate.Size = new System.Drawing.Size(78, 40);
             this.btnCalculate.TabIndex = 0;
@@ -239,7 +244,7 @@
             this.tabPage2.Location = new System.Drawing.Point(4, 28);
             this.tabPage2.Name = "tabPage2";
             this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage2.Size = new System.Drawing.Size(842, 823);
+            this.tabPage2.Size = new System.Drawing.Size(792, 823);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "TE";
             this.tabPage2.UseVisualStyleBackColor = true;
@@ -252,7 +257,7 @@
             this.gridTE.Name = "gridTE";
             this.gridTE.RowHeadersWidth = 62;
             this.gridTE.RowTemplate.Height = 30;
-            this.gridTE.Size = new System.Drawing.Size(836, 817);
+            this.gridTE.Size = new System.Drawing.Size(786, 817);
             this.gridTE.TabIndex = 0;
             // 
             // tabPage3
@@ -261,7 +266,7 @@
             this.tabPage3.Location = new System.Drawing.Point(4, 28);
             this.tabPage3.Name = "tabPage3";
             this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage3.Size = new System.Drawing.Size(842, 823);
+            this.tabPage3.Size = new System.Drawing.Size(792, 823);
             this.tabPage3.TabIndex = 2;
             this.tabPage3.Text = "TM";
             this.tabPage3.UseVisualStyleBackColor = true;
@@ -274,7 +279,7 @@
             this.gridTM.Name = "gridTM";
             this.gridTM.RowHeadersWidth = 62;
             this.gridTM.RowTemplate.Height = 30;
-            this.gridTM.Size = new System.Drawing.Size(836, 817);
+            this.gridTM.Size = new System.Drawing.Size(786, 817);
             this.gridTM.TabIndex = 0;
             // 
             // label1
@@ -318,31 +323,6 @@
             this.cmbStationLayer.Size = new System.Drawing.Size(236, 26);
             this.cmbStationLayer.TabIndex = 0;
             this.cmbStationLayer.SelectedIndexChanged += new System.EventHandler(this.cmbStationLayer_SelectedIndexChanged);
-            // 
-            // chartResultSection
-            // 
-            chartArea2.Name = "ChartArea1";
-            this.chartResultSection.ChartAreas.Add(chartArea2);
-            this.chartResultSection.Dock = System.Windows.Forms.DockStyle.Bottom;
-            legend1.Name = "Legend1";
-            this.chartResultSection.Legends.Add(legend1);
-            this.chartResultSection.Location = new System.Drawing.Point(0, 422);
-            this.chartResultSection.Name = "chartResultSection";
-            series1.ChartArea = "ChartArea1";
-            series1.Legend = "Legend1";
-            series1.Name = "Series1";
-            this.chartResultSection.Series.Add(series1);
-            this.chartResultSection.Size = new System.Drawing.Size(846, 480);
-            this.chartResultSection.TabIndex = 5;
-            this.chartResultSection.Text = "chart1";
-            // 
-            // progressBar1
-            // 
-            this.progressBar1.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.progressBar1.Location = new System.Drawing.Point(0, 902);
-            this.progressBar1.Name = "progressBar1";
-            this.progressBar1.Size = new System.Drawing.Size(846, 25);
-            this.progressBar1.TabIndex = 4;
             // 
             // chartPhase
             // 
@@ -394,7 +374,7 @@
             this.tabPageDisplayTM.Location = new System.Drawing.Point(4, 28);
             this.tabPageDisplayTM.Name = "tabPageDisplayTM";
             this.tabPageDisplayTM.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPageDisplayTM.Size = new System.Drawing.Size(788, 0);
+            this.tabPageDisplayTM.Size = new System.Drawing.Size(838, 0);
             this.tabPageDisplayTM.TabIndex = 1;
             this.tabPageDisplayTM.Text = "TM";
             this.tabPageDisplayTM.UseVisualStyleBackColor = true;
@@ -435,6 +415,63 @@
             this.btnClose.UseVisualStyleBackColor = true;
             this.btnClose.Click += new System.EventHandler(this.btnClose_Click);
             // 
+            // lblRMS
+            // 
+            this.lblRMS.AutoSize = true;
+            this.lblRMS.Location = new System.Drawing.Point(581, 47);
+            this.lblRMS.Name = "lblRMS";
+            this.lblRMS.Size = new System.Drawing.Size(152, 18);
+            this.lblRMS.TabIndex = 7;
+            this.lblRMS.Text = "实际迭代误差：--";
+            // 
+            // panelResultBottom
+            // 
+            this.panelResultBottom.Controls.Add(this.lblStatus);
+            this.panelResultBottom.Controls.Add(this.progressBar1);
+            this.panelResultBottom.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.panelResultBottom.Location = new System.Drawing.Point(0, 897);
+            this.panelResultBottom.Name = "panelResultBottom";
+            this.panelResultBottom.Size = new System.Drawing.Size(846, 30);
+            this.panelResultBottom.TabIndex = 7;
+            // 
+            // lblStatus
+            // 
+            this.lblStatus.AutoSize = true;
+            this.lblStatus.BackColor = System.Drawing.SystemColors.ControlLight;
+            this.lblStatus.Dock = System.Windows.Forms.DockStyle.Right;
+            this.lblStatus.Font = new System.Drawing.Font("宋体", 10.5F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(134)));
+            this.lblStatus.Location = new System.Drawing.Point(794, 0);
+            this.lblStatus.Margin = new System.Windows.Forms.Padding(0);
+            this.lblStatus.Name = "lblStatus";
+            this.lblStatus.Size = new System.Drawing.Size(52, 21);
+            this.lblStatus.TabIndex = 1;
+            this.lblStatus.Text = "就绪";
+            // 
+            // progressBar1
+            // 
+            this.progressBar1.Dock = System.Windows.Forms.DockStyle.Left;
+            this.progressBar1.Location = new System.Drawing.Point(0, 0);
+            this.progressBar1.Name = "progressBar1";
+            this.progressBar1.Size = new System.Drawing.Size(732, 30);
+            this.progressBar1.TabIndex = 0;
+            // 
+            // chartResultSection
+            // 
+            chartArea2.Name = "ChartArea1";
+            this.chartResultSection.ChartAreas.Add(chartArea2);
+            this.chartResultSection.Dock = System.Windows.Forms.DockStyle.Bottom;
+            legend1.Name = "Legend1";
+            this.chartResultSection.Legends.Add(legend1);
+            this.chartResultSection.Location = new System.Drawing.Point(0, 429);
+            this.chartResultSection.Name = "chartResultSection";
+            series1.ChartArea = "ChartArea1";
+            series1.Legend = "Legend1";
+            series1.Name = "Series1";
+            this.chartResultSection.Series.Add(series1);
+            this.chartResultSection.Size = new System.Drawing.Size(846, 468);
+            this.chartResultSection.TabIndex = 8;
+            this.chartResultSection.Text = "chart1";
+            // 
             // Form_MT2di
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 18F);
@@ -462,11 +499,13 @@
             ((System.ComponentModel.ISupportInitialize)(this.gridTE)).EndInit();
             this.tabPage3.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.gridTM)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.chartResultSection)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.chartPhase)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.chartResistivity)).EndInit();
             this.tabControl2.ResumeLayout(false);
             this.panelTitle.ResumeLayout(false);
+            this.panelResultBottom.ResumeLayout(false);
+            this.panelResultBottom.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.chartResultSection)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -501,8 +540,11 @@
         private System.Windows.Forms.Panel panelTitle;
         private System.Windows.Forms.Label labelTitle;
         private System.Windows.Forms.Button btnClose;
-        private System.Windows.Forms.DataVisualization.Charting.Chart chartResultSection;
-        private System.Windows.Forms.ProgressBar progressBar1;
         private System.Windows.Forms.Timer timerProgress;
+        private System.Windows.Forms.Label lblRMS;
+        private System.Windows.Forms.DataVisualization.Charting.Chart chartResultSection;
+        private System.Windows.Forms.Panel panelResultBottom;
+        private System.Windows.Forms.Label lblStatus;
+        private System.Windows.Forms.ProgressBar progressBar1;
     }
 }

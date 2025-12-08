@@ -643,7 +643,8 @@ namespace MapGISPlugin3
             this.Cursor = Cursors.WaitCursor;
             btnCalculate.Enabled = false;
             progressBar1.Value = 0;
-            if (Controls.Find("lblStatus", true).Length > 0) Controls.Find("lblStatus", true)[0].Text = "计算中...";
+            if (lblRMS != null) lblRMS.Text = "实际迭代误差：--";
+            lblStatus.Text = "计算中...";
             if (chartResultSection != null) chartResultSection.Series.Clear();
 
             m_IsCalculating = true;
@@ -679,11 +680,16 @@ namespace MapGISPlugin3
 
             if (success)
             {
+                lblStatus.Text = "计算完成";
                 string resultFile = FindBestResultFile(m_CurrentWorkspacePath);
                 if (!string.IsNullOrEmpty(resultFile)) DrawInversionResultChart(resultFile);
                 else MessageBox.Show("未找到结果文件 (KNOW_*)。");
             }
-            else MessageBox.Show("计算程序执行失败。");
+            else {
+                lblStatus.Text = "计算失败";
+                MessageBox.Show("计算程序执行失败。");
+            }
+            
         }
 
         private string FindBestResultFile(string folder)
@@ -708,30 +714,60 @@ namespace MapGISPlugin3
         private void timerProgress_Tick(object sender, EventArgs e)
         {
             if (!m_IsCalculating || string.IsNullOrEmpty(m_CurrentWorkspacePath)) return;
+
             string recordPath = Path.Combine(m_CurrentWorkspacePath, "record");
+
             if (File.Exists(recordPath))
             {
                 try
                 {
+                    // 使用 FileShare.ReadWrite 防止和 a.exe 文件锁冲突
                     using (FileStream fs = new FileStream(recordPath, System.IO.FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                     using (StreamReader sr = new StreamReader(fs))
                     {
                         string line = sr.ReadLine();
                         if (!string.IsNullOrWhiteSpace(line))
                         {
+                            // 分割字符串，处理多个空格的情况
                             string[] parts = line.Split(new char[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
-                            if (parts.Length >= 2)
+
+                            // 格式是：Current Total RMS (例如：30 30 2.926)
+                            if (parts.Length >= 3)
                             {
                                 double current = double.Parse(parts[0]);
                                 double total = double.Parse(parts[1]);
-                                if (total > 0) progressBar1.Value = Math.Min((int)((current / total) * 100), 100);
+                                double rms = double.Parse(parts[2]); // 读取第3个数字
+
+                                // 1. 更新进度条
+                                if (total > 0)
+                                {
+                                    int percent = (int)((current / total) * 100);
+                                    progressBar1.Value = Math.Min(percent, 100);
+                                    lblStatus.Text = $"{percent}%";
+                                }
+                                    
+                                // 2. 更新 RMS 标签 (F3 表示保留3位小数)
+                                if (lblRMS != null)
+                                    lblRMS.Text = $"实际迭代误差：{rms:F3}";
+                            }
+                            else if (parts.Length >= 2) // 兼容旧逻辑
+                            {
+                                double current = double.Parse(parts[0]);
+                                double total = double.Parse(parts[1]);
+                                if (total > 0)
+                                    progressBar1.Value = Math.Min((int)((current / total) * 100), 100);
                             }
                         }
                     }
                 }
-                catch { }
+                catch
+                {
+                    // 忽略文件被占用或格式错误的瞬间异常，等待下一次 Tick
+                }
             }
         }
+
+
 
         // ====================================================================================
         // 【结果图绘制】完全照搬 MT1di 的实现 (严格取整 + Padding)
