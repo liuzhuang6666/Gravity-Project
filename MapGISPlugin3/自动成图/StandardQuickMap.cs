@@ -78,6 +78,11 @@ namespace MapGISPlugin3
         private Button button1;
         private PanelControl panelControl1;
         private List<LegendItemInfo> _dynamicLegends = new List<LegendItemInfo>();
+        // 1. 【核心】复制 VisualizationHelper 中的颜色数组
+        private readonly int[] _contourColors = {
+    601,603,498,500,436,408,391,233,190,184,154,122,106,33,31,
+    127,391,128,392,393,136,149,150,442,443,186,444,179,180,445,189,190
+};
 
         public IApplication Application
         {
@@ -133,6 +138,151 @@ namespace MapGISPlugin3
                 srcDataPolygon.Add(new Dot(rect.XMin, rect.YMin));
             }
             srcDataMode = 0;
+        }
+        /// <summary>
+        /// 【双栏最终修复版】绘制等值线专用图例
+        /// 修复了读取 "等值线间距" 失败的问题（统一为简体中文）
+        /// </summary>
+        private void DrawContourLegend(SFeatureCls lineCls, AnnotationCls annCls, Rect outRect, double unit)
+        {
+            // --- 1. 获取数据极值 ---
+            double zMin, zMax;
+            GetGridMinMax(out zMin, out zMax);
+
+            if (zMin >= zMax) return;
+
+            // =========================================================
+            // ★★★ 核心修复：确保 Key 是简体中文 "等值线间距" ★★★
+            // =========================================================
+            double autoStep = 0;
+
+            // 务必检查这里的字符串和 RefreshTextList 里的一模一样
+            string keyName = "等值线间距";
+
+            if (texts.ContainsKey(keyName))
+            {
+                string userInput = texts[keyName].ToString();
+                if (double.TryParse(userInput, out double val) && val > 0.00001)
+                {
+                    autoStep = val;
+                }
+            }
+
+            // 如果没读到（或者用户填了0），才自动计算
+            if (autoStep <= 0.00001)
+            {
+                autoStep = CalculateNiceStep(zMin, zMax, 12);
+                // [调试] 如果弹这个框，说明读取失败了，还是走了自动计算
+                // MessageBox.Show("未能读取到输入值，正在使用自动计算步长: " + autoStep);
+            }
+            else
+            {
+                // [调试] 如果弹这个框，说明读取成功了
+                // MessageBox.Show("成功读取步长: " + autoStep);
+            }
+
+            // --- 生成层级列表 ---
+            double startZ = Math.Floor(zMin / autoStep) * autoStep;
+            List<double> levels = new List<double>();
+            int safetyLimit = 0;
+            for (double z = startZ; z <= zMax + 0.0001; z += autoStep)
+            {
+                if (z < zMin - 0.0001) continue;
+                levels.Add(z);
+                safetyLimit++;
+                if (safetyLimit > 500) break;
+            }
+            if (levels.Count > 0 && levels[levels.Count - 1] < zMax - 0.0001)
+            {
+                levels.Add(zMax);
+            }
+            levels.Reverse(); // 高值在上面
+
+            if (levels.Count == 0) return;
+
+            // =========================================================
+            // ★★★ 双栏布局逻辑 (保持不变) ★★★
+            // =========================================================
+
+            // 1. 定义尺寸 (不压缩)
+            double itemH = 6.0 * unit;       // 单行高度
+            double colorBoxW = 12.0 * unit;  // 色块宽度
+            double textBoxW = 28.0 * unit;   // 文字预留宽
+            double colPadding = 8.0 * unit;  // 栏内左边距
+            double textGap = 2.0 * unit;     // 文字间距
+            double colGap = 10.0 * unit;     // 两栏间距
+            double titleH = 15.0 * unit;     // 标题高
+
+            // 2. 计算分栏
+            int totalItems = levels.Count;
+            int itemsInLeftCol = (int)Math.Ceiling(totalItems / 2.0);
+
+            // 3. 计算总尺寸
+            double contentH = itemsInLeftCol * itemH;
+            double totalH = titleH + contentH + (2.0 * unit);
+            double singleColW = colPadding + colorBoxW + textGap + textBoxW;
+            double totalW = singleColW + colGap + singleColW;
+
+            // 4. 定位
+            double xLeft = outRect.XMin;
+            double gapFromFrame = 15.0 * unit;
+            double yTop = outRect.YMin - gapFromFrame;
+            double yBottom = yTop - totalH;
+
+            // --- 绘制外框 ---
+            LinInfo framePen = new LinInfo { LinStyID = 1, OutClr = new int[] { 1 }, OutPenW = new float[] { (float)(0.05 * unit) } };
+            DrawRect(lineCls, xLeft, yBottom, xLeft + totalW, yTop, framePen);
+
+            TextAnnInfo txtInfo = new TextAnnInfo { Ovprnt = true };
+            float titleSize = (float)(4.0 * unit);
+            TextAnno title = new TextAnno { Text = "图  例", Height = titleSize, Width = titleSize };
+            title.AnchorDot = new Dot(xLeft + totalW / 2.0 - (2.5 * titleSize) / 2.0, yTop - titleSize - (3.0 * unit));
+            annCls.Append(title, null, txtInfo);
+
+            // --- 循环绘制 ---
+            float numSize = (float)(3.0 * unit);
+            double listTopY = yTop - titleH;
+            double leftColStartX = xLeft;
+            double rightColStartX = xLeft + singleColW + colGap;
+
+            for (int i = 0; i < totalItems; i++)
+            {
+                bool isLeftCol = i < itemsInLeftCol;
+                int rowIndex = isLeftCol ? i : (i - itemsInLeftCol);
+                double currentStartX = isLeftCol ? leftColStartX : rightColStartX;
+
+                double rectTop = listTopY - (rowIndex * itemH);
+                double rectBottom = rectTop - itemH;
+
+                double val = levels[i];
+
+                // 这里的 logicIndex 依然使用 autoStep 计算，保证颜色准确
+                int logicIndex = (int)Math.Round((val - startZ) / autoStep);
+                if (logicIndex < 0) logicIndex = 0;
+                int colorId = _contourColors[logicIndex % _contourColors.Length];
+
+                double cbX = currentStartX + colPadding;
+
+                // 填充
+                LinInfo fillPen = new LinInfo { LinStyID = 1, OutClr = new int[] { colorId }, OutPenW = new float[] { (float)(0.1 * unit) } };
+                double fillStep = 0.15 * unit;
+                for (double h = rectBottom + fillStep / 2; h < rectTop; h += fillStep)
+                {
+                    GeoVarLine hLine = new GeoVarLine();
+                    hLine.Append(new Dot(cbX, h));
+                    hLine.Append(new Dot(cbX + colorBoxW, h));
+                    GeoLines gl = new GeoLines(); gl.Append(hLine);
+                    lineCls.Append(gl, null, fillPen);
+                }
+                // 边框
+                DrawRect(lineCls, cbX, rectBottom, cbX + colorBoxW, rectTop, framePen);
+
+                // 文字
+                string valText = val.ToString("0.##");
+                TextAnno numAnn = new TextAnno { Text = valText, Height = numSize, Width = numSize * 0.7f };
+                numAnn.AnchorDot = new Dot(cbX + colorBoxW + textGap, (rectTop + rectBottom) / 2.0 - numSize / 2.0);
+                annCls.Append(numAnn, null, txtInfo);
+            }
         }
 
         public StandardQuickMap(Map basemap, GeoPolygon geopolygon)
@@ -396,85 +546,122 @@ namespace MapGISPlugin3
         /// </summary>
         private void GetGridMinMax(out double min, out double max)
         {
-            // 1. 设置默认值 (如果读不到，以此为兜底)
+            // 1. 初始化
             min = 0;
             max = 100;
             bool found = false;
 
             if (map == null) return;
 
-            // 2. 遍历图层
             List<MapLayer> layers = GetAllLeafLayers(map);
+
             foreach (MapLayer layer in layers)
             {
-                // 跳过辅助图层
+                // 跳过无关图层
                 if (layer.Name.Contains("图框") || layer.Name.Contains("注记") || layer.Name.Contains("图例"))
                     continue;
 
-                // 获取图层数据对象
+                // 获取数据对象 (这通常是 RasterDataSet)
                 object data = layer.GetData();
                 if (data == null) continue;
 
                 try
                 {
+                    // =============================================================
+                    // ★★★ 核心修复：尝试获取“波段” (Band) ★★★
+                    // =============================================================
+                    object targetObject = data; // 默认查 data
                     Type t = data.GetType();
 
-                    // --- 3. 暴力尝试所有可能的属性名 ---
-                    // MapGIS SDK 中常见的极值属性名有以下几种，我们逐一尝试
-                    string[] minPropNames = new string[] { "ZMin", "MinVal", "MinValue", "Min", "Minimum" };
-                    string[] maxPropNames = new string[] { "ZMax", "MaxVal", "MaxValue", "Max", "Maximum" };
+                    // 检查是否有 GetRasterBand 方法 (说明它是数据集)
+                    var getBandMethod = t.GetMethod("GetRasterBand");
+                    if (getBandMethod != null)
+                    {
+                        // 尝试获取第 1 波段 (索引可能是 1 或 0，VisualizationHelper里用的是1)
+                        object band = null;
+                        try
+                        {
+                            // 先试着拿 Band 1
+                            band = getBandMethod.Invoke(data, new object[] { 1 });
+                        }
+                        catch { }
+
+                        if (band == null)
+                        {
+                            try
+                            {
+                                // 如果失败，试着拿 Band 0
+                                band = getBandMethod.Invoke(data, new object[] { 0 });
+                            }
+                            catch { }
+                        }
+
+                        // 如果成功拿到了波段，我们就查波段的属性，而不是数据集的属性
+                        if (band != null)
+                        {
+                            targetObject = band;
+                            // 更新类型信息，准备反射
+                            t = targetObject.GetType();
+                        }
+                    }
+                    // =============================================================
+
+                    // 下面开始在 targetObject (可能是波段，也可能是数据集) 上找极值
+                    string[] minPropNames = new string[] { "MinValue", "MinVal", "ZMin", "Min", "Minimum" };
+                    string[] maxPropNames = new string[] { "MaxValue", "MaxVal", "ZMax", "Max", "Maximum" };
 
                     double? tempMin = null;
                     double? tempMax = null;
 
-                    // 查找最小值
+                    // 找最小值
                     foreach (string name in minPropNames)
                     {
                         var prop = t.GetProperty(name);
                         if (prop != null)
                         {
-                            object val = prop.GetValue(data, null);
+                            object val = prop.GetValue(targetObject, null);
                             if (val != null) { tempMin = Convert.ToDouble(val); break; }
                         }
                     }
 
-                    // 查找最大值
+                    // 找最大值
                     foreach (string name in maxPropNames)
                     {
                         var prop = t.GetProperty(name);
                         if (prop != null)
                         {
-                            object val = prop.GetValue(data, null);
+                            object val = prop.GetValue(targetObject, null);
                             if (val != null) { tempMax = Convert.ToDouble(val); break; }
                         }
                     }
 
-                    // --- 4. 如果找到了有效值，赋值并退出 ---
+                    // 验证结果
                     if (tempMin.HasValue && tempMax.HasValue)
                     {
                         min = tempMin.Value;
                         max = tempMax.Value;
 
-                        // 简单的防错检查：如果最大最小一样，强行拉开一点，防止除零错误
-                        if (Math.Abs(max - min) < 0.000001)
-                        {
-                            max = min + 1.0;
-                        }
+                        // 防止 Min == Max 导致除零
+                        if (Math.Abs(max - min) < 0.000001) max = min + 1.0;
 
-                        // [可选] 调试弹窗，确认读到了正确的值
-                        // MessageBox.Show($"【调试成功】自动获取到网格极值:\nMin={min}\nMax={max}");
+                        // 成功了！弹窗提示一下 (调试通过后可注释掉)
+                        MessageBox.Show($"【成功】在图层 [{layer.Name}] 中读取到数据！\nMin = {min}\nMax = {max}\n(读取对象: {t.Name})");
 
                         found = true;
-                        break; // 只要找到一个包含数据的网格层就够了
+                        break; // 找到了就停止
                     }
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    // 仅仅是调试用，正式发布可去掉
+                    // MessageBox.Show($"读取图层 {layer.Name} 出错: " + ex.Message);
+                }
             }
 
             if (!found)
             {
-                // 如果依然没找到，可以在这里加个日志
-                //MessageBox.Show("未识别到统计属性，使用默认 0-100");
+                // 依然没找到，说明属性名可能还是不对，或者波段也没取到
+                MessageBox.Show("【失败】已找到 gra.grd，但无法读取其 MinValue/MaxValue 属性。\n图例将使用默认范围 0-100。");
             }
         }
 
@@ -765,12 +952,17 @@ namespace MapGISPlugin3
                     DrawSurveyLineTable(drawLineCls, drawAnnCls, outerRect, scaleUnit);
                     DrawSurveyLineLegend(drawLineCls, drawAnnCls, outerRect, scaleUnit);
                 }
+                // 在 MakeData() 方法中
+
                 else if (selectedStyleIndex == 300) // 重磁数据成图样式
                 {
+                    MessageBox.Show("4. 命中样式 300！准备绘制等值线图例 (DrawContourLegend)...");
                     DrawMapGrid(drawLineCls, innerRect, scaleUnit);
                     DrawGraphicScale(drawLineCls, drawAnnCls, outerRect, scaleUnit, scale);
                     DrawSurveyLineTable(drawLineCls, drawAnnCls, outerRect, scaleUnit);
-                    DrawGradientLegend(drawLineCls, drawAnnCls, outerRect, scaleUnit);
+
+                    // ★★★ 使用新方法 ★★★
+                    DrawContourLegend(drawLineCls, drawAnnCls, outerRect, scaleUnit);
                 }
                 else if (selectedStyleIndex == 0) // 标准分幅
                 {
@@ -2332,7 +2524,7 @@ namespace MapGISPlugin3
             // 定义当前样式需要的字段列表
             string[] requiredKeys;
 
-            if (selectedStyleTag == 200 || selectedStyleTag == 300)
+            if (selectedStyleTag == 200)
             {
                 requiredKeys = new string[] {
           "主标题", "制图单位", "编    图", "审    核", "数字制图",
@@ -2340,6 +2532,16 @@ namespace MapGISPlugin3
           "编图日期", "资料来源"
         };
             }
+            else if (selectedStyleTag == 300) // 重磁数据成图
+            {
+                requiredKeys = new string[] {
+            "主标题", "制图单位", "编    图", "审    核", "数字制图",
+            "技术负责", "单位负责人", "顺序号", "图    号", "比例尺",
+            "编图日期", "资料来源",
+            // ★★★ 新增这一行：等值线间距 ★★★
+            "等值线间距"
+            };
+                }
             else // 其他默认样式
             {
                 requiredKeys = new string[] { "主标题", "左下角附注", "右下角附注" };
@@ -2515,6 +2717,7 @@ namespace MapGISPlugin3
             if (key == "比例尺") return "1:" + scale.ToString(); // 自动获取当前比例尺
             if (key == "编图日期") return DateTime.Now.ToString("yyyy年MM月");
             if (key == "资料来源") return "实测";
+            if (key == "等值线间距") return "0.2";
 
             return "";
         }
@@ -2924,17 +3127,17 @@ namespace MapGISPlugin3
             this.splitContainerControl1.Panel1.Controls.Add(this.panelLeft);
             this.splitContainerControl1.Panel1.Location = new System.Drawing.Point(0, 0);
             this.splitContainerControl1.Panel1.Name = "";
-            this.splitContainerControl1.Panel1.Size = new System.Drawing.Size(320, 555);
+            this.splitContainerControl1.Panel1.Size = new System.Drawing.Size(320, 650);
             this.splitContainerControl1.Panel1.TabIndex = 0;
             // 
             // 
             // 
             this.splitContainerControl1.Panel2.Controls.Add(this.groupControl_Styles);
-            this.splitContainerControl1.Panel2.Location = new System.Drawing.Point(328, 0);
+            this.splitContainerControl1.Panel2.Location = new System.Drawing.Point(325, 0);
             this.splitContainerControl1.Panel2.Name = "";
-            this.splitContainerControl1.Panel2.Size = new System.Drawing.Size(472, 555);
+            this.splitContainerControl1.Panel2.Size = new System.Drawing.Size(475, 650);
             this.splitContainerControl1.Panel2.TabIndex = 1;
-            this.splitContainerControl1.Size = new System.Drawing.Size(800, 555);
+            this.splitContainerControl1.Size = new System.Drawing.Size(800, 650);
             this.splitContainerControl1.SplitterPosition = 320;
             this.splitContainerControl1.TabIndex = 0;
             // 
@@ -2947,7 +3150,7 @@ namespace MapGISPlugin3
             this.panelLeft.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panelLeft.Location = new System.Drawing.Point(0, 0);
             this.panelLeft.Name = "panelLeft";
-            this.panelLeft.Size = new System.Drawing.Size(320, 555);
+            this.panelLeft.Size = new System.Drawing.Size(320, 650);
             this.panelLeft.TabIndex = 0;
             // 
             // groupControl_Text
@@ -2956,7 +3159,7 @@ namespace MapGISPlugin3
             this.groupControl_Text.Dock = System.Windows.Forms.DockStyle.Fill;
             this.groupControl_Text.Location = new System.Drawing.Point(0, 260);
             this.groupControl_Text.Name = "groupControl_Text";
-            this.groupControl_Text.Size = new System.Drawing.Size(320, 295);
+            this.groupControl_Text.Size = new System.Drawing.Size(320, 390);
             this.groupControl_Text.TabIndex = 0;
             this.groupControl_Text.Text = "框外文本元素";
             // 
@@ -2967,12 +3170,12 @@ namespace MapGISPlugin3
             this.contentColumn});
             this.treeList_Ann.DataSource = null;
             this.treeList_Ann.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.treeList_Ann.Location = new System.Drawing.Point(3, 33);
+            this.treeList_Ann.Location = new System.Drawing.Point(2, 21);
             this.treeList_Ann.Name = "treeList_Ann";
             this.treeList_Ann.OptionsView.ShowRoot = false;
             this.treeList_Ann.RepositoryItems.AddRange(new DevExpress.XtraEditors.Repository.RepositoryItem[] {
             this.contentMemoEdit});
-            this.treeList_Ann.Size = new System.Drawing.Size(314, 259);
+            this.treeList_Ann.Size = new System.Drawing.Size(316, 367);
             this.treeList_Ann.TabIndex = 0;
             this.treeList_Ann.CellValueChanged += new DevExpress.XtraTreeList.CellValueChangedEventHandler(this.treeList_Ann_CellValueChanged);
             // 
@@ -3012,10 +3215,10 @@ namespace MapGISPlugin3
             // labelControl_WH
             // 
             this.labelControl_WH.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.labelControl_WH.Location = new System.Drawing.Point(3, 165);
+            this.labelControl_WH.Location = new System.Drawing.Point(2, 174);
             this.labelControl_WH.Name = "labelControl_WH";
             this.labelControl_WH.Padding = new System.Windows.Forms.Padding(5);
-            this.labelControl_WH.Size = new System.Drawing.Size(109, 32);
+            this.labelControl_WH.Size = new System.Drawing.Size(78, 24);
             this.labelControl_WH.TabIndex = 0;
             this.labelControl_WH.Text = "输出宽高: ...";
             // 
@@ -3035,15 +3238,14 @@ namespace MapGISPlugin3
             // 
             this.comboBoxEdit_Scale.Location = new System.Drawing.Point(80, 23);
             this.comboBoxEdit_Scale.Name = "comboBoxEdit_Scale";
-            this.comboBoxEdit_Scale.Size = new System.Drawing.Size(100, 28);
             this.comboBoxEdit_Scale.TabIndex = 0;
             this.comboBoxEdit_Scale.EditValueChanging += new DevExpress.XtraEditors.Controls.ChangingEventHandler(this.comboBoxEdit_Scale_EditValueChanging);
             // 
             // labelControl_Sacle
             // 
-            this.labelControl_Sacle.Location = new System.Drawing.Point(10, 26);
+            this.labelControl_Sacle.Location = new System.Drawing.Point(10, 7);
             this.labelControl_Sacle.Name = "labelControl_Sacle";
-            this.labelControl_Sacle.Size = new System.Drawing.Size(60, 22);
+            this.labelControl_Sacle.Size = new System.Drawing.Size(40, 14);
             this.labelControl_Sacle.TabIndex = 1;
             this.labelControl_Sacle.Text = "比例尺:";
             // 
@@ -3053,7 +3255,7 @@ namespace MapGISPlugin3
             this.groupControl_Styles.Dock = System.Windows.Forms.DockStyle.Fill;
             this.groupControl_Styles.Location = new System.Drawing.Point(0, 0);
             this.groupControl_Styles.Name = "groupControl_Styles";
-            this.groupControl_Styles.Size = new System.Drawing.Size(472, 555);
+            this.groupControl_Styles.Size = new System.Drawing.Size(475, 650);
             this.groupControl_Styles.TabIndex = 0;
             this.groupControl_Styles.Text = "图饰样式";
             // 
@@ -3062,9 +3264,9 @@ namespace MapGISPlugin3
             this.listView_Style.Dock = System.Windows.Forms.DockStyle.Fill;
             this.listView_Style.HideSelection = false;
             this.listView_Style.LargeImageList = this.largeImgList;
-            this.listView_Style.Location = new System.Drawing.Point(3, 33);
+            this.listView_Style.Location = new System.Drawing.Point(2, 21);
             this.listView_Style.Name = "listView_Style";
-            this.listView_Style.Size = new System.Drawing.Size(466, 519);
+            this.listView_Style.Size = new System.Drawing.Size(471, 627);
             this.listView_Style.TabIndex = 0;
             this.listView_Style.UseCompatibleStateImageBehavior = false;
             this.listView_Style.SelectedIndexChanged += new System.EventHandler(this.listView_Style_SelectedIndexChanged);
@@ -3083,34 +3285,32 @@ namespace MapGISPlugin3
             this.panelBottom.Controls.Add(this.simpleButton_Cancel);
             this.panelBottom.Controls.Add(this.simpleButton_OK);
             this.panelBottom.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.panelBottom.Location = new System.Drawing.Point(0, 555);
+            this.panelBottom.Location = new System.Drawing.Point(0, 650);
             this.panelBottom.Name = "panelBottom";
             this.panelBottom.Size = new System.Drawing.Size(800, 50);
             this.panelBottom.TabIndex = 1;
             // 
             // button2
             // 
-            
+            this.button2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.button2.Location = new System.Drawing.Point(680, 10);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(75, 30);
             this.button2.TabIndex = 3;
             this.button2.Text = "取消";
             this.button2.UseVisualStyleBackColor = true;
             this.button2.Click += new System.EventHandler(this.button2_Click);
-            this.button2.Location = new System.Drawing.Point(680, 10);
-            this.button2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right))); // 添加锚点，拉伸窗口时按钮会自动跑到底部
             // 
             // button1
             // 
-            
+            this.button1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.button1.Location = new System.Drawing.Point(580, 10);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(75, 30);
             this.button1.TabIndex = 2;
             this.button1.Text = "完成";
             this.button1.UseVisualStyleBackColor = true;
             this.button1.Click += new System.EventHandler(this.button1_Click);
-            this.button1.Location = new System.Drawing.Point(580, 10);
-            this.button1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             // 
             // simpleButton_Cancel
             // 
@@ -3137,7 +3337,6 @@ namespace MapGISPlugin3
             this.ClientSize = new System.Drawing.Size(800, 700);
             this.Controls.Add(this.splitContainerControl1);
             this.Controls.Add(this.panelBottom);
-            this.panelBottom.BringToFront();
             this.MinimizeBox = false;
             this.Name = "StandardQuickMap";
             this.ShowIcon = false;

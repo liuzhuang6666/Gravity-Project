@@ -680,35 +680,84 @@ namespace MapGISPlugin3
         #region --- 数据导出（新增） ---
 
         /// <summary>
-        /// 【修改后】导出当前测线的所有测点数据到文件
+        /// 【修正版】根据您的截图直接导出数据
+        /// 修正点：
+        /// 1. 直接读取表中的 "X" 和 "Y" 列
+        /// 2. 修正了带有空格的列名 "采样时间 us" 和 "感应电压 mV"
         /// </summary>
         private void ExportObservationDataToFile(string filePath)
         {
+            // 检查是否有数据
+            if (m_CurrentLineData == null || m_CurrentLineData.Rows.Count == 0)
+            {
+                MessageBox.Show("当前测线无数据，无法导出。", "提示");
+                return;
+            }
+
             using (StreamWriter writer = new StreamWriter(filePath))
             {
-                // 写入表头
+                // 写入表头 (根据 a.exe 要求的格式)
                 writer.WriteLine("PROFILE\tSTATION\tCOORX\tCOORY\tTIMES\tRAREA\tCHZ");
 
-                // 遍历当前测线数据表 (m_CurrentLineData 里面已经是当前测线的所有数据了)
                 foreach (DataRow row in m_CurrentLineData.Rows)
                 {
-                    // 【核心修改】移除了 if (stationName == m_CurrentSelectedStationName) 判断
-                    // 这样会将该测线下的所有测点都写入文件
+                    try
+                    {
+                        // 1. 读取基础信息
+                        string lineName = row["测线号"].ToString();
+                        string stationName = row["测点号"].ToString();
 
-                    string lineName = row["测线号"].ToString();
-                    string stationName = row["测点号"].ToString();
+                        // 2. 读取坐标 (根据截图，列名是 X 和 Y)
+                        // 使用 GetRowValue 辅助方法防止列名对不上报错
+                        double x = GetRowValue(row, "X", "X坐标");
+                        double y = GetRowValue(row, "Y", "Y坐标");
 
-                    // 数据类型转换建议加上 TryParse 防止空值报错，这里沿用你的逻辑
-                    double x = Convert.ToDouble(row["X坐标"]);
-                    double y = Convert.ToDouble(row["Y坐标"]);
-                    double samplingTime = Convert.ToDouble(row["采样时间_us"]);
-                    double area = Convert.ToDouble(row["有效面积"]);
-                    double voltage = Convert.ToDouble(row["感应电压_mV"]);
+                        // 3. 读取物理量 (根据截图，注意空格)
+                        // 优先尝试 "采样时间 us"，如果失败尝试 "采样时间_us"
+                        double samplingTime = GetRowValue(row, "采样时间 us", "采样时间_us");
 
-                    // 写入一行数据
-                    writer.WriteLine($"{lineName} {stationName} {x} {y} {samplingTime} {area} {voltage}");
+                        // 优先尝试 "有效面积"
+                        double area = GetRowValue(row, "有效面积", "有效面积");
+                        if (area == 0) area = 1.0; // 防止面积为0导致计算错误
+
+                        // 优先尝试 "感应电压 mV"
+                        double voltage = GetRowValue(row, "感应电压 mV", "感应电压_mV");
+
+                        // 4. 写入文件
+                        writer.WriteLine($"{lineName} {stationName} {x} {y} {samplingTime} {area} {voltage}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"导出数据行异常: {ex.Message}");
+                        // 可以选择 continue 跳过坏行，或者 throw 停止
+                    }
                 }
             }
+        }
+
+        /// <summary>
+        /// 辅助函数：尝试获取列值，支持别名（防止空格/下划线差异）
+        /// </summary>
+        private double GetRowValue(DataRow row, string colName1, string colName2)
+        {
+            object val = null;
+            if (row.Table.Columns.Contains(colName1))
+            {
+                val = row[colName1];
+            }
+            else if (row.Table.Columns.Contains(colName2))
+            {
+                val = row[colName2];
+            }
+
+            if (val != null && val != DBNull.Value)
+            {
+                if (double.TryParse(val.ToString(), out double result))
+                {
+                    return result;
+                }
+            }
+            return 0.0;
         }
 
         /// <summary>
@@ -1444,6 +1493,7 @@ namespace MapGISPlugin3
             try
             {
                 dvStation.RowFilter = $"测点号 = '{m_CurrentSelectedStationName}'";
+                dvStation.Sort = "采样时间_us ASC";
             }
             catch (Exception ex)
             {
@@ -1615,6 +1665,7 @@ namespace MapGISPlugin3
                 // 获取所有不重复的采样时间
                 DataView view = new DataView(m_CurrentLineData);
                 DataTable distinctTimes = view.ToTable(true, "采样时间_us");
+
 
                 // 排序时间
                 var times = distinctTimes.AsEnumerable()
@@ -1846,15 +1897,25 @@ namespace MapGISPlugin3
         }
         /// <summary>
         /// 【修改版】绘制电阻率断面图
-        /// 1. X轴改为“相对距离”
-        /// 2. 添加右侧颜色刻度图例
+        /// 满足要求：
+        /// 1. 顶部显示标题“反演电阻率断面图”
+        /// 2. 右侧显示颜色刻度图例
+        /// 3. 横坐标为相对坐标（起点为0）
         /// </summary>
         private void UpdateResistivitySection(string knowFilePath)
         {
-            // 1. 清理旧数据
+            // ==========================================================
+            // 1. 清理旧数据 & 设置标题 (满足要求 1)
+            // ==========================================================
             chartResistivity.Series.Clear();
-            chartResistivity.Legends.Clear(); // 清除旧图例
+            chartResistivity.Legends.Clear();
             chartResistivity.Titles.Clear();
+
+            // 【修改点1】：添加图表标题
+            Title title = new Title("反演电阻率断面图");
+            title.Font = new System.Drawing.Font("Microsoft YaHei", 12, System.Drawing.FontStyle.Bold); // 设置字体
+            title.ForeColor = System.Drawing.Color.Black;
+            chartResistivity.Titles.Add(title);
 
             if (!File.Exists(knowFilePath)) return;
 
@@ -1862,7 +1923,7 @@ namespace MapGISPlugin3
             double minLogRes = double.MaxValue;
             double maxLogRes = double.MinValue;
 
-            // 2. 读取数据
+            // 2. 读取数据 (保持不变)
             try
             {
                 string[] lines = File.ReadAllLines(knowFilePath);
@@ -1871,18 +1932,13 @@ namespace MapGISPlugin3
                     string[] parts = line.Split(new char[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
                     if (parts.Length >= 6)
                     {
-                        // KNOW文件格式：测线 测点 X Y Depth Res
-                        // 注意：这里我们读取 X 和 Y 用于计算距离
                         if (double.TryParse(parts[2], out double x) &&
                             double.TryParse(parts[3], out double y) &&
                             double.TryParse(parts[4], out double depth) &&
                             double.TryParse(parts[5], out double res))
                         {
                             if (res <= 0) continue;
-
                             double logRes = Math.Log10(res);
-
-                            // 这里仍然保存原始X，但在下面会计算 Distance
                             points.Add(new InversionPoint { X = x, Y = y, Depth = depth, Res = res, LogRes = logRes });
 
                             if (logRes < minLogRes) minLogRes = logRes;
@@ -1900,92 +1956,71 @@ namespace MapGISPlugin3
             if (points.Count == 0) return;
 
             // ==========================================================
-            // 【核心修改 1】：计算相对距离 (Distance)
-            // 假设数据是按测线顺序排列的（通常 a.exe 输出顺序与输入一致）
+            // 3. 计算相对距离 (满足要求 3)
             // ==========================================================
 
-            // 如果需要，可以先按 X 或 Y 排序，这里假设已经有序
+            // 为了确保“最左边”是起点，我们可以先按 X 坐标排序 (假设测线大体是 X 轴方向)
+            // 如果测线是任意方向，通常依赖文件本身的记录顺序。这里默认保持文件顺序。
             // points = points.OrderBy(p => p.X).ToList(); 
 
-            double currentDist = 0;
-            // 记录每个点的计算距离，为了处理多个深度对应同一个测点的情况
-            // 我们认为 X,Y 相同的点，距离也相同
-            Dictionary<string, double> distMap = new Dictionary<string, double>();
-
-            // 临时列表用于存储计算好距离的点
-            var plotPoints = new List<dynamic>();
-
-            // 找到第一个点的坐标作为起点
             double startX = points[0].X;
             double startY = points[0].Y;
 
+            var plotPoints = new List<dynamic>();
+
             foreach (var p in points)
             {
-                // 简单的欧氏距离计算：sqrt((x-x0)^2 + (y-y0)^2)
-                // 这种方式计算的是“距起点的直线距离”
+                // 【修改点3】：计算相对于第一个点的距离
+                // 结果：第一个点的 dist 为 0
                 double dist = Math.Sqrt(Math.Pow(p.X - startX, 2) + Math.Pow(p.Y - startY, 2));
-
-                // 或者：如果你的测线是弯曲的，应该用累加距离（Point_i 到 Point_i-1），但这里用距起点距离通常够用了
-
                 plotPoints.Add(new { Dist = dist, Depth = p.Depth, LogRes = p.LogRes, Res = p.Res });
             }
 
             // ==========================================================
-            // 3. 配置图表系列
+            // 4. 配置图表系列
             // ==========================================================
             Series series = chartResistivity.Series.Add("ResSection");
             series.ChartType = SeriesChartType.Point;
             series.MarkerStyle = MarkerStyle.Square;
-            // 调整 MarkerSize：根据数据量调整，让点看起来像连续的色块
-            // 如果点很密，可以设小一点；如果稀疏，设大一点
-            series.MarkerSize = 10;
+            series.MarkerSize = 10; // 色块大小，根据数据密集度调整
             series.BorderWidth = 0;
 
-            // 填充数据到图表
             foreach (var p in plotPoints)
             {
-                int idx = series.Points.AddXY(p.Dist, p.Depth);
+                int idx = series.Points.AddXY(p.Dist, p.Depth); // X轴使用相对距离
                 DataPoint dp = series.Points[idx];
-
-                // 获取颜色
                 dp.Color = GetColorForValue(p.LogRes, minLogRes, maxLogRes);
-                // Tooltip 显示：距离、深度、电阻率
-                dp.ToolTip = $"距离: {p.Dist:F1} m\n深度: {p.Depth:F1} m\n电阻率: {p.Res:F1} Ω·m\nLog10: {p.LogRes:F2}";
+                dp.ToolTip = $"相对距离: {p.Dist:F1} m\n深度: {p.Depth:F1} m\n电阻率: {p.Res:F1} Ω·m";
             }
 
-            // 设置轴标题
-            chartResistivity.ChartAreas[0].AxisX.Title = "相对距离 (m)";
-            chartResistivity.ChartAreas[0].AxisY.Title = "深度 (m)";
-            chartResistivity.ChartAreas[0].RecalculateAxesScale();
+            // 设置坐标轴
+            var area = chartResistivity.ChartAreas[0];
+            area.AxisX.Title = "相对距离 (m)";
+            area.AxisX.Minimum = 0; // 【关键】：强制横坐标从0开始
+            area.AxisY.Title = "深度 (m)";
+            // 如果深度向下为负，可以设置 IsReversed = true，或者由数据决定（你的数据深度如果是正值代表向下，则可能需要翻转）
+            area.AxisY.IsReversed = true; // 通常电法断面图深度向下，Y轴需要翻转（0在上面）
+            area.RecalculateAxesScale();
 
             // ==========================================================
-            // 【核心修改 2】：手动创建颜色图例 (Legend)
+            // 5. 创建右侧颜色图例 (满足要求 2)
             // ==========================================================
             Legend legend = new Legend("ColorScale");
-            legend.Docking = Docking.Right; // 停靠在右侧
-            legend.Title = "lg(Res) [Ω·m]"; // 图例标题
+            legend.Docking = Docking.Right; // 【修改点2】：停靠在右侧
+            legend.Title = "lg(Res)"; // 图例标题
             legend.IsTextAutoFit = false;
-            legend.InterlacedRows = false;
 
-            // 我们手动添加 5 个刻度来模拟颜色条
-            // 从 Max 到 Min 添加，这样在图例上是从上到下排列
+            // 手动构建颜色条刻度
             int steps = 5;
             for (int i = 0; i <= steps; i++)
             {
-                // 计算当前步骤的 Log 值
                 double val = maxLogRes - (maxLogRes - minLogRes) * i / steps;
-
-                // 获取对应颜色
                 System.Drawing.Color c = GetColorForValue(val, minLogRes, maxLogRes);
-
                 System.Windows.Forms.DataVisualization.Charting.LegendItem item = new System.Windows.Forms.DataVisualization.Charting.LegendItem();
-                // 显示数值：10^val (原始电阻率) 或者 val (对数值)
-                // 这里显示 10^val 比较直观，但数字可能很大，用 F1 或科学计数法
-                // 如果想显示对数值，直接用 val.ToString("F2")
-                item.Name = $"10^{val:F1}";
+                // 显示原始电阻率值 (10^val)，更直观
+                item.Name = $"{Math.Pow(10, val):F1}";
                 item.Color = c;
-                item.MarkerStyle = MarkerStyle.Square; // 色块
-
+                item.MarkerStyle = MarkerStyle.Square;
                 legend.CustomItems.Add(item);
             }
 
@@ -2028,4 +2063,5 @@ namespace MapGISPlugin3
 
         }
     }
+    
 }
