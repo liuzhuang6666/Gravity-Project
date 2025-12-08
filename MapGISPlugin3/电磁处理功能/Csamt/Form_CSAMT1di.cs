@@ -813,10 +813,35 @@ namespace MapGISPlugin3
 
         private void ClearAllDisplays()
         {
+            // 清空 Series
             if (chartProfileView.Series != null) chartProfileView.Series.Clear();
             if (chartLayout.Series != null) chartLayout.Series.Clear();
             if (chartResistivity.Series != null) chartResistivity.Series.Clear();
             if (chartPhase.Series != null) chartPhase.Series.Clear();
+
+            // 【关键修复】重置 chartResistivity 的对数坐标设置
+            if (chartResistivity.ChartAreas.Count > 0)
+            {
+                chartResistivity.ChartAreas[0].AxisX.IsLogarithmic = false;
+                chartResistivity.ChartAreas[0].AxisY.IsLogarithmic = false;
+                chartResistivity.ChartAreas[0].AxisX.Minimum = double.NaN;  // 重置为自动
+                chartResistivity.ChartAreas[0].AxisX.Maximum = double.NaN;
+                chartResistivity.ChartAreas[0].AxisY.Minimum = double.NaN;
+                chartResistivity.ChartAreas[0].AxisY.Maximum = double.NaN;
+                chartResistivity.ChartAreas[0].AxisX.IsReversed = false;
+            }
+
+            // 【关键修复】重置 chartPhase 的对数坐标设置
+            if (chartPhase.ChartAreas.Count > 0)
+            {
+                chartPhase.ChartAreas[0].AxisX.IsLogarithmic = false;
+                chartPhase.ChartAreas[0].AxisY.IsLogarithmic = false;
+                chartPhase.ChartAreas[0].AxisX.Minimum = double.NaN;
+                chartPhase.ChartAreas[0].AxisX.Maximum = double.NaN;
+                chartPhase.ChartAreas[0].AxisY.Minimum = double.NaN;
+                chartPhase.ChartAreas[0].AxisY.Maximum = double.NaN;
+                chartPhase.ChartAreas[0].AxisX.IsReversed = false;
+            }
 
             DisplayInversionResults(new List<InversionResultPoint>());
 
@@ -1065,7 +1090,7 @@ namespace MapGISPlugin3
 
             DataView dvStation = new DataView(m_CurrentLineData);
             dvStation.RowFilter = $"测点编号 = '{m_CurrentSelectedStationName}'";
-
+            dvStation.Sort = "频率 DESC";  // 按频率降序排序
             if (dvStation.Count == 0)
             {
                 return;
