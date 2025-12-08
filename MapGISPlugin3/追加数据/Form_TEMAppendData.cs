@@ -121,14 +121,14 @@ namespace MapGISPlugin3
                 }
                 else if (layer is VectorLayer)
                 {
-                    TreeNode layerNode = new TreeNode(layer.Name + " [测点]");
+                    TreeNode layerNode = new TreeNode(layer.Name);
                     layerNode.Tag = layer;
                     layerNode.ForeColor = System.Drawing.Color.Blue;
                     parentNode.Nodes.Add(layerNode);
                 }
                 else if (layer is ObjectLayer)
                 {
-                    TreeNode layerNode = new TreeNode(layer.Name + " [观测数据]");
+                    TreeNode layerNode = new TreeNode(layer.Name);
                     layerNode.Tag = layer;
                     layerNode.ForeColor = System.Drawing.Color.Green;
                     parentNode.Nodes.Add(layerNode);

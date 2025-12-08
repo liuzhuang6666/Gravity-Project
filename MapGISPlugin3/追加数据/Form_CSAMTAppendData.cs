@@ -138,7 +138,7 @@ namespace MapGISPlugin3
                 else if (layer is VectorLayer)
                 {
                     // 显示矢量图层（测点）
-                    TreeNode layerNode = new TreeNode(layer.Name + " [测点]");
+                    TreeNode layerNode = new TreeNode(layer.Name);
                     layerNode.Tag = layer;
                     layerNode.ForeColor = System.Drawing.Color.Blue;
                     parentNode.Nodes.Add(layerNode);
@@ -146,7 +146,7 @@ namespace MapGISPlugin3
                 else if (layer is ObjectLayer)
                 {
                     // 显示对象图层（测深数据表）
-                    TreeNode layerNode = new TreeNode(layer.Name + " [测深数据]");
+                    TreeNode layerNode = new TreeNode(layer.Name);
                     layerNode.Tag = layer;
                     layerNode.ForeColor = System.Drawing.Color.Green;
                     parentNode.Nodes.Add(layerNode);

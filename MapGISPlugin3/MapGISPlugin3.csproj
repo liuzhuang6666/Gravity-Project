@@ -371,7 +371,6 @@
     <Compile Include="重磁处理功能\FieldTransformCommand.cs" />
     <Compile Include="重磁处理功能\Command3.cs" />
     <Compile Include="数据类浮窗\DockWindow1.cs" />
-    <Compile Include="重磁处理功能\Command4.cs" />
     <Compile Include="重磁处理功能\FieldTransformForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -407,12 +406,6 @@
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
-    </Compile>
-    <Compile Include="重磁处理功能\Form_GravityMagnetic.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="重磁处理功能\Form_GravityMagnetic.Designer.cs">
-      <DependentUpon>Form_GravityMagnetic.cs</DependentUpon>
     </Compile>
     <Compile Include="重磁处理功能\PluginResourceManager.cs" />
     <Compile Include="重磁处理功能\ShowMyProcessorCommand.cs" />
@@ -501,9 +494,6 @@
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
-    <EmbeddedResource Include="重磁处理功能\Form_GravityMagnetic.resx">
-      <DependentUpon>Form_GravityMagnetic.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="重磁处理功能\Form_SurfaceContin.resx">
       <DependentUpon>Form_SurfaceContin.cs</DependentUpon>

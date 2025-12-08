@@ -558,63 +558,91 @@ namespace MapGISPlugin3
 
         /// <summary>
         /// 根据选择的图层自动生成唯一的输出类名
+        /// 命名规则: {源文件前缀}_{MCI}_{时间戳}
+        /// 示例: Magnet_MCI_12061430 (共20字符以内)
         /// </summary>
         /// <param name="layer">选中的栅格图层</param>
-        /// <returns>生成的类名</returns>
+        /// <returns>生成的类名，格式为: 源文件前缀_MCI_时间戳</returns>
         private string GenerateOutputClassName(RasterLayer layer)
         {
+            // 参数校验：如果图层无效，返回错误标识
             if (layer == null || string.IsNullOrEmpty(layer.URL))
             {
-                return "Error_InvalidLayer";
+                return "Err_MCI";
             }
 
+            // 1. 获取简短时间戳
+            //    格式: MMddHHmm (月日时分，共8字符)
+            //    示例: 12061430 表示12月06日14点30分
+            string timestamp = DateTime.Now.ToString("MMddHHmm");
+
+            // 2. 方法标识
+            //    MCI = Magnetic Correlation Imaging (磁力相关成像)
+            string methodTag = "MCI";
+
+            // 3. 获取源文件名前缀 (最多6字符)
+            string srcPrefix = GetSourcePrefix(layer, 6);
+
+            // 4.  组合最终名称
+            //    格式: {源文件前缀}_{MCI}_{时间戳}
+            //    长度计算: 6 + 1 + 3 + 1 + 8 = 19字符 (最大20字符)
+            string finalName = $"{srcPrefix}_{methodTag}_{timestamp}";
+
+            // 5. 确保名称以字母开头 (符合命名规范)
+            if (!char.IsLetter(finalName[0]))
+            {
+                finalName = "R" + finalName.Substring(1);
+            }
+
+            return finalName;
+        }
+
+        /// <summary>
+        /// 从图层中提取源文件名前缀
+        /// </summary>
+        /// <param name="layer">栅格图层</param>
+        /// <param name="maxLen">前缀最大长度</param>
+        /// <returns>清理后的源文件名前缀</returns>
+        private string GetSourcePrefix(RasterLayer layer, int maxLen)
+        {
             string sourceName;
+
             try
             {
-                // 从 URL 获取本地文件名 (不含扩展名)
                 Uri uri = new Uri(layer.URL);
-                if (!uri.IsFile)
+
+                // 判断数据来源类型
+                if (uri.IsFile)
                 {
-                    sourceName = "GdbLayer"; // 如果是 GDB 内部图层
+                    // 本地文件: 提取文件名 (不含扩展名)
+                    // 例如: "C:\Data\MagneticAnomaly.tif" -> "MagneticAnomaly"
+                    sourceName = Path.GetFileNameWithoutExtension(uri.LocalPath);
                 }
                 else
                 {
-                    sourceName = Path.GetFileNameWithoutExtension(uri.LocalPath);
+                    // GDB内部图层或其他非文件类型
+                    sourceName = "Gdb";
                 }
             }
             catch
             {
-                sourceName = "SourceFile"; // 备用名称
+                // URL解析失败时使用默认名称
+                sourceName = "Src";
             }
 
-            // 1. 清理源文件名 (移除所有非字母/数字/下划线)
-            string sanitizedName = System.Text.RegularExpressions.Regex.Replace(sourceName, @"[^\w]", "_");
-            if (string.IsNullOrWhiteSpace(sanitizedName))
+            // 清理文件名: 移除所有非字母、数字、下划线的字符
+            // 例如: "Magnetic-Anomaly(1)" -> "MagneticAnomaly1"
+            string clean = System.Text.RegularExpressions.Regex.Replace(sourceName, @"[^\w]", "");
+
+            // 如果清理后为空，使用默认名称
+            if (string.IsNullOrWhiteSpace(clean))
             {
-                sanitizedName = "Source";
+                clean = "Data";
             }
 
-            // 2. 获取方法名 (缩写)
-            string methodName = "CorrImg"; // 代表 "CorrelationImaging"
-
-            // 3. 获取时间戳
-            string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-
-            // 4. 组合
-            string finalName = $"{sanitizedName}_{methodName}_{timestamp}";
-
-            // 5. 确保名称符合 MapGIS 规范 (例如，不超过64个字符)
-            if (finalName.Length > 64)
-            {
-                finalName = finalName.Substring(0, 64);
-            }
-            // 确保以字母开头
-            if (!char.IsLetter(finalName[0]))
-            {
-                finalName = "R_" + finalName.Substring(0, 61);
-            }
-
-            return finalName;
+            // 截取指定长度的前缀
+            // 例如: "MagneticAnomaly" -> "Magnet" (取前6个字符)
+            return clean.Length > maxLen ? clean.Substring(0, maxLen) : clean;
         }
 
         #endregion
