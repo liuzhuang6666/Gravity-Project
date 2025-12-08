@@ -988,15 +988,6 @@ namespace MapGISPlugin3
                     }
                 }
             }
-            if (app != null)
-            {
-                IDockWindow dw = null;
-                app.PluginContainer.DockWindows.TryGetValue(typeof(ProjectTreeDockWindow).ToString(), out dw);
-                if (dw == null)
-                    dw = app.PluginContainer.CreateDockWindow(typeof(ProjectTreeDockWindow).ToString());
-                if (dw != null)
-                    app.PluginContainer.ActiveDockWindow(dw);
-            }
         }
 
         private void App_ApplicationClosingEvent(ApplicationClosingEventArgs args)

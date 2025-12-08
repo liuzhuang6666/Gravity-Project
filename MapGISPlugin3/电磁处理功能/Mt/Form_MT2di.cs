@@ -301,7 +301,7 @@ namespace MapGISPlugin3
             {
                 DataView dv = new DataView(m_CurrentLineData);
                 dv.RowFilter = $"测点编号 = '{m_CurrentSelectedStationName}'";
-
+                dv.Sort = "周期 ASC";
                 foreach (DataRowView row in dv)
                 {
                     if (row["周期"] == DBNull.Value) continue;

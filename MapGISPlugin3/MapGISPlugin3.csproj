@@ -142,6 +142,10 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>D:\Program Files\MapGIS 10\Program\MapGIS.GISControl.dll</HintPath>
     </Reference>
+    <Reference Include="MapGIS.MapEditor.Plugin, Version=1.0.0.0, Culture=neutral, PublicKeyToken=3c41f9a6f834b774, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>D:\Program Files\MapGIS 10\Program\plugin\MapGIS.MapEditor.Plugin.dll</HintPath>
+    </Reference>
     <Reference Include="MapGIS.PluginEngine, Version=1.0.0.0, Culture=neutral, PublicKeyToken=3c41f9a6f834b774, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>D:\Program Files\MapGIS 10\Program\MapGIS.PluginEngine.dll</HintPath>
@@ -246,7 +250,6 @@
     <Compile Include="工程相关\Project.cs" />
     <Compile Include="工程相关\ResourceManage.cs" />
     <Compile Include="工程相关\StaticFunctions.cs" />
-    <Compile Include="数据类浮窗\DockWindows.cs" />
     <Compile Include="电磁处理功能\Csamt\CSAMT1diCommand.cs" />
     <Compile Include="电磁处理功能\Csamt\CSAMTAddDataCommand.cs" />
     <Compile Include="电磁处理功能\Csamt\Form_CSAMT1di.cs">
@@ -319,6 +322,25 @@
     <Compile Include="命令项\PopupCommand.cs" />
     <Compile Include="工程相关\ProjectManage.cs" />
     <Compile Include="查看属性\DocumentItemPropertiesManage.cs" />
+    <Compile Include="自动成图\CmdPolygonQuickMapcommand.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Compile>
+    <Compile Include="自动成图\CmdRectQuickMapcommand.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Compile>
+    <Compile Include="自动成图\CmdWholeRangeQuickMapcommand.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Compile>
+    <Compile Include="自动成图\StandardPolygonTool.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Compile>
+    <Compile Include="自动成图\StandardQuickMap.cs">
+      <SubType>Form</SubType>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Compile>
+    <Compile Include="自动成图\StandardRectTool.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Compile>
     <Compile Include="菜单\PopupMenuBar.cs" />
     <Compile Include="追加数据\CSAMTAppendDataCommand.cs" />
     <Compile Include="追加数据\Form_CSAMTAppendData.cs">
@@ -370,7 +392,6 @@
     <Compile Include="重磁处理功能\MagCorrelationImagingCommand.cs" />
     <Compile Include="重磁处理功能\FieldTransformCommand.cs" />
     <Compile Include="重磁处理功能\Command3.cs" />
-    <Compile Include="数据类浮窗\DockWindow1.cs" />
     <Compile Include="重磁处理功能\FieldTransformForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -468,6 +489,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="目录树\CreatePrjectForm.resx">
       <DependentUpon>CreatePrjectForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="自动成图\StandardQuickMap.resx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="重磁处理功能\AddDataForm.resx">
       <DependentUpon>AddDataForm.cs</DependentUpon>
