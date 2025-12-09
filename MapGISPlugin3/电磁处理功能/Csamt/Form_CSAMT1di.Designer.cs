@@ -48,6 +48,8 @@ namespace MapGISPlugin3
             this.nudIterationCount = new System.Windows.Forms.NumericUpDown();
             this.labelIter = new System.Windows.Forms.Label();
             this.btnCalculate = new System.Windows.Forms.Button();
+            this.progressBarCalc = new System.Windows.Forms.ProgressBar();
+            this.labelProgressPercent = new System.Windows.Forms.Label();
             this.tabPageLayout = new System.Windows.Forms.TabPage();
             this.chartLayout = new System.Windows.Forms.DataVisualization.Charting.Chart();
             this.panelLayoutTop = new System.Windows.Forms.Panel();
@@ -82,6 +84,9 @@ namespace MapGISPlugin3
             this.chartResistivity = new System.Windows.Forms.DataVisualization.Charting.Chart();
             this.chartPhase = new System.Windows.Forms.DataVisualization.Charting.Chart();
             this.chartResultSection = new System.Windows.Forms.DataVisualization.Charting.Chart();
+            this.panelResultControl = new System.Windows.Forms.Panel();
+            this.nudMaxDepth = new System.Windows.Forms.NumericUpDown();
+            this.labelDepthRange = new System.Windows.Forms.Label();
             this.panelTitle = new System.Windows.Forms.Panel();
             this.labelTitle = new System.Windows.Forms.Label();
             this.btnClose = new System.Windows.Forms.Button();
@@ -126,6 +131,8 @@ namespace MapGISPlugin3
             ((System.ComponentModel.ISupportInitialize)(this.chartResistivity)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.chartPhase)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.chartResultSection)).BeginInit();
+            this.panelResultControl.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.nudMaxDepth)).BeginInit();
             this.panelTitle.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.gridLayout)).BeginInit();
             this.SuspendLayout();
@@ -133,7 +140,7 @@ namespace MapGISPlugin3
             // splitContainerMain
             // 
             this.splitContainerMain.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.splitContainerMain.Location = new System.Drawing.Point(0, 48);
+            this.splitContainerMain.Location = new System.Drawing.Point(0, 36);
             this.splitContainerMain.Name = "splitContainerMain";
             // 
             // splitContainerMain.Panel1
@@ -147,8 +154,8 @@ namespace MapGISPlugin3
             // splitContainerMain.Panel2
             // 
             this.splitContainerMain.Panel2.Controls.Add(this.splitContainerRightMain);
-            this.splitContainerMain.Size = new System.Drawing.Size(1900, 952);
-            this.splitContainerMain.SplitterDistance = 998;
+            this.splitContainerMain.Size = new System.Drawing.Size(1280, 664);
+            this.splitContainerMain.SplitterDistance = 670;
             this.splitContainerMain.TabIndex = 0;
             // 
             // tabControl1
@@ -160,10 +167,10 @@ namespace MapGISPlugin3
             this.tabControl1.Controls.Add(this.tabPageLayout);
             this.tabControl1.Controls.Add(this.tabPageData);
             this.tabControl1.Controls.Add(this.tabPageModel);
-            this.tabControl1.Location = new System.Drawing.Point(0, 66);
+            this.tabControl1.Location = new System.Drawing.Point(0, 50);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(998, 886);
+            this.tabControl1.Size = new System.Drawing.Size(670, 614);
             this.tabControl1.TabIndex = 5;
             this.tabControl1.SelectedIndexChanged += new System.EventHandler(this.tabControl1_SelectedIndexChanged);
             // 
@@ -173,10 +180,10 @@ namespace MapGISPlugin3
             this.tabPageCalculate.Controls.Add(this.gridCalc);
             this.tabPageCalculate.Controls.Add(this.chartProfileView);
             this.tabPageCalculate.Controls.Add(this.groupBoxCalcParams);
-            this.tabPageCalculate.Location = new System.Drawing.Point(4, 28);
+            this.tabPageCalculate.Location = new System.Drawing.Point(4, 22);
             this.tabPageCalculate.Name = "tabPageCalculate";
-            this.tabPageCalculate.Padding = new System.Windows.Forms.Padding(3, 3, 3, 3);
-            this.tabPageCalculate.Size = new System.Drawing.Size(990, 854);
+            this.tabPageCalculate.Padding = new System.Windows.Forms.Padding(2);
+            this.tabPageCalculate.Size = new System.Drawing.Size(662, 588);
             this.tabPageCalculate.TabIndex = 0;
             this.tabPageCalculate.Text = "计算";
             // 
@@ -186,11 +193,11 @@ namespace MapGISPlugin3
             | System.Windows.Forms.AnchorStyles.Right)));
             this.gridCalc.BackgroundColor = System.Drawing.SystemColors.Control;
             this.gridCalc.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.gridCalc.Location = new System.Drawing.Point(10, 466);
+            this.gridCalc.Location = new System.Drawing.Point(7, 323);
             this.gridCalc.Name = "gridCalc";
-            this.gridCalc.RowHeadersWidth = 62;
-            this.gridCalc.RowTemplate.Height = 30;
-            this.gridCalc.Size = new System.Drawing.Size(969, 375);
+            this.gridCalc.RowHeadersWidth = 45;
+            this.gridCalc.RowTemplate.Height = 23;
+            this.gridCalc.Size = new System.Drawing.Size(648, 258);
             this.gridCalc.TabIndex = 3;
             // 
             // chartProfileView
@@ -199,12 +206,12 @@ namespace MapGISPlugin3
             | System.Windows.Forms.AnchorStyles.Right)));
             chartArea1.Name = "ChartArea1";
             this.chartProfileView.ChartAreas.Add(chartArea1);
-            this.chartProfileView.Location = new System.Drawing.Point(10, 156);
+            this.chartProfileView.Location = new System.Drawing.Point(7, 110);
             this.chartProfileView.Name = "chartProfileView";
             series1.ChartArea = "ChartArea1";
             series1.Name = "Series1";
             this.chartProfileView.Series.Add(series1);
-            this.chartProfileView.Size = new System.Drawing.Size(969, 300);
+            this.chartProfileView.Size = new System.Drawing.Size(648, 200);
             this.chartProfileView.TabIndex = 2;
             this.chartProfileView.Text = "chartProfileView";
             this.chartProfileView.MouseClick += new System.Windows.Forms.MouseEventHandler(this.chartProfileView_MouseClick);
@@ -222,9 +229,11 @@ namespace MapGISPlugin3
             this.groupBoxCalcParams.Controls.Add(this.nudIterationCount);
             this.groupBoxCalcParams.Controls.Add(this.labelIter);
             this.groupBoxCalcParams.Controls.Add(this.btnCalculate);
-            this.groupBoxCalcParams.Location = new System.Drawing.Point(10, 10);
+            this.groupBoxCalcParams.Controls.Add(this.progressBarCalc);
+            this.groupBoxCalcParams.Controls.Add(this.labelProgressPercent);
+            this.groupBoxCalcParams.Location = new System.Drawing.Point(7, 7);
             this.groupBoxCalcParams.Name = "groupBoxCalcParams";
-            this.groupBoxCalcParams.Size = new System.Drawing.Size(969, 140);
+            this.groupBoxCalcParams.Size = new System.Drawing.Size(648, 97);
             this.groupBoxCalcParams.TabIndex = 1;
             this.groupBoxCalcParams.TabStop = false;
             this.groupBoxCalcParams.Text = "计算参数";
@@ -232,44 +241,44 @@ namespace MapGISPlugin3
             // txtActualError
             // 
             this.txtActualError.BackColor = System.Drawing.SystemColors.Control;
-            this.txtActualError.Location = new System.Drawing.Point(480, 94);
+            this.txtActualError.Location = new System.Drawing.Point(231, 64);
             this.txtActualError.Name = "txtActualError";
             this.txtActualError.ReadOnly = true;
-            this.txtActualError.Size = new System.Drawing.Size(150, 28);
+            this.txtActualError.Size = new System.Drawing.Size(100, 21);
             this.txtActualError.TabIndex = 9;
             // 
             // labelActualError
             // 
             this.labelActualError.AutoSize = true;
-            this.labelActualError.Location = new System.Drawing.Point(344, 100);
+            this.labelActualError.Location = new System.Drawing.Point(141, 68);
             this.labelActualError.Name = "labelActualError";
-            this.labelActualError.Size = new System.Drawing.Size(134, 18);
+            this.labelActualError.Size = new System.Drawing.Size(89, 12);
             this.labelActualError.TabIndex = 8;
             this.labelActualError.Text = "实际迭代误差：";
             // 
             // txtAllowError
             // 
             this.txtAllowError.BackColor = System.Drawing.SystemColors.Control;
-            this.txtAllowError.Location = new System.Drawing.Point(480, 56);
+            this.txtAllowError.Location = new System.Drawing.Point(231, 37);
             this.txtAllowError.Name = "txtAllowError";
-            this.txtAllowError.Size = new System.Drawing.Size(150, 28);
+            this.txtAllowError.Size = new System.Drawing.Size(100, 21);
             this.txtAllowError.TabIndex = 7;
             // 
             // labelAllowError
             // 
             this.labelAllowError.AutoSize = true;
-            this.labelAllowError.Location = new System.Drawing.Point(344, 62);
+            this.labelAllowError.Location = new System.Drawing.Point(141, 41);
             this.labelAllowError.Name = "labelAllowError";
-            this.labelAllowError.Size = new System.Drawing.Size(134, 18);
+            this.labelAllowError.Size = new System.Drawing.Size(89, 12);
             this.labelAllowError.TabIndex = 6;
             this.labelAllowError.Text = "允许迭代误差：";
             // 
             // chkJointInversion
             // 
             this.chkJointInversion.AutoSize = true;
-            this.chkJointInversion.Location = new System.Drawing.Point(26, 98);
+            this.chkJointInversion.Location = new System.Drawing.Point(17, 67);
             this.chkJointInversion.Name = "chkJointInversion";
-            this.chkJointInversion.Size = new System.Drawing.Size(106, 22);
+            this.chkJointInversion.Size = new System.Drawing.Size(72, 16);
             this.chkJointInversion.TabIndex = 5;
             this.chkJointInversion.Text = "联合反演";
             this.chkJointInversion.UseVisualStyleBackColor = true;
@@ -277,9 +286,9 @@ namespace MapGISPlugin3
             // chkUseCurrentStation
             // 
             this.chkUseCurrentStation.AutoSize = true;
-            this.chkUseCurrentStation.Location = new System.Drawing.Point(26, 60);
+            this.chkUseCurrentStation.Location = new System.Drawing.Point(17, 41);
             this.chkUseCurrentStation.Name = "chkUseCurrentStation";
-            this.chkUseCurrentStation.Size = new System.Drawing.Size(124, 22);
+            this.chkUseCurrentStation.Size = new System.Drawing.Size(84, 16);
             this.chkUseCurrentStation.TabIndex = 4;
             this.chkUseCurrentStation.Text = "仅当前测点";
             this.chkUseCurrentStation.UseVisualStyleBackColor = true;
@@ -287,14 +296,14 @@ namespace MapGISPlugin3
             // nudIterationCount
             // 
             this.nudIterationCount.BackColor = System.Drawing.SystemColors.Control;
-            this.nudIterationCount.Location = new System.Drawing.Point(480, 20);
+            this.nudIterationCount.Location = new System.Drawing.Point(231, 13);
             this.nudIterationCount.Minimum = new decimal(new int[] {
             1,
             0,
             0,
             0});
             this.nudIterationCount.Name = "nudIterationCount";
-            this.nudIterationCount.Size = new System.Drawing.Size(150, 28);
+            this.nudIterationCount.Size = new System.Drawing.Size(100, 21);
             this.nudIterationCount.TabIndex = 3;
             this.nudIterationCount.Value = new decimal(new int[] {
             10,
@@ -305,9 +314,9 @@ namespace MapGISPlugin3
             // labelIter
             // 
             this.labelIter.AutoSize = true;
-            this.labelIter.Location = new System.Drawing.Point(344, 26);
+            this.labelIter.Location = new System.Drawing.Point(141, 17);
             this.labelIter.Name = "labelIter";
-            this.labelIter.Size = new System.Drawing.Size(98, 18);
+            this.labelIter.Size = new System.Drawing.Size(65, 12);
             this.labelIter.TabIndex = 2;
             this.labelIter.Text = "迭代次数：";
             // 
@@ -315,23 +324,43 @@ namespace MapGISPlugin3
             // 
             this.btnCalculate.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.btnCalculate.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.btnCalculate.Location = new System.Drawing.Point(853, 52);
+            this.btnCalculate.Location = new System.Drawing.Point(373, 22);
             this.btnCalculate.Name = "btnCalculate";
-            this.btnCalculate.Size = new System.Drawing.Size(100, 40);
+            this.btnCalculate.Size = new System.Drawing.Size(67, 27);
             this.btnCalculate.TabIndex = 0;
             this.btnCalculate.Text = "计算";
             this.btnCalculate.UseVisualStyleBackColor = true;
             this.btnCalculate.Click += new System.EventHandler(this.btnCalculate_Click);
+            // 
+            // progressBarCalc
+            // 
+            this.progressBarCalc.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.progressBarCalc.Location = new System.Drawing.Point(373, 57);
+            this.progressBarCalc.Name = "progressBarCalc";
+            this.progressBarCalc.Size = new System.Drawing.Size(180, 23);
+            this.progressBarCalc.TabIndex = 13;
+            this.progressBarCalc.Visible = false;
+            // 
+            // labelProgressPercent
+            // 
+            this.labelProgressPercent.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.labelProgressPercent.AutoSize = true;
+            this.labelProgressPercent.Location = new System.Drawing.Point(559, 64);
+            this.labelProgressPercent.Name = "labelProgressPercent";
+            this.labelProgressPercent.Size = new System.Drawing.Size(17, 12);
+            this.labelProgressPercent.TabIndex = 14;
+            this.labelProgressPercent.Text = "0%";
+            this.labelProgressPercent.Visible = false;
             // 
             // tabPageLayout
             // 
             this.tabPageLayout.BackColor = System.Drawing.SystemColors.Control;
             this.tabPageLayout.Controls.Add(this.chartLayout);
             this.tabPageLayout.Controls.Add(this.panelLayoutTop);
-            this.tabPageLayout.Location = new System.Drawing.Point(4, 28);
+            this.tabPageLayout.Location = new System.Drawing.Point(4, 22);
             this.tabPageLayout.Name = "tabPageLayout";
-            this.tabPageLayout.Padding = new System.Windows.Forms.Padding(3, 3, 3, 3);
-            this.tabPageLayout.Size = new System.Drawing.Size(991, 854);
+            this.tabPageLayout.Padding = new System.Windows.Forms.Padding(2);
+            this.tabPageLayout.Size = new System.Drawing.Size(662, 588);
             this.tabPageLayout.TabIndex = 1;
             this.tabPageLayout.Text = "布置图";
             // 
@@ -346,13 +375,13 @@ namespace MapGISPlugin3
             legend1.Enabled = false;
             legend1.Name = "Legend1";
             this.chartLayout.Legends.Add(legend1);
-            this.chartLayout.Location = new System.Drawing.Point(10, 120);
+            this.chartLayout.Location = new System.Drawing.Point(7, 80);
             this.chartLayout.Name = "chartLayout";
             series2.ChartArea = "ChartArea1";
             series2.Legend = "Legend1";
             series2.Name = "Series1";
             this.chartLayout.Series.Add(series2);
-            this.chartLayout.Size = new System.Drawing.Size(970, 724);
+            this.chartLayout.Size = new System.Drawing.Size(648, 501);
             this.chartLayout.TabIndex = 1;
             this.chartLayout.Text = "chartLayout";
             this.chartLayout.MouseClick += new System.Windows.Forms.MouseEventHandler(this.chartLayout_MouseClick);
@@ -369,17 +398,17 @@ namespace MapGISPlugin3
             this.panelLayoutTop.Controls.Add(this.txtCurrentInversionStation);
             this.panelLayoutTop.Controls.Add(this.labelCurrentSelectedStation);
             this.panelLayoutTop.Controls.Add(this.txtCurrentSelectedStation);
-            this.panelLayoutTop.Location = new System.Drawing.Point(10, 10);
+            this.panelLayoutTop.Location = new System.Drawing.Point(7, 7);
             this.panelLayoutTop.Name = "panelLayoutTop";
-            this.panelLayoutTop.Size = new System.Drawing.Size(970, 100);
+            this.panelLayoutTop.Size = new System.Drawing.Size(648, 67);
             this.panelLayoutTop.TabIndex = 0;
             // 
             // labelOffsetFromCenter
             // 
             this.labelOffsetFromCenter.AutoSize = true;
-            this.labelOffsetFromCenter.Location = new System.Drawing.Point(480, 62);
+            this.labelOffsetFromCenter.Location = new System.Drawing.Point(320, 42);
             this.labelOffsetFromCenter.Name = "labelOffsetFromCenter";
-            this.labelOffsetFromCenter.Size = new System.Drawing.Size(188, 18);
+            this.labelOffsetFromCenter.Size = new System.Drawing.Size(125, 12);
             this.labelOffsetFromCenter.TabIndex = 8;
             this.labelOffsetFromCenter.Text = "偏移发射源中心距离：";
             this.labelOffsetFromCenter.Click += new System.EventHandler(this.labelOffsetFromCenter_Click);
@@ -387,18 +416,18 @@ namespace MapGISPlugin3
             // txtOffsetFromCenter
             // 
             this.txtOffsetFromCenter.BackColor = System.Drawing.SystemColors.Control;
-            this.txtOffsetFromCenter.Location = new System.Drawing.Point(674, 56);
+            this.txtOffsetFromCenter.Location = new System.Drawing.Point(450, 38);
             this.txtOffsetFromCenter.Name = "txtOffsetFromCenter";
             this.txtOffsetFromCenter.ReadOnly = true;
-            this.txtOffsetFromCenter.Size = new System.Drawing.Size(120, 28);
+            this.txtOffsetFromCenter.Size = new System.Drawing.Size(80, 21);
             this.txtOffsetFromCenter.TabIndex = 7;
             // 
             // labelTxRxDistance
             // 
             this.labelTxRxDistance.AutoSize = true;
-            this.labelTxRxDistance.Location = new System.Drawing.Point(480, 20);
+            this.labelTxRxDistance.Location = new System.Drawing.Point(320, 14);
             this.labelTxRxDistance.Name = "labelTxRxDistance";
-            this.labelTxRxDistance.Size = new System.Drawing.Size(98, 18);
+            this.labelTxRxDistance.Size = new System.Drawing.Size(65, 12);
             this.labelTxRxDistance.TabIndex = 6;
             this.labelTxRxDistance.Text = "收发距离：";
             this.labelTxRxDistance.Click += new System.EventHandler(this.labelTxRxDistance_Click);
@@ -406,56 +435,56 @@ namespace MapGISPlugin3
             // txtTxRxDistance
             // 
             this.txtTxRxDistance.BackColor = System.Drawing.SystemColors.Control;
-            this.txtTxRxDistance.Location = new System.Drawing.Point(674, 14);
+            this.txtTxRxDistance.Location = new System.Drawing.Point(450, 10);
             this.txtTxRxDistance.Name = "txtTxRxDistance";
             this.txtTxRxDistance.ReadOnly = true;
-            this.txtTxRxDistance.Size = new System.Drawing.Size(120, 28);
+            this.txtTxRxDistance.Size = new System.Drawing.Size(80, 21);
             this.txtTxRxDistance.TabIndex = 5;
             // 
             // labelCurrentInversionStation
             // 
             this.labelCurrentInversionStation.AutoSize = true;
-            this.labelCurrentInversionStation.Location = new System.Drawing.Point(8, 62);
+            this.labelCurrentInversionStation.Location = new System.Drawing.Point(5, 42);
             this.labelCurrentInversionStation.Name = "labelCurrentInversionStation";
-            this.labelCurrentInversionStation.Size = new System.Drawing.Size(134, 18);
+            this.labelCurrentInversionStation.Size = new System.Drawing.Size(89, 12);
             this.labelCurrentInversionStation.TabIndex = 4;
             this.labelCurrentInversionStation.Text = "当前反演测点：";
             // 
             // txtCurrentInversionStation
             // 
             this.txtCurrentInversionStation.BackColor = System.Drawing.SystemColors.Control;
-            this.txtCurrentInversionStation.Location = new System.Drawing.Point(148, 56);
+            this.txtCurrentInversionStation.Location = new System.Drawing.Point(99, 38);
             this.txtCurrentInversionStation.Name = "txtCurrentInversionStation";
             this.txtCurrentInversionStation.ReadOnly = true;
-            this.txtCurrentInversionStation.Size = new System.Drawing.Size(80, 28);
+            this.txtCurrentInversionStation.Size = new System.Drawing.Size(54, 21);
             this.txtCurrentInversionStation.TabIndex = 3;
             // 
             // labelCurrentSelectedStation
             // 
             this.labelCurrentSelectedStation.AutoSize = true;
-            this.labelCurrentSelectedStation.Location = new System.Drawing.Point(8, 20);
+            this.labelCurrentSelectedStation.Location = new System.Drawing.Point(5, 14);
             this.labelCurrentSelectedStation.Name = "labelCurrentSelectedStation";
-            this.labelCurrentSelectedStation.Size = new System.Drawing.Size(134, 18);
+            this.labelCurrentSelectedStation.Size = new System.Drawing.Size(89, 12);
             this.labelCurrentSelectedStation.TabIndex = 2;
             this.labelCurrentSelectedStation.Text = "当前选择测点：";
             // 
             // txtCurrentSelectedStation
             // 
             this.txtCurrentSelectedStation.BackColor = System.Drawing.SystemColors.Control;
-            this.txtCurrentSelectedStation.Location = new System.Drawing.Point(148, 14);
+            this.txtCurrentSelectedStation.Location = new System.Drawing.Point(99, 10);
             this.txtCurrentSelectedStation.Name = "txtCurrentSelectedStation";
             this.txtCurrentSelectedStation.ReadOnly = true;
-            this.txtCurrentSelectedStation.Size = new System.Drawing.Size(80, 28);
+            this.txtCurrentSelectedStation.Size = new System.Drawing.Size(54, 21);
             this.txtCurrentSelectedStation.TabIndex = 1;
             // 
             // tabPageData
             // 
             this.tabPageData.BackColor = System.Drawing.SystemColors.Control;
             this.tabPageData.Controls.Add(this.gridData);
-            this.tabPageData.Location = new System.Drawing.Point(4, 28);
+            this.tabPageData.Location = new System.Drawing.Point(4, 22);
             this.tabPageData.Name = "tabPageData";
-            this.tabPageData.Padding = new System.Windows.Forms.Padding(3, 3, 3, 3);
-            this.tabPageData.Size = new System.Drawing.Size(991, 854);
+            this.tabPageData.Padding = new System.Windows.Forms.Padding(2);
+            this.tabPageData.Size = new System.Drawing.Size(662, 588);
             this.tabPageData.TabIndex = 2;
             this.tabPageData.Text = "数据";
             // 
@@ -464,11 +493,11 @@ namespace MapGISPlugin3
             this.gridData.BackgroundColor = System.Drawing.SystemColors.Control;
             this.gridData.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.gridData.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.gridData.Location = new System.Drawing.Point(3, 3);
+            this.gridData.Location = new System.Drawing.Point(2, 2);
             this.gridData.Name = "gridData";
-            this.gridData.RowHeadersWidth = 62;
-            this.gridData.RowTemplate.Height = 30;
-            this.gridData.Size = new System.Drawing.Size(985, 848);
+            this.gridData.RowHeadersWidth = 45;
+            this.gridData.RowTemplate.Height = 23;
+            this.gridData.Size = new System.Drawing.Size(658, 584);
             this.gridData.TabIndex = 0;
             // 
             // tabPageModel
@@ -476,10 +505,10 @@ namespace MapGISPlugin3
             this.tabPageModel.BackColor = System.Drawing.SystemColors.Control;
             this.tabPageModel.Controls.Add(this.gridModelLayers);
             this.tabPageModel.Controls.Add(this.groupBoxModelParams);
-            this.tabPageModel.Location = new System.Drawing.Point(4, 28);
+            this.tabPageModel.Location = new System.Drawing.Point(4, 22);
             this.tabPageModel.Name = "tabPageModel";
-            this.tabPageModel.Padding = new System.Windows.Forms.Padding(3, 3, 3, 3);
-            this.tabPageModel.Size = new System.Drawing.Size(991, 854);
+            this.tabPageModel.Padding = new System.Windows.Forms.Padding(2);
+            this.tabPageModel.Size = new System.Drawing.Size(662, 588);
             this.tabPageModel.TabIndex = 3;
             this.tabPageModel.Text = "模型";
             // 
@@ -490,11 +519,11 @@ namespace MapGISPlugin3
             | System.Windows.Forms.AnchorStyles.Right)));
             this.gridModelLayers.BackgroundColor = System.Drawing.SystemColors.Control;
             this.gridModelLayers.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.gridModelLayers.Location = new System.Drawing.Point(10, 136);
+            this.gridModelLayers.Location = new System.Drawing.Point(7, 91);
             this.gridModelLayers.Name = "gridModelLayers";
-            this.gridModelLayers.RowHeadersWidth = 62;
-            this.gridModelLayers.RowTemplate.Height = 30;
-            this.gridModelLayers.Size = new System.Drawing.Size(970, 705);
+            this.gridModelLayers.RowHeadersWidth = 45;
+            this.gridModelLayers.RowTemplate.Height = 23;
+            this.gridModelLayers.Size = new System.Drawing.Size(648, 490);
             this.gridModelLayers.TabIndex = 1;
             // 
             // groupBoxModelParams
@@ -510,9 +539,9 @@ namespace MapGISPlugin3
             this.groupBoxModelParams.Controls.Add(this.labelInitialThickness);
             this.groupBoxModelParams.Controls.Add(this.nudLayerCount);
             this.groupBoxModelParams.Controls.Add(this.labelLayerCount);
-            this.groupBoxModelParams.Location = new System.Drawing.Point(10, 10);
+            this.groupBoxModelParams.Location = new System.Drawing.Point(7, 7);
             this.groupBoxModelParams.Name = "groupBoxModelParams";
-            this.groupBoxModelParams.Size = new System.Drawing.Size(970, 120);
+            this.groupBoxModelParams.Size = new System.Drawing.Size(648, 80);
             this.groupBoxModelParams.TabIndex = 0;
             this.groupBoxModelParams.TabStop = false;
             this.groupBoxModelParams.Text = "模型参数";
@@ -521,9 +550,9 @@ namespace MapGISPlugin3
             // 
             this.btnGenerateModel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.btnGenerateModel.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.btnGenerateModel.Location = new System.Drawing.Point(855, 45);
+            this.btnGenerateModel.Location = new System.Drawing.Point(570, 30);
             this.btnGenerateModel.Name = "btnGenerateModel";
-            this.btnGenerateModel.Size = new System.Drawing.Size(100, 40);
+            this.btnGenerateModel.Size = new System.Drawing.Size(67, 27);
             this.btnGenerateModel.TabIndex = 8;
             this.btnGenerateModel.Text = "生成模型";
             this.btnGenerateModel.UseVisualStyleBackColor = true;
@@ -532,7 +561,7 @@ namespace MapGISPlugin3
             // nudInitialResistivity
             // 
             this.nudInitialResistivity.DecimalPlaces = 1;
-            this.nudInitialResistivity.Location = new System.Drawing.Point(532, 72);
+            this.nudInitialResistivity.Location = new System.Drawing.Point(355, 49);
             this.nudInitialResistivity.Maximum = new decimal(new int[] {
             100000,
             0,
@@ -544,7 +573,7 @@ namespace MapGISPlugin3
             0,
             0});
             this.nudInitialResistivity.Name = "nudInitialResistivity";
-            this.nudInitialResistivity.Size = new System.Drawing.Size(150, 28);
+            this.nudInitialResistivity.Size = new System.Drawing.Size(100, 21);
             this.nudInitialResistivity.TabIndex = 7;
             this.nudInitialResistivity.Value = new decimal(new int[] {
             100,
@@ -555,9 +584,9 @@ namespace MapGISPlugin3
             // labelInitialResistivity
             // 
             this.labelInitialResistivity.AutoSize = true;
-            this.labelInitialResistivity.Location = new System.Drawing.Point(366, 78);
+            this.labelInitialResistivity.Location = new System.Drawing.Point(244, 53);
             this.labelInitialResistivity.Name = "labelInitialResistivity";
-            this.labelInitialResistivity.Size = new System.Drawing.Size(161, 18);
+            this.labelInitialResistivity.Size = new System.Drawing.Size(107, 12);
             this.labelInitialResistivity.TabIndex = 6;
             this.labelInitialResistivity.Text = "初始电阻率(Ω·m)";
             // 
@@ -569,7 +598,7 @@ namespace MapGISPlugin3
             0,
             0,
             262144});
-            this.nudGrowthRate.Location = new System.Drawing.Point(532, 32);
+            this.nudGrowthRate.Location = new System.Drawing.Point(355, 22);
             this.nudGrowthRate.Maximum = new decimal(new int[] {
             3,
             0,
@@ -581,7 +610,7 @@ namespace MapGISPlugin3
             0,
             131072});
             this.nudGrowthRate.Name = "nudGrowthRate";
-            this.nudGrowthRate.Size = new System.Drawing.Size(150, 28);
+            this.nudGrowthRate.Size = new System.Drawing.Size(100, 21);
             this.nudGrowthRate.TabIndex = 5;
             this.nudGrowthRate.Value = new decimal(new int[] {
             12589,
@@ -592,16 +621,16 @@ namespace MapGISPlugin3
             // labelGrowthRate
             // 
             this.labelGrowthRate.AutoSize = true;
-            this.labelGrowthRate.Location = new System.Drawing.Point(366, 38);
+            this.labelGrowthRate.Location = new System.Drawing.Point(244, 26);
             this.labelGrowthRate.Name = "labelGrowthRate";
-            this.labelGrowthRate.Size = new System.Drawing.Size(107, 18);
+            this.labelGrowthRate.Size = new System.Drawing.Size(77, 12);
             this.labelGrowthRate.TabIndex = 4;
-            this.labelGrowthRate.Text = "厚度增长倍:";
+            this.labelGrowthRate.Text = "厚度增长倍: ";
             // 
             // nudInitialThickness
             // 
             this.nudInitialThickness.DecimalPlaces = 1;
-            this.nudInitialThickness.Location = new System.Drawing.Point(146, 72);
+            this.nudInitialThickness.Location = new System.Drawing.Point(97, 49);
             this.nudInitialThickness.Maximum = new decimal(new int[] {
             1000,
             0,
@@ -613,7 +642,7 @@ namespace MapGISPlugin3
             0,
             0});
             this.nudInitialThickness.Name = "nudInitialThickness";
-            this.nudInitialThickness.Size = new System.Drawing.Size(150, 28);
+            this.nudInitialThickness.Size = new System.Drawing.Size(100, 21);
             this.nudInitialThickness.TabIndex = 3;
             this.nudInitialThickness.Value = new decimal(new int[] {
             5,
@@ -624,22 +653,22 @@ namespace MapGISPlugin3
             // labelInitialThickness
             // 
             this.labelInitialThickness.AutoSize = true;
-            this.labelInitialThickness.Location = new System.Drawing.Point(16, 78);
+            this.labelInitialThickness.Location = new System.Drawing.Point(11, 53);
             this.labelInitialThickness.Name = "labelInitialThickness";
-            this.labelInitialThickness.Size = new System.Drawing.Size(107, 18);
+            this.labelInitialThickness.Size = new System.Drawing.Size(71, 12);
             this.labelInitialThickness.TabIndex = 2;
             this.labelInitialThickness.Text = "首层厚度(m)";
             // 
             // nudLayerCount
             // 
-            this.nudLayerCount.Location = new System.Drawing.Point(146, 32);
+            this.nudLayerCount.Location = new System.Drawing.Point(97, 22);
             this.nudLayerCount.Minimum = new decimal(new int[] {
             1,
             0,
             0,
             0});
             this.nudLayerCount.Name = "nudLayerCount";
-            this.nudLayerCount.Size = new System.Drawing.Size(150, 28);
+            this.nudLayerCount.Size = new System.Drawing.Size(100, 21);
             this.nudLayerCount.TabIndex = 1;
             this.nudLayerCount.Value = new decimal(new int[] {
             20,
@@ -650,29 +679,29 @@ namespace MapGISPlugin3
             // labelLayerCount
             // 
             this.labelLayerCount.AutoSize = true;
-            this.labelLayerCount.Location = new System.Drawing.Point(16, 38);
+            this.labelLayerCount.Location = new System.Drawing.Point(11, 26);
             this.labelLayerCount.Name = "labelLayerCount";
-            this.labelLayerCount.Size = new System.Drawing.Size(80, 18);
+            this.labelLayerCount.Size = new System.Drawing.Size(53, 12);
             this.labelLayerCount.TabIndex = 0;
             this.labelLayerCount.Text = "层数(nL)";
             // 
             // labelStationLayer
             // 
             this.labelStationLayer.AutoSize = true;
-            this.labelStationLayer.Location = new System.Drawing.Point(12, 27);
+            this.labelStationLayer.Location = new System.Drawing.Point(8, 18);
             this.labelStationLayer.Name = "labelStationLayer";
-            this.labelStationLayer.Size = new System.Drawing.Size(125, 18);
+            this.labelStationLayer.Size = new System.Drawing.Size(83, 12);
             this.labelStationLayer.TabIndex = 4;
             this.labelStationLayer.Text = "选择测点图层:";
             // 
             // labelLineName
             // 
             this.labelLineName.AutoSize = true;
-            this.labelLineName.Location = new System.Drawing.Point(420, 27);
+            this.labelLineName.Location = new System.Drawing.Point(280, 18);
             this.labelLineName.Name = "labelLineName";
-            this.labelLineName.Size = new System.Drawing.Size(89, 18);
+            this.labelLineName.Size = new System.Drawing.Size(65, 12);
             this.labelLineName.TabIndex = 3;
-            this.labelLineName.Text = "选择测线:";
+            this.labelLineName.Text = "选择测线: ";
             // 
             // cmbLineName
             // 
@@ -682,9 +711,9 @@ namespace MapGISPlugin3
             this.cmbLineName.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbLineName.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.cmbLineName.FormattingEnabled = true;
-            this.cmbLineName.Location = new System.Drawing.Point(516, 20);
+            this.cmbLineName.Location = new System.Drawing.Point(344, 14);
             this.cmbLineName.Name = "cmbLineName";
-            this.cmbLineName.Size = new System.Drawing.Size(465, 26);
+            this.cmbLineName.Size = new System.Drawing.Size(311, 20);
             this.cmbLineName.TabIndex = 1;
             this.cmbLineName.SelectedIndexChanged += new System.EventHandler(this.cmbLineName_SelectedIndexChanged);
             // 
@@ -694,9 +723,9 @@ namespace MapGISPlugin3
             this.cmbStationLayer.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbStationLayer.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.cmbStationLayer.FormattingEnabled = true;
-            this.cmbStationLayer.Location = new System.Drawing.Point(147, 20);
+            this.cmbStationLayer.Location = new System.Drawing.Point(98, 14);
             this.cmbStationLayer.Name = "cmbStationLayer";
-            this.cmbStationLayer.Size = new System.Drawing.Size(258, 26);
+            this.cmbStationLayer.Size = new System.Drawing.Size(172, 20);
             this.cmbStationLayer.TabIndex = 0;
             this.cmbStationLayer.SelectedIndexChanged += new System.EventHandler(this.cmbStationLayer_SelectedIndexChanged);
             // 
@@ -704,7 +733,6 @@ namespace MapGISPlugin3
             // 
             this.splitContainerRightMain.Dock = System.Windows.Forms.DockStyle.Fill;
             this.splitContainerRightMain.Location = new System.Drawing.Point(0, 0);
-            this.splitContainerRightMain.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.splitContainerRightMain.Name = "splitContainerRightMain";
             this.splitContainerRightMain.Orientation = System.Windows.Forms.Orientation.Horizontal;
             // 
@@ -715,16 +743,15 @@ namespace MapGISPlugin3
             // splitContainerRightMain.Panel2
             // 
             this.splitContainerRightMain.Panel2.Controls.Add(this.chartResultSection);
-            this.splitContainerRightMain.Size = new System.Drawing.Size(898, 952);
-            this.splitContainerRightMain.SplitterDistance = 479;
-            this.splitContainerRightMain.SplitterWidth = 6;
+            this.splitContainerRightMain.Panel2.Controls.Add(this.panelResultControl);
+            this.splitContainerRightMain.Size = new System.Drawing.Size(606, 664);
+            this.splitContainerRightMain.SplitterDistance = 334;
             this.splitContainerRightMain.TabIndex = 0;
             // 
             // splitContainerRight
             // 
             this.splitContainerRight.Dock = System.Windows.Forms.DockStyle.Fill;
             this.splitContainerRight.Location = new System.Drawing.Point(0, 0);
-            this.splitContainerRight.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.splitContainerRight.Name = "splitContainerRight";
             // 
             // splitContainerRight.Panel1
@@ -734,9 +761,8 @@ namespace MapGISPlugin3
             // splitContainerRight.Panel2
             // 
             this.splitContainerRight.Panel2.Controls.Add(this.chartPhase);
-            this.splitContainerRight.Size = new System.Drawing.Size(898, 479);
-            this.splitContainerRight.SplitterDistance = 449;
-            this.splitContainerRight.SplitterWidth = 6;
+            this.splitContainerRight.Size = new System.Drawing.Size(606, 334);
+            this.splitContainerRight.SplitterDistance = 303;
             this.splitContainerRight.TabIndex = 0;
             // 
             // chartResistivity
@@ -753,7 +779,7 @@ namespace MapGISPlugin3
             series3.Legend = "Legend1";
             series3.Name = "Series1";
             this.chartResistivity.Series.Add(series3);
-            this.chartResistivity.Size = new System.Drawing.Size(449, 479);
+            this.chartResistivity.Size = new System.Drawing.Size(303, 334);
             this.chartResistivity.TabIndex = 1;
             this.chartResistivity.Text = "chartResistivity";
             // 
@@ -771,7 +797,7 @@ namespace MapGISPlugin3
             series4.Legend = "Legend1";
             series4.Name = "Series1";
             this.chartPhase.Series.Add(series4);
-            this.chartPhase.Size = new System.Drawing.Size(443, 479);
+            this.chartPhase.Size = new System.Drawing.Size(299, 334);
             this.chartPhase.TabIndex = 2;
             this.chartPhase.Text = "chartPhase";
             // 
@@ -784,16 +810,57 @@ namespace MapGISPlugin3
             legend4.BackColor = System.Drawing.SystemColors.Control;
             legend4.Name = "Legend1";
             this.chartResultSection.Legends.Add(legend4);
-            this.chartResultSection.Location = new System.Drawing.Point(0, 0);
-            this.chartResultSection.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.chartResultSection.Location = new System.Drawing.Point(0, 35);
             this.chartResultSection.Name = "chartResultSection";
             series5.ChartArea = "ChartArea1";
             series5.Legend = "Legend1";
             series5.Name = "Series1";
             this.chartResultSection.Series.Add(series5);
-            this.chartResultSection.Size = new System.Drawing.Size(898, 467);
+            this.chartResultSection.Size = new System.Drawing.Size(606, 291);
             this.chartResultSection.TabIndex = 0;
             this.chartResultSection.Text = "chartResultSection";
+            // 
+            // panelResultControl
+            // 
+            this.panelResultControl.Controls.Add(this.nudMaxDepth);
+            this.panelResultControl.Controls.Add(this.labelDepthRange);
+            this.panelResultControl.Dock = System.Windows.Forms.DockStyle.Top;
+            this.panelResultControl.Location = new System.Drawing.Point(0, 0);
+            this.panelResultControl.Name = "panelResultControl";
+            this.panelResultControl.Size = new System.Drawing.Size(606, 35);
+            this.panelResultControl.TabIndex = 1;
+            // 
+            // nudMaxDepth
+            // 
+            this.nudMaxDepth.Location = new System.Drawing.Point(117, 8);
+            this.nudMaxDepth.Maximum = new decimal(new int[] {
+            200000,
+            0,
+            0,
+            0});
+            this.nudMaxDepth.Minimum = new decimal(new int[] {
+            100,
+            0,
+            0,
+            0});
+            this.nudMaxDepth.Name = "nudMaxDepth";
+            this.nudMaxDepth.Size = new System.Drawing.Size(100, 21);
+            this.nudMaxDepth.TabIndex = 1;
+            this.nudMaxDepth.Value = new decimal(new int[] {
+            1000,
+            0,
+            0,
+            0});
+            this.nudMaxDepth.ValueChanged += new System.EventHandler(this.nudMaxDepth_ValueChanged);
+            // 
+            // labelDepthRange
+            // 
+            this.labelDepthRange.AutoSize = true;
+            this.labelDepthRange.Location = new System.Drawing.Point(10, 10);
+            this.labelDepthRange.Name = "labelDepthRange";
+            this.labelDepthRange.Size = new System.Drawing.Size(101, 12);
+            this.labelDepthRange.TabIndex = 0;
+            this.labelDepthRange.Text = "显示最大深度(m):";
             // 
             // panelTitle
             // 
@@ -803,7 +870,7 @@ namespace MapGISPlugin3
             this.panelTitle.Dock = System.Windows.Forms.DockStyle.Top;
             this.panelTitle.Location = new System.Drawing.Point(0, 0);
             this.panelTitle.Name = "panelTitle";
-            this.panelTitle.Size = new System.Drawing.Size(1900, 48);
+            this.panelTitle.Size = new System.Drawing.Size(1280, 36);
             this.panelTitle.TabIndex = 6;
             // 
             // labelTitle
@@ -812,7 +879,7 @@ namespace MapGISPlugin3
             this.labelTitle.ForeColor = System.Drawing.SystemColors.ControlText;
             this.labelTitle.Location = new System.Drawing.Point(0, 0);
             this.labelTitle.Name = "labelTitle";
-            this.labelTitle.Size = new System.Drawing.Size(200, 48);
+            this.labelTitle.Size = new System.Drawing.Size(133, 36);
             this.labelTitle.TabIndex = 1;
             this.labelTitle.Text = "CSAMT 一维反演";
             this.labelTitle.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -823,9 +890,9 @@ namespace MapGISPlugin3
             this.btnClose.FlatAppearance.BorderColor = System.Drawing.SystemColors.ControlLight;
             this.btnClose.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnClose.Font = new System.Drawing.Font("宋体", 6.75F);
-            this.btnClose.Location = new System.Drawing.Point(1856, 0);
+            this.btnClose.Location = new System.Drawing.Point(1250, 0);
             this.btnClose.Name = "btnClose";
-            this.btnClose.Size = new System.Drawing.Size(44, 48);
+            this.btnClose.Size = new System.Drawing.Size(30, 36);
             this.btnClose.TabIndex = 0;
             this.btnClose.Text = "X";
             this.btnClose.UseVisualStyleBackColor = true;
@@ -834,14 +901,15 @@ namespace MapGISPlugin3
             // openFileDialogTran
             // 
             this.openFileDialogTran.FileName = "tran.dat";
-            this.openFileDialogTran.Filter = "发射源文件 (*.dat)|*.dat|所有文件 (*.*)|*.*";
+            this.openFileDialogTran.Filter = "发射源文件 (*. dat)|*.dat|所有文件 (*.*)|*.*";
             this.openFileDialogTran.Title = "请选择发射源文件";
+            this.openFileDialogTran.FileOk += new System.ComponentModel.CancelEventHandler(this.openFileDialogTran_FileOk);
             // 
             // txtAz
             // 
             this.txtAz.Location = new System.Drawing.Point(0, 0);
             this.txtAz.Name = "txtAz";
-            this.txtAz.Size = new System.Drawing.Size(10, 28);
+            this.txtAz.Size = new System.Drawing.Size(7, 21);
             this.txtAz.TabIndex = 0;
             this.txtAz.Visible = false;
             // 
@@ -849,7 +917,7 @@ namespace MapGISPlugin3
             // 
             this.txtAy.Location = new System.Drawing.Point(0, 0);
             this.txtAy.Name = "txtAy";
-            this.txtAy.Size = new System.Drawing.Size(10, 28);
+            this.txtAy.Size = new System.Drawing.Size(7, 21);
             this.txtAy.TabIndex = 0;
             this.txtAy.Visible = false;
             // 
@@ -857,7 +925,7 @@ namespace MapGISPlugin3
             // 
             this.txtAx.Location = new System.Drawing.Point(0, 0);
             this.txtAx.Name = "txtAx";
-            this.txtAx.Size = new System.Drawing.Size(10, 28);
+            this.txtAx.Size = new System.Drawing.Size(7, 21);
             this.txtAx.TabIndex = 0;
             this.txtAx.Visible = false;
             // 
@@ -865,7 +933,7 @@ namespace MapGISPlugin3
             // 
             this.txtBz.Location = new System.Drawing.Point(0, 0);
             this.txtBz.Name = "txtBz";
-            this.txtBz.Size = new System.Drawing.Size(10, 28);
+            this.txtBz.Size = new System.Drawing.Size(7, 21);
             this.txtBz.TabIndex = 0;
             this.txtBz.Visible = false;
             // 
@@ -873,7 +941,7 @@ namespace MapGISPlugin3
             // 
             this.txtBy.Location = new System.Drawing.Point(0, 0);
             this.txtBy.Name = "txtBy";
-            this.txtBy.Size = new System.Drawing.Size(10, 28);
+            this.txtBy.Size = new System.Drawing.Size(7, 21);
             this.txtBy.TabIndex = 0;
             this.txtBy.Visible = false;
             // 
@@ -881,7 +949,7 @@ namespace MapGISPlugin3
             // 
             this.txtBx.Location = new System.Drawing.Point(0, 0);
             this.txtBx.Name = "txtBx";
-            this.txtBx.Size = new System.Drawing.Size(10, 28);
+            this.txtBx.Size = new System.Drawing.Size(7, 21);
             this.txtBx.TabIndex = 0;
             this.txtBx.Visible = false;
             // 
@@ -890,16 +958,16 @@ namespace MapGISPlugin3
             this.gridLayout.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.gridLayout.Location = new System.Drawing.Point(0, 0);
             this.gridLayout.Name = "gridLayout";
-            this.gridLayout.RowHeadersWidth = 62;
-            this.gridLayout.RowTemplate.Height = 30;
-            this.gridLayout.Size = new System.Drawing.Size(240, 150);
+            this.gridLayout.RowHeadersWidth = 45;
+            this.gridLayout.RowTemplate.Height = 23;
+            this.gridLayout.Size = new System.Drawing.Size(160, 100);
             this.gridLayout.TabIndex = 0;
             this.gridLayout.Visible = false;
             // 
             // Form_CSAMT1di
             // 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
-            this.ClientSize = new System.Drawing.Size(1900, 1000);
+            this.ClientSize = new System.Drawing.Size(1280, 700);
             this.Controls.Add(this.splitContainerMain);
             this.Controls.Add(this.panelTitle);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
@@ -944,6 +1012,9 @@ namespace MapGISPlugin3
             ((System.ComponentModel.ISupportInitialize)(this.chartResistivity)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.chartPhase)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.chartResultSection)).EndInit();
+            this.panelResultControl.ResumeLayout(false);
+            this.panelResultControl.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.nudMaxDepth)).EndInit();
             this.panelTitle.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.gridLayout)).EndInit();
             this.ResumeLayout(false);
@@ -985,6 +1056,7 @@ namespace MapGISPlugin3
         private System.Windows.Forms.Label labelAllowError;
         private System.Windows.Forms.TextBox txtActualError;
         private System.Windows.Forms.Label labelActualError;
+        private System.Windows.Forms.ProgressBar progressBarCalc;
         private System.Windows.Forms.Panel panelLayoutTop;
         private System.Windows.Forms.Label labelCurrentSelectedStation;
         private System.Windows.Forms.TextBox txtCurrentSelectedStation;
@@ -996,7 +1068,7 @@ namespace MapGISPlugin3
         private System.Windows.Forms.TextBox txtOffsetFromCenter;
         private System.Windows.Forms.DataGridView gridCalc;
         private System.Windows.Forms.DataVisualization.Charting.Chart chartLayout;
-        private System.Windows.Forms.SplitContainer splitContainerRightMain; // 新增
+        private System.Windows.Forms.SplitContainer splitContainerRightMain;
         private System.Windows.Forms.SplitContainer splitContainerRight;
         private System.Windows.Forms.DataVisualization.Charting.Chart chartResistivity;
         private System.Windows.Forms.DataVisualization.Charting.Chart chartPhase;
@@ -1012,5 +1084,10 @@ namespace MapGISPlugin3
         private System.Windows.Forms.TextBox txtBy;
         private System.Windows.Forms.TextBox txtBx;
         private System.Windows.Forms.DataGridView gridLayout;
+        // 在类的字段声明区域添加（约在 gridLayout 声明附近）
+        private System.Windows.Forms.Label labelDepthRange;
+        private System.Windows.Forms.NumericUpDown nudMaxDepth;
+        private System.Windows.Forms.Panel panelResultControl;
+        private System.Windows.Forms.Label labelProgressPercent;
     }
 }

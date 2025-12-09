@@ -18,6 +18,8 @@ using System.IO;
 using System.Diagnostics;
 using System.Reflection;
 using System.Numerics;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace MapGISPlugin3
 {
@@ -36,9 +38,8 @@ namespace MapGISPlugin3
         private DataTable m_CurrentLineData;
         private string m_CurrentSelectedStationName;
         private Dictionary<string, (double Offset, double Distance)> m_StationDistances;
-
+        private List<InversionResultPoint> m_LastInversionResults;
         private Point mousePoint = new Point();
-
         private double Ax = 0, Ay = 0, Az = 0;
         private double Bx = 0, By = 0, Bz = 0;
 
@@ -55,8 +56,8 @@ namespace MapGISPlugin3
             m_CurrentLineStations = new List<StationInfo>();
             m_CurrentLineData = new DataTable();
             m_StationDistances = new Dictionary<string, (double, double)>();
+            m_LastInversionResults = null;  // 添加这行
 
-            // 不在计算页的左侧小地图上进行点选
             chartProfileView.MouseClick -= chartProfileView_MouseClick;
         }
 
@@ -433,10 +434,14 @@ namespace MapGISPlugin3
 
         #endregion
 
+
         #region 计算按钮与 a.exe
 
-        private void btnCalculate_Click(object sender, EventArgs e)
+        private CancellationTokenSource _progressCancellationTokenSource;
+
+        private async void btnCalculate_Click(object sender, EventArgs e)
         {
+            // ========== 1. 前置校验 ==========
             bool allZero = true;
             double ax = 0, ay = 0, az = 0;
             double bx = 0, by = 0, bz = 0;
@@ -458,7 +463,7 @@ namespace MapGISPlugin3
             if (allZero)
             {
                 var result = MessageBox.Show(
-                    "发射源坐标未设置或全部为0，请在“布置图”页面设置发射源坐标后再进行计算。\n\n是否立即跳转到布置图页面？",
+                    "发射源坐标未设置或全部为0，请在布置图页面设置发射源坐标后再进行计算。\n\n是否立即跳转到布置图页面？",
                     "发射源坐标未设置",
                     MessageBoxButtons.YesNo,
                     MessageBoxIcon.Warning);
@@ -481,14 +486,247 @@ namespace MapGISPlugin3
             double growthRate = (double)nudGrowthRate.Value;
             double initialResistivity = (double)nudInitialResistivity.Value;
             double allowError = SafeParseDouble(txtAllowError.Text);
-            if (allowError <= 0) // 确保 eps 有效
+            if (allowError <= 0)
             {
                 MessageBox.Show("允许误差容忍度 (eps) 必须大于 0。", "输入错误");
                 return;
             }
-            this.Cursor = Cursors.WaitCursor;
+
+            // ========== 2. 设置等待状态和显示进度条 ==========
+            btnCalculate.Enabled = false;
+            ShowProgressBar(true);
+            UpdateProgressBar(0);
+            txtActualError.Text = "计算中...";
+
+            // 准备数据
+            DataTable lineDataCopy = m_CurrentLineData.Copy();
+            Dictionary<string, StationInfo> stationCoords = m_CurrentLineStations.ToDictionary(s => s.StationName);
 
             string tempRunDir = Path.Combine(Path.GetTempPath(), "CSAMT1di_run_" + Guid.NewGuid().ToString("N").Substring(0, 8));
+            string fullWorkspacePath = Path.Combine(tempRunDir, "result");
+
+            // 创建取消令牌
+            _progressCancellationTokenSource = new CancellationTokenSource();
+            var cancellationToken = _progressCancellationTokenSource.Token;
+
+            try
+            {
+                // ========== 3. 启动进度监控任务 ==========
+                var progressTask = MonitorProgressAsync(fullWorkspacePath, its, cancellationToken);
+
+                // ========== 4. 后台线程执行计算 ==========
+                var calcResult = await Task.Run(() =>
+                {
+                    return RunCSAMTCalculationAsync(
+                        tempRunDir, lineDataCopy, stationCoords,
+                        ax, ay, az, bx, by, bz,
+                        its, layerCount, initialThickness, growthRate, initialResistivity, allowError);
+                });
+
+                // ========== 5. 停止进度监控 ==========
+                _progressCancellationTokenSource.Cancel();
+                try { await progressTask; } catch (OperationCanceledException) { }
+
+                // ========== 6. 更新 UI ==========
+                if (calcResult.Success)
+                {
+                    UpdateProgressBar(100);  // 计算完成，进度条保持100%
+                    m_LastInversionResults = calcResult.Results;
+                    DisplayInversionResults(calcResult.Results);
+                    ApplyInversionResultToDataTable(calcResult.Results);
+                    UpdateCalcDataGridForCurrentStation(m_CurrentSelectedStationName);
+
+                    if (!string.IsNullOrEmpty(calcResult.ActualError))
+                    {
+                        txtActualError.Text = calcResult.ActualError;
+                    }
+                    else
+                    {
+                        txtActualError.Text = "计算完成";
+                    }
+
+                    MessageBox.Show($"计算完成！\n结果保存在:  {calcResult.WorkspacePath}", "成功");
+                    UpdateDataGrids();
+                }
+                else
+                {
+                    DisplayInversionResults(new List<InversionResultPoint>());
+                    txtActualError.Text = "计算失败";
+                    UpdateProgressBar(0);
+
+                    if (!string.IsNullOrEmpty(calcResult.ErrorMessage))
+                    {
+                        MessageBox.Show(calcResult.ErrorMessage, "计算失败");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                txtActualError.Text = "计算出错";
+                UpdateProgressBar(0);
+                MessageBox.Show($"计算过程中发生错误:  \n{ex.Message}", "计算失败");
+            }
+            finally
+            {
+                // ========== 7. 清理 ==========
+                _progressCancellationTokenSource?.Cancel();
+                _progressCancellationTokenSource?.Dispose();
+                _progressCancellationTokenSource = null;
+
+                if (Directory.Exists(tempRunDir))
+                {
+                    try { Directory.Delete(tempRunDir, true); } catch { }
+                }
+
+                // 如果想保持显示最终状态，不需要修改
+                // 如果想隐藏，取消下面的注释：
+                labelProgressPercent. Visible = false;
+
+                // 注意：不隐藏进度条，保持显示最终状态
+                btnCalculate.Enabled = true;
+            }
+        }
+        private void nudMaxDepth_ValueChanged(object sender, EventArgs e)
+        {
+            if (m_LastInversionResults != null && m_LastInversionResults.Count > 0)
+            {
+                DisplayInversionResults(m_LastInversionResults);
+            }
+        }
+        /// <summary>
+        /// 显示/隐藏进度条
+        /// </summary>
+        private void ShowProgressBar(bool show)
+        {
+            progressBarCalc.Visible = show;
+            labelProgressPercent.Visible = show;
+            if (show)
+            {
+                progressBarCalc.Value = 0;
+                labelProgressPercent.Text = "0%";
+            }
+        }
+
+        /// <summary>
+        /// 更新进度条
+        /// </summary>
+        private void UpdateProgressBar(int percent)
+        {
+            if (this.InvokeRequired)
+            {
+                this.BeginInvoke(new Action(() => UpdateProgressBar(percent)));
+                return;
+            }
+
+            percent = Math.Max(0, Math.Min(100, percent));
+            progressBarCalc.Value = percent;
+            labelProgressPercent.Text = $"{percent}%";
+        }
+
+        /// <summary>
+        /// 更新实际误差显示
+        /// </summary>
+        private void UpdateActualError(string errorText)
+        {
+            if (this.InvokeRequired)
+            {
+                this.BeginInvoke(new Action(() => UpdateActualError(errorText)));
+                return;
+            }
+
+            txtActualError.Text = errorText;
+        }
+
+        /// <summary>
+        /// 异步监控进度文件
+        /// </summary>
+        private async Task MonitorProgressAsync(string workspacePath, int totalIterations, CancellationToken cancellationToken)
+        {
+            string recordFile = Path.Combine(workspacePath, "record");
+            int lastPercent = -1;
+
+            await Task.Delay(300, cancellationToken);
+
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                try
+                {
+                    if (File.Exists(recordFile))
+                    {
+                        string lastLine = null;
+                        try
+                        {
+                            using (var fs = new FileStream(recordFile, System.IO.FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                            using (var sr = new StreamReader(fs, Encoding.Default))
+                            {
+                                string line;
+                                while ((line = sr.ReadLine()) != null)
+                                {
+                                    if (!string.IsNullOrWhiteSpace(line))
+                                        lastLine = line;
+                                }
+                            }
+                        }
+                        catch (IOException)
+                        {
+                            // 文件被占用，稍后重试
+                        }
+
+                        if (!string.IsNullOrEmpty(lastLine))
+                        {
+                            var parts = lastLine.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+                            if (parts.Length >= 2)
+                            {
+                                if (int.TryParse(parts[0], out int currentIter) &&
+                                    int.TryParse(parts[1], out int totalIter))
+                                {
+                                    // 更新进度条
+                                    int percent = totalIter > 0 ? (int)((double)currentIter / totalIter * 100) : 0;
+                                    if (percent != lastPercent)
+                                    {
+                                        lastPercent = percent;
+                                        UpdateProgressBar(percent);
+                                    }
+
+                                    // 实时更新误差到 txtActualError
+                                    if (parts.Length >= 3)
+                                    {
+                                        UpdateActualError(parts[2]);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                catch (Exception)
+                {
+                    // 忽略读取错误
+                }
+
+                try
+                {
+                    await Task.Delay(200, cancellationToken);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 后台计算方法
+        /// </summary>
+        private CalculationResult RunCSAMTCalculationAsync(
+            string tempRunDir,
+            DataTable lineData,
+            Dictionary<string, StationInfo> stationCoords,
+            double ax, double ay, double az,
+            double bx, double by, double bz,
+            int its, int layerCount, double initialThickness, double growthRate,
+            double initialResistivity, double allowError)
+        {
+            var result = new CalculationResult();
 
             try
             {
@@ -505,21 +743,19 @@ namespace MapGISPlugin3
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"查找 'a.exe' 失败: {ex.Message}", "错误");
-                    this.Cursor = Cursors.Default;
-                    return;
+                    result.Success = false;
+                    result.ErrorMessage = $"查找 'a. exe' 失败: {ex.Message}";
+                    return result;
                 }
 
-                string tempDataFile = Path.Combine(tempRunDir, "knowed.dat");
+                string tempDataFile = Path.Combine(tempRunDir, "knowed. dat");
                 string tempTranFile = Path.Combine(tempRunDir, "tran.dat");
                 string workspaceName = "result";
                 string fullWorkspacePath = Path.Combine(tempRunDir, workspaceName);
 
-                Dictionary<string, StationInfo> stationCoords = m_CurrentLineStations.ToDictionary(s => s.StationName);
-
                 using (StreamWriter writer = new StreamWriter(tempDataFile, false, Encoding.UTF8))
                 {
-                    foreach (DataRow row in m_CurrentLineData.Rows)
+                    foreach (DataRow row in lineData.Rows)
                     {
                         string lineName = row["测线编号"].ToString();
                         string stationName = row["测点编号"].ToString();
@@ -542,37 +778,25 @@ namespace MapGISPlugin3
                     writer.WriteLine($"{bx} {by} {bz}");
                 }
 
-                ProcessStartInfo startInfo = new ProcessStartInfo();
-                startInfo.FileName = exePath;
-
-
-                string arguments = $"\"{tempDataFile}\" \"{tempTranFile}\" \"{workspaceName}\" {its} {layerCount} {initialThickness} {growthRate} {initialResistivity} {allowError}";
-
-                // 【关键调试代码】—— 让你亲眼看到传给 a.exe 的完整命令行
-                MessageBox.Show(
-                    "即将执行的命令行：\n\n" +
-                    exePath + "\n\n参数：\n" + arguments + "\n\n" +
-                    "工作目录：\n" + tempRunDir,
-                    "调试：a.exe 命令行参数",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Information);
-
-                startInfo.Arguments = $"\"{tempDataFile}\" \"{tempTranFile}\" \"{workspaceName}\" {its} {layerCount} {initialThickness} {growthRate} {initialResistivity} {allowError}";
-
-                startInfo.WorkingDirectory = tempRunDir;
-                startInfo.UseShellExecute = false;
-                startInfo.RedirectStandardOutput = true;
-                startInfo.RedirectStandardError = true;
-                startInfo.CreateNoWindow = true;
-                startInfo.StandardErrorEncoding = Encoding.GetEncoding("GBK");
-
-                string output = "";
-                string error = "";
-
-                using (Process process = Process.Start(startInfo))
+                ProcessStartInfo startInfo = new ProcessStartInfo
                 {
-                    output = process.StandardOutput.ReadToEnd();
-                    error = process.StandardError.ReadToEnd();
+                    FileName = exePath,
+                    Arguments = $"\"{tempDataFile}\" \"{tempTranFile}\" \"{workspaceName}\" {its} {layerCount} {initialThickness} {growthRate} {initialResistivity} {allowError}",
+                    WorkingDirectory = tempRunDir,
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    CreateNoWindow = true,
+                    StandardErrorEncoding = Encoding.GetEncoding("GBK")
+                };
+
+                using (Process process = new Process())
+                {
+                    process.StartInfo = startInfo;
+                    process.Start();
+
+                    string output = process.StandardOutput.ReadToEnd();
+                    string error = process.StandardError.ReadToEnd();
                     process.WaitForExit();
 
                     if (process.ExitCode == 0)
@@ -580,18 +804,15 @@ namespace MapGISPlugin3
                         string knowFile = Path.Combine(fullWorkspacePath, "KNOW");
                         if (File.Exists(knowFile))
                         {
-                            List<InversionResultPoint> results = ParseKnowFile(knowFile);
-
-                            DisplayInversionResults(results);       // 数据页剖面图
-                            ApplyInversionResultToDataTable(results); // 所有行写入“计算后电阻率”
-
-                            // 更新计算页下方当前测点的表
-                            UpdateCalcDataGridForCurrentStation(m_CurrentSelectedStationName);
+                            result.Results = ParseKnowFile(knowFile);
+                            result.Success = true;
+                            result.WorkspacePath = fullWorkspacePath;
                         }
                         else
                         {
-                            DisplayInversionResults(new List<InversionResultPoint>());
-                            MessageBox.Show($"计算程序返回成功，但未生成 KNOW 结果文件。\n\n程序输出:\n{output}", "提示");
+                            result.Results = new List<InversionResultPoint>();
+                            result.Success = true;
+                            result.WorkspacePath = fullWorkspacePath;
                         }
 
                         string recordFile = Path.Combine(fullWorkspacePath, "record");
@@ -606,63 +827,83 @@ namespace MapGISPlugin3
                                     var parts = last.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
                                     if (parts.Length >= 3)
                                     {
-                                        txtActualError.Text = parts[2];
+                                        result.ActualError = parts[2];
                                     }
                                 }
                             }
                             catch { }
                         }
-
-                        MessageBox.Show($"计算完成！\n结果保存在: {fullWorkspacePath}", "成功");
-                        UpdateDataGrids(); // 数据页刷新
                     }
                     else
                     {
-                        throw new Exception($"a.exe 运行失败 (ExitCode: {process.ExitCode})。\n\n错误信息:\n{error}\n\n标准输出:\n{output}");
+                        result.Success = false;
+                        result.ErrorMessage = $"a.exe 运行失败 (ExitCode: {process.ExitCode})。\n\n错误信息:\n{error}\n\n标准输出:\n{output}";
                     }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"计算过程中发生错误: \n{ex.Message}", "计算失败");
+                result.Success = false;
+                result.ErrorMessage = ex.Message;
             }
-            finally
-            {
-                if (Directory.Exists(tempRunDir))
-                {
-                    try { Directory.Delete(tempRunDir, true); } catch { }
-                }
-                this.Cursor = Cursors.Default;
-            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// 计算结果封装类
+        /// </summary>
+        private class CalculationResult
+        {
+            public bool Success { get; set; }
+            public string ErrorMessage { get; set; }
+            public List<InversionResultPoint> Results { get; set; } = new List<InversionResultPoint>();
+            public string WorkspacePath { get; set; }
+            public string ActualError { get; set; }
         }
 
         private void ApplyInversionResultToDataTable(List<InversionResultPoint> results)
         {
             if (m_CurrentLineData == null || results == null || results.Count == 0) return;
 
-            const string colName = "计算后电阻率";
+            const string colAvgRes = "平均电阻率";
+            const string colMinRes = "最小电阻率";
+            const string colMaxRes = "最大电阻率";
+            const string colLayers = "反演层数";
 
-            if (!m_CurrentLineData.Columns.Contains(colName))
-            {
-                m_CurrentLineData.Columns.Add(colName, typeof(double));
-            }
+            // 添加列（如果不存在）
+            if (!m_CurrentLineData.Columns.Contains(colAvgRes))
+                m_CurrentLineData.Columns.Add(colAvgRes, typeof(double));
+            if (!m_CurrentLineData.Columns.Contains(colMinRes))
+                m_CurrentLineData.Columns.Add(colMinRes, typeof(double));
+            if (!m_CurrentLineData.Columns.Contains(colMaxRes))
+                m_CurrentLineData.Columns.Add(colMaxRes, typeof(double));
+            if (!m_CurrentLineData.Columns.Contains(colLayers))
+                m_CurrentLineData.Columns.Add(colLayers, typeof(int));
 
+            // 按测点分组，计算统计值
             var grouped = results
                 .GroupBy(r => r.StationName)
                 .ToDictionary(
                     g => g.Key,
-                    g =>
+                    g => new
                     {
-                        var shallow = g.OrderBy(p => Math.Abs(p.Depth)).First();
-                        return shallow.Resistivity;
-                    });
+                        Avg = g.Average(p => p.Resistivity),
+                        Min = g.Min(p => p.Resistivity),
+                        Max = g.Max(p => p.Resistivity),
+                        Count = g.Count()
+                    }
+                );
 
             foreach (DataRow row in m_CurrentLineData.Rows)
             {
                 string sta = row["测点编号"].ToString();
-                if (grouped.TryGetValue(sta, out double invRes))
+                if (grouped.TryGetValue(sta, out var stats))
                 {
-                    row[colName] = invRes;
+                    row[colAvgRes] = Math.Round(stats.Avg, 2);
+                    row[colMinRes] = Math.Round(stats.Min, 2);
+                    row[colMaxRes] = Math.Round(stats.Max, 2);
+                    row[colLayers] = stats.Count;
                 }
             }
         }
@@ -858,6 +1099,7 @@ namespace MapGISPlugin3
             txtCurrentInversionStation.Text = "";
             txtTxRxDistance.Text = "";
             txtOffsetFromCenter.Text = "";
+            m_LastInversionResults = null;
         }
 
         private void UpdateProfileView()
@@ -1026,24 +1268,22 @@ namespace MapGISPlugin3
                 return;
             }
 
-            if (!m_CurrentLineData.Columns.Contains("计算后电阻率"))
-            {
-                // 尚未计算，不显示该列
-                DataView dv0 = new DataView(m_CurrentLineData)
-                {
-                    RowFilter = $"测点编号 = '{stationName}'"
-                };
-                gridCalc.DataSource = dv0.ToTable(false, "频率", "视电阻率", "相位");
-            }
-            else
-            {
-                DataView dv = new DataView(m_CurrentLineData)
-                {
-                    RowFilter = $"测点编号 = '{stationName}'"
-                };
-                gridCalc.DataSource = dv.ToTable(false, "频率", "视电阻率", "相位", "计算后电阻率");
-            }
+            List<string> cols = new List<string> { "频率", "视电阻率", "相位" };
 
+            if (m_CurrentLineData.Columns.Contains("平均电阻率"))
+                cols.Add("平均电阻率");
+            if (m_CurrentLineData.Columns.Contains("最小电阻率"))
+                cols.Add("最小电阻率");
+            if (m_CurrentLineData.Columns.Contains("最大电阻率"))
+                cols.Add("最大电阻率");
+            if (m_CurrentLineData.Columns.Contains("反演层数"))
+                cols.Add("反演层数");
+
+            DataView dv = new DataView(m_CurrentLineData)
+            {
+                RowFilter = $"测点编号 = '{stationName}'"
+            };
+            gridCalc.DataSource = dv.ToTable(false, cols.ToArray());
             gridCalc.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
         }
 
@@ -1417,17 +1657,18 @@ namespace MapGISPlugin3
                 DataView dvData = new DataView(m_CurrentLineData);
 
                 List<string> cols = new List<string> { "测点编号", "频率", "视电阻率", "相位" };
-                if (m_CurrentLineData.Columns.Contains("计算后电阻率"))
-                {
-                    cols.Add("计算后电阻率");
-                }
+
+                if (m_CurrentLineData.Columns.Contains("平均电阻率"))
+                    cols.Add("平均电阻率");
+                if (m_CurrentLineData.Columns.Contains("反演层数"))
+                    cols.Add("反演层数");
 
                 gridData.DataSource = dvData.ToTable(false, cols.ToArray());
                 gridData.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"填充数据表格时出错: {ex.Message}", "表格错误");
+                MessageBox.Show($"填充数据表格时出错:  {ex.Message}", "表格错误");
             }
         }
 
@@ -1502,120 +1743,349 @@ namespace MapGISPlugin3
 
             if (results == null || results.Count == 0) return;
 
-            chart.Titles.Add("CSAMT 一维反演电阻率剖面图 (深部 > 1000m)");
+            // 获取用户设置的最大深度
+            double userMaxDepth = (double)nudMaxDepth.Value;
+
+            chart.Titles.Add($"CSAMT 一维反演电阻率剖面图 (0 ~ -{userMaxDepth: F0}m)");
             chart.Titles[0].Font = new System.Drawing.Font("微软雅黑", 12f, FontStyle.Bold);
 
             ChartArea ca = chart.ChartAreas.Add("ResultArea");
             ca.AxisX.Title = "相对距离 (m)";
             ca.AxisY.Title = "深度 (m)";
-            ca.AxisY.IsReversed = false;
 
-            Series s = chart.Series.Add("ResistivitySection");
-            s.ChartType = SeriesChartType.Point;
-            s.MarkerStyle = MarkerStyle.Square;
-            s.MarkerSize = 12;
-            s.BorderWidth = 0;
-            s.IsVisibleInLegend = false;
+            // 筛选用户指定深度范围内的数据
+            var validResults = results
+                .Where(r => r.Resistivity > 0 && r.Depth >= -userMaxDepth && r.Depth <= 0)
+                .ToList();
 
-            var validResults = results.Where(r => r.Resistivity > 0 && r.Depth < -1000).ToList();
             if (validResults.Count == 0)
             {
-                MessageBox.Show("结果文件中没有深度超过 1000m 的有效数据。", "提示");
+                chart.Titles[0].Text = "指定深度范围内没有有效数据";
                 return;
             }
 
-            double minX = validResults.Min(r => r.X);
-            double maxXRel = validResults.Max(r => r.X) - minX;
-            double maxDepth = validResults.Max(r => Math.Abs(r.Depth));
-
+            // 计算电阻率对数范围（用于颜色映射）
             var logResistivities = validResults.Select(r => Math.Log10(r.Resistivity)).ToList();
             double minLogRes = logResistivities.Min();
             double maxLogRes = logResistivities.Max();
 
+            // ========== 按测点分组并排序 ==========
+            var stationGroups = validResults
+                .GroupBy(r => r.StationName)
+                .Select(g => new
+                {
+                    StationName = g.Key,
+                    X = g.First().X,
+                    Layers = g.OrderBy(p => p.Depth).ToList()  // 按深度排序（从0向下）
+        })
+                .OrderBy(s => s.X)
+                .ToList();
+
+            if (stationGroups.Count == 0) return;
+
+            // 计算测点间距（用于确定每个柱的宽度）
+            double minX = stationGroups.Min(s => s.X);
+            double maxX = stationGroups.Max(s => s.X);
+            double dataRangeX = maxX - minX;
+            if (dataRangeX <= 0) dataRangeX = 1;
+
+            // 计算每个测点的柱宽度
+            double[] stationWidths = new double[stationGroups.Count];
+            double[] stationLeftEdges = new double[stationGroups.Count];
+
+            for (int i = 0; i < stationGroups.Count; i++)
+            {
+                double leftBound, rightBound;
+
+                if (i == 0)
+                {
+                    // 第一个测点
+                    leftBound = stationGroups[i].X - minX;
+                    if (stationGroups.Count > 1)
+                    {
+                        rightBound = (stationGroups[i].X + stationGroups[i + 1].X) / 2 - minX;
+                    }
+                    else
+                    {
+                        rightBound = dataRangeX;
+                    }
+                }
+                else if (i == stationGroups.Count - 1)
+                {
+                    // 最后一个测点
+                    leftBound = (stationGroups[i - 1].X + stationGroups[i].X) / 2 - minX;
+                    rightBound = dataRangeX;
+                }
+                else
+                {
+                    // 中间测点
+                    leftBound = (stationGroups[i - 1].X + stationGroups[i].X) / 2 - minX;
+                    rightBound = (stationGroups[i].X + stationGroups[i + 1].X) / 2 - minX;
+                }
+
+                stationLeftEdges[i] = leftBound;
+                stationWidths[i] = rightBound - leftBound;
+            }
+
+            // ========== 使用 RangeBar 类型绑制层状图 ==========
+            // 由于 Chart 控件不直接支持水平堆叠柱状图，我们使用多个 Point 来模拟矩形
+
+            // 创建一个图像来绑制
+            int imageWidth = Math.Max(chart.Width - 150, 400);  // 减去图例宽度
+            int imageHeight = Math.Max(chart.Height - 80, 300); // 减去标题和轴标签
+
+            using (Bitmap bmp = new Bitmap(imageWidth, imageHeight))
+            using (Graphics g = Graphics.FromImage(bmp))
+            {
+                g.Clear(System.Drawing.Color.White);
+
+                // 计算坐标转换参数
+                double xScale = imageWidth / dataRangeX;
+                double yScale = imageHeight / userMaxDepth;
+
+                // 绑制每个测点的每一层
+                for (int stationIdx = 0; stationIdx < stationGroups.Count; stationIdx++)
+                {
+                    var station = stationGroups[stationIdx];
+                    double xLeft = stationLeftEdges[stationIdx] * xScale;
+                    double width = stationWidths[stationIdx] * xScale;
+
+                    var layers = station.Layers;
+
+                    for (int layerIdx = 0; layerIdx < layers.Count; layerIdx++)
+                    {
+                        var currentLayer = layers[layerIdx];
+                        double depthTop, depthBottom;
+
+                        if (layerIdx == 0)
+                        {
+                            // 第一层从0开始
+                            depthTop = 0;
+                            if (layers.Count > 1)
+                            {
+                                // 到下一层深度的中点
+                                depthBottom = (Math.Abs(currentLayer.Depth) + Math.Abs(layers[layerIdx + 1].Depth)) / 2;
+                            }
+                            else
+                            {
+                                depthBottom = Math.Abs(currentLayer.Depth);
+                            }
+                        }
+                        else if (layerIdx == layers.Count - 1)
+                        {
+                            // 最后一层延伸到最大深度
+                            depthTop = (Math.Abs(layers[layerIdx - 1].Depth) + Math.Abs(currentLayer.Depth)) / 2;
+                            depthBottom = userMaxDepth;
+                        }
+                        else
+                        {
+                            // 中间层
+                            depthTop = (Math.Abs(layers[layerIdx - 1].Depth) + Math.Abs(currentLayer.Depth)) / 2;
+                            depthBottom = (Math.Abs(currentLayer.Depth) + Math.Abs(layers[layerIdx + 1].Depth)) / 2;
+                        }
+
+                        // 限制在显示范围内
+                        depthTop = Math.Max(0, Math.Min(userMaxDepth, depthTop));
+                        depthBottom = Math.Max(0, Math.Min(userMaxDepth, depthBottom));
+
+                        if (depthBottom <= depthTop) continue;
+
+                        // 计算像素坐标
+                        float pixelX = (float)xLeft;
+                        float pixelY = (float)(depthTop * yScale);
+                        float pixelWidth = (float)Math.Max(width, 1);
+                        float pixelHeight = (float)((depthBottom - depthTop) * yScale);
+
+                        // 获取颜色
+                        double logRes = Math.Log10(currentLayer.Resistivity);
+                        System.Drawing.Color fillColor = GetColorForValueSmooth(logRes, minLogRes, maxLogRes);
+
+                        using (SolidBrush brush = new SolidBrush(fillColor))
+                        {
+                            g.FillRectangle(brush, pixelX, pixelY, pixelWidth, pixelHeight);
+                        }
+                    }
+                }
+
+                // 将图像添加到 Chart 作为背景
+                // 使用 NamedImage
+                string imageName = "LayerImage_" + DateTime.Now.Ticks;
+                chart.Images.Clear();
+                chart.Images.Add(new NamedImage(imageName, (Bitmap)bmp.Clone()));
+
+                // 设置为 ChartArea 背景
+                ca.BackImage = imageName;
+                ca.BackImageWrapMode = ChartImageWrapMode.Scaled;
+            }
+
+            // ========== 设置坐标轴 ==========
+            ca.AxisX.Minimum = 0;
+            ca.AxisX.Maximum = dataRangeX;
+            ca.AxisY.Minimum = -userMaxDepth;
+            ca.AxisY.Maximum = 0;
+
+            ca.AxisX.IsMarginVisible = false;
+            ca.AxisY.IsMarginVisible = false;
+
+            // X 轴刻度配置
+            double xInterval = CalculateNiceInterval(dataRangeX, 8);
+            ca.AxisX.Interval = xInterval;
+            ca.AxisX.IntervalType = DateTimeIntervalType.Number;
+            ca.AxisX.IntervalOffset = 0;
+            ca.AxisX.LabelStyle.Format = "F0";
+            ca.AxisX.LabelStyle.Angle = 0;
+            ca.AxisX.MajorTickMark.Enabled = true;
+            ca.AxisX.MinorTickMark.Enabled = true;
+            ca.AxisX.MinorTickMark.Interval = xInterval / 2;
+
+            // Y 轴刻度配置
+            double yInterval = CalculateNiceInterval(userMaxDepth, 8);
+            ca.AxisY.Interval = yInterval;
+            ca.AxisY.IntervalType = DateTimeIntervalType.Number;
+            ca.AxisY.IntervalOffset = 0;
+            ca.AxisY.LabelStyle.Format = "F0";
+            ca.AxisY.MajorTickMark.Enabled = true;
+            ca.AxisY.MinorTickMark.Enabled = true;
+            ca.AxisY.MinorTickMark.Interval = yInterval / 2;
+
+            ca.AxisY.IsReversed = false;
+
+            // 添加一个空的 Series 以确保坐标轴正确显示
+            Series sDummy = chart.Series.Add("Dummy");
+            sDummy.ChartType = SeriesChartType.Point;
+            sDummy.Points.AddXY(0, 0);
+            sDummy.Points.AddXY(dataRangeX, -userMaxDepth);
+            sDummy.Color = System.Drawing.Color.Transparent;
+            sDummy.MarkerSize = 0;
+            sDummy.IsVisibleInLegend = false;
+
+            // ========== 图例 ==========
             Legend legend = chart.Legends.Add("ColorScale");
             legend.Docking = Docking.Right;
             legend.Alignment = StringAlignment.Center;
             legend.Title = "lg(ρ/Ω·m)";
             legend.TitleFont = new System.Drawing.Font("微软雅黑", 9F, FontStyle.Bold);
+            legend.BackColor = System.Drawing.Color.White;
 
-            int legendSteps = 7;
-            for (int i = 0; i <= legendSteps; i++)
+            int legendSteps = 10;
+            for (int i = legendSteps; i >= 0; i--)
             {
                 double val = minLogRes + (maxLogRes - minLogRes) * i / legendSteps;
-                System.Windows.Forms.DataVisualization.Charting.LegendItem item = new System.Windows.Forms.DataVisualization.Charting.LegendItem
-                {
-                    Name = val.ToString("F1"),
-                    Color = GetColorForValue(val, minLogRes, maxLogRes),
-                    MarkerStyle = MarkerStyle.Square,
-                    MarkerSize = 12
-                };
+                System.Windows.Forms.DataVisualization.Charting.LegendItem item =
+                    new System.Windows.Forms.DataVisualization.Charting.LegendItem
+                    {
+                        Name = val.ToString("F2"),
+                        Color = GetColorForValueSmooth(val, minLogRes, maxLogRes),
+                        MarkerStyle = MarkerStyle.Square,
+                        MarkerSize = 12
+                    };
                 legend.CustomItems.Add(item);
             }
 
-            int markerSize = s.MarkerSize;
-            double halfMarkerPixels = markerSize / 2.0;
-            double paddingPixels = halfMarkerPixels + 2;
+            // ========== 美化坐标轴 ==========
+            ca.BorderWidth = 1;
+            ca.BorderColor = System.Drawing.Color.Black;
+            ca.BorderDashStyle = ChartDashStyle.Solid;
 
-            int chartWidth = chart.Width;
-            int chartHeight = chart.Height;
-
-            double plotAreaWidthRatio = 0.70;
-            double plotAreaHeightRatio = 0.75;
-            double plotAreaWidthPixels = chartWidth * plotAreaWidthRatio;
-            double plotAreaHeightPixels = chartHeight * plotAreaHeightRatio;
-
-            double dataRangeX = maxXRel;
-            double dataRangeY = maxDepth - 1000;
-
-            if (dataRangeX <= 0) dataRangeX = 1;
-            if (dataRangeY <= 0) dataRangeY = 1;
-
-            double pixelsPerUnitX = plotAreaWidthPixels / dataRangeX;
-            double pixelsPerUnitY = plotAreaHeightPixels / dataRangeY;
-
-            double offsetX = paddingPixels / pixelsPerUnitX;
-            double offsetY = paddingPixels / pixelsPerUnitY;
-
-            foreach (var point in validResults)
-            {
-                double logRes = Math.Log10(point.Resistivity);
-
-                double relativeX = point.X - minX;
-                double adjustedX = relativeX + offsetX;
-
-                double positiveDepth = Math.Abs(point.Depth);
-                double adjustedY = positiveDepth + offsetY;
-
-                int pointIndex = s.Points.AddXY(adjustedX, adjustedY);
-                s.Points[pointIndex].Color = GetColorForValue(logRes, minLogRes, maxLogRes);
-                s.Points[pointIndex].ToolTip = $"X: {point.X:F1}\nRel X: {relativeX:F1}\nDepth: {positiveDepth:F0}m\nRes: {point.Resistivity:F1}";
-            }
-
-            ca.AxisX.IsMarginVisible = false;
-            ca.AxisY.IsMarginVisible = false;
-
-            ca.AxisX.Minimum = 0;
-            ca.AxisX.Maximum = maxXRel + offsetX * 2;
-
-            ca.AxisY.Minimum = 1000;
-            ca.AxisY.Maximum = maxDepth + offsetY * 2;
-
-            ca.BorderWidth = 0;
-
-            ca.AxisX.LineWidth = 2;
+            ca.AxisX.LineWidth = 1;
             ca.AxisX.LineColor = System.Drawing.Color.Black;
-            ca.AxisY.LineWidth = 2;
+            ca.AxisY.LineWidth = 1;
             ca.AxisY.LineColor = System.Drawing.Color.Black;
 
-            ca.AxisX.MajorGrid.LineColor = System.Drawing.Color.FromArgb(50, System.Drawing.Color.Gray);
-            ca.AxisY.MajorGrid.LineColor = System.Drawing.Color.FromArgb(50, System.Drawing.Color.Gray);
-            ca.AxisX.MinorGrid.Enabled = false;
-            ca.AxisY.MinorGrid.Enabled = false;
+            ca.AxisX.MajorGrid.LineColor = System.Drawing.Color.FromArgb(100, System.Drawing.Color.Gray);
+            ca.AxisY.MajorGrid.LineColor = System.Drawing.Color.FromArgb(100, System.Drawing.Color.Gray);
+            ca.AxisX.MajorGrid.LineDashStyle = ChartDashStyle.Dash;
+            ca.AxisY.MajorGrid.LineDashStyle = ChartDashStyle.Dash;
 
-            ca.AxisX.MajorTickMark.TickMarkStyle = TickMarkStyle.OutsideArea;
-            ca.AxisY.MajorTickMark.TickMarkStyle = TickMarkStyle.OutsideArea;
+            ca.AxisX.TitleFont = new System.Drawing.Font("微软雅黑", 10f);
+            ca.AxisY.TitleFont = new System.Drawing.Font("微软雅黑", 10f);
+            ca.AxisX.LabelStyle.Font = new System.Drawing.Font("Arial", 9f);
+            ca.AxisY.LabelStyle.Font = new System.Drawing.Font("Arial", 9f);
+        }
 
-            BeautifyChartAxes(ca);
+        /// <summary>
+        /// 计算美观的刻度间隔（1, 2, 5 的倍数）
+        /// </summary>
+        /// <param name="range">数据范围</param>
+        /// <param name="targetTicks">目标刻度数量</param>
+        /// <returns>刻度间隔</returns>
+        private double CalculateNiceInterval(double range, int targetTicks)
+        {
+            if (range <= 0 || targetTicks <= 0) return 1;
+
+            double roughInterval = range / targetTicks;
+            double magnitude = Math.Pow(10, Math.Floor(Math.Log10(roughInterval)));
+            double residual = roughInterval / magnitude;
+
+            double niceInterval;
+            if (residual <= 1.5)
+                niceInterval = 1 * magnitude;
+            else if (residual <= 3)
+                niceInterval = 2 * magnitude;
+            else if (residual <= 7)
+                niceInterval = 5 * magnitude;
+            else
+                niceInterval = 10 * magnitude;
+
+            return niceInterval;
+        }
+
+        /// <summary>
+        /// 使用 HSV 色彩空间实现更平滑的颜色渐变（蓝->青->绿->黄->红）
+        /// </summary>
+        private System.Drawing.Color GetColorForValueSmooth(double value, double min, double max)
+        {
+            if (min >= max) return System.Drawing.Color.Gray;
+
+            double normalized = Math.Max(0, Math.Min(1, (value - min) / (max - min)));
+
+            // 使用 Jet 色标（类似 MATLAB）
+            return GetJetColor(normalized);
+        }
+
+        /// <summary>
+        /// Jet 色标（蓝->青->绿->黄->红）
+        /// </summary>
+        private System.Drawing.Color GetJetColor(double v)
+        {
+            double r, g, b;
+
+            if (v < 0.125)
+            {
+                r = 0;
+                g = 0;
+                b = 0.5 + v * 4;
+            }
+            else if (v < 0.375)
+            {
+                r = 0;
+                g = (v - 0.125) * 4;
+                b = 1;
+            }
+            else if (v < 0.625)
+            {
+                r = (v - 0.375) * 4;
+                g = 1;
+                b = 1 - (v - 0.375) * 4;
+            }
+            else if (v < 0.875)
+            {
+                r = 1;
+                g = 1 - (v - 0.625) * 4;
+                b = 0;
+            }
+            else
+            {
+                r = 1 - (v - 0.875) * 4;
+                g = 0;
+                b = 0;
+            }
+
+            return System.Drawing.Color.FromArgb(
+                (int)(Math.Max(0, Math.Min(1, r)) * 255),
+                (int)(Math.Max(0, Math.Min(1, g)) * 255),
+                (int)(Math.Max(0, Math.Min(1, b)) * 255)
+            );
         }
 
         #endregion
@@ -1712,6 +2182,11 @@ namespace MapGISPlugin3
         }
 
         private void labelTxRxDistance_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void openFileDialogTran_FileOk(object sender, CancelEventArgs e)
         {
 
         }
