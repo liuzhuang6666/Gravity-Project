@@ -505,8 +505,8 @@ namespace MapGISPlugin3
                     Fields observationFields = new Fields();
                     observationFields.AppendField(new Field { FieldName = "测线号", FieldType = FieldType.FldString, MskLength = 50 });
                     observationFields.AppendField(new Field { FieldName = "测点号", FieldType = FieldType.FldString, MskLength = 50 });
-                    observationFields.AppendField(new Field { FieldName = "X", FieldType = FieldType.FldDouble, MskLength = 20, PointLength = 8 });
-                    observationFields.AppendField(new Field { FieldName = "Y", FieldType = FieldType.FldDouble, MskLength = 20, PointLength = 8 });
+                    observationFields.AppendField(new Field { FieldName = "X坐标", FieldType = FieldType.FldDouble, MskLength = 20, PointLength = 8 });
+                    observationFields.AppendField(new Field { FieldName = "Y坐标", FieldType = FieldType.FldDouble, MskLength = 20, PointLength = 8 });
                     observationFields.AppendField(new Field { FieldName = "采样时间_us", FieldType = FieldType.FldDouble, MskLength = 15, PointLength = 6 });
                     observationFields.AppendField(new Field { FieldName = "有效面积", FieldType = FieldType.FldDouble, MskLength = 15, PointLength = 6 });
                     observationFields.AppendField(new Field { FieldName = "感应电压_mV", FieldType = FieldType.FldDouble, MskLength = 15, PointLength = 6 });
@@ -529,8 +529,8 @@ namespace MapGISPlugin3
                     {
                         observationRecord["测线号"] = rowData.LineName;
                         observationRecord["测点号"] = rowData.StationName;
-                        observationRecord["X"] = rowData.X;
-                        observationRecord["Y"] = rowData.Y;
+                        observationRecord["X坐标"] = rowData.X;
+                        observationRecord["Y坐标"] = rowData.Y;
                         observationRecord["采样时间_us"] = rowData.SamplingTime_us;
                         observationRecord["有效面积"] = rowData.EffectiveArea;
                         observationRecord["感应电压_mV"] = rowData.InducedVoltage_mV;
