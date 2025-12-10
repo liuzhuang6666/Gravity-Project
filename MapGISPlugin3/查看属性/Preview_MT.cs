@@ -45,14 +45,14 @@ namespace MapGISPlugin3.查看属性
 
             // 2. 创建 TE 按钮
             _rbTE = new RadioButton();
-            _rbTE.Text = "TE 模式 (横电)";
+            _rbTE.Text = "TE 模式";
             _rbTE.AutoSize = true;
             _rbTE.Checked = true; // 默认选中 TE
             _rbTE.Margin = new Padding(10, 5, 20, 0); // 右边距设大点，把 TM 顶开
 
             // 3. 创建 TM 按钮 (确保这个被添加进去)
             _rbTM = new RadioButton();
-            _rbTM.Text = "TM 模式 (横磁)";
+            _rbTM.Text = "TM 模式";
             _rbTM.AutoSize = true;
             _rbTM.Margin = new Padding(0, 5, 0, 0);
 

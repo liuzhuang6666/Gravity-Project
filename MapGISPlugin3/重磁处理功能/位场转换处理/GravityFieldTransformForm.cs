@@ -137,10 +137,9 @@ namespace MapGISPlugin3
             // 重力窗口：不包括化极
             this.comboBox1.Items.Add("方向导数");
             this.comboBox1.Items.Add("二次导数");
-/*            this.comboBox1.Items.Add("三角");
-            this.comboBox1.Items.Add("方向分量");
-            this.comboBox1.Items.Add("导数");
-            this.comboBox1.Items.Add("分量");*/
+            this.comboBox1.Items.Add("正则化滤波");
+            this.comboBox1.Items.Add("补偿滤波");
+            this.comboBox1.Items.Add("延拓");
             this.comboBox1.SelectedIndex = 0;
             UpdateParameterUI();
         }
