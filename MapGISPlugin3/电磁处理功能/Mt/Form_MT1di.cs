@@ -49,7 +49,8 @@ namespace MapGISPlugin3
         // --- 线程与计算控制 ---
         private CancellationTokenSource _progressCancellationTokenSource;
         private List<InversionResultPoint> m_LastInversionResults = null; // 缓存最后一次计算结果
-
+        private List<InversionResultPoint> m_LastInterpolatedResults = null; // 缓存插值后的网格数据
+        private double m_LastInterpolatedDepth = -1;
         // --- 内部数据结构 ---
         private class StationInfo
         {
@@ -377,6 +378,105 @@ namespace MapGISPlugin3
             catch { }
             return points;
         }
+
+        /// <summary>
+        /// IDW反距离加权插值 - 填充网格（完全来自你成功的 MT2di）
+        /// </summary>
+        /// <summary>
+        /// IDW反距离加权插值 - 填充网格（完全来自你成功的 MT2di）
+        /// </summary>
+        private List<InversionResultPoint> PerformIDWInterpolation(List<InversionResultPoint> sourcePoints, double minZ)
+        {
+            if (sourcePoints.Count == 0) return sourcePoints;
+
+            double minX = sourcePoints.Min(p => p.Distance);
+            double maxX = sourcePoints.Max(p => p.Distance);
+            double maxZ = sourcePoints.Max(p => p.Depth);
+            if (maxZ < 0) maxZ = 0;
+
+            double xRange = maxX - minX;
+            double zRange = maxZ - minZ;
+
+            // 动态网格密度（横向30米，纵向20米）-- 已增大间距，减少网格数量
+            int xSteps = Math.Min(400, Math.Max(20, (int)(xRange / 50)));
+            int zSteps = Math.Min(400, Math.Max(20, (int)(zRange / 30)));
+
+            double xStep = xRange / xSteps;
+            double zStep = zRange / zSteps;
+
+            var interpolatedPoints = new List<InversionResultPoint>();
+            double power = 2.0;
+            double searchRadius = Math.Max(xStep, zStep) * 8;
+
+            for (int i = 0; i <= xSteps; i++)
+            {
+                double x = minX + i * xStep;
+                for (int j = 0; j <= zSteps; j++)
+                {
+                    double z = maxZ - j * zStep;
+                    if (z < minZ) continue;
+
+                    double val = CalculateIDWValue(x, z, sourcePoints, power, searchRadius);
+                    if (val > 0)
+                    {
+                        interpolatedPoints.Add(new InversionResultPoint
+                        {
+                            Distance = x,
+                            Depth = z,
+                            Value = val
+                        });
+                    }
+                }
+            }
+            return interpolatedPoints.Count > 0 ? interpolatedPoints : sourcePoints;
+        }
+        /// <summary>
+        /// 计算单个网格点的 IDW 插值（黄金双保险机制）
+        /// </summary>
+        private double CalculateIDWValue(double x, double z, List<InversionResultPoint> sourcePoints, double power, double searchRadius)
+        {
+            // 第一步：精确命中源点直接返回
+            foreach (var point in sourcePoints)
+            {
+                double dist = Math.Sqrt(Math.Pow(x - point.Distance, 2) + Math.Pow(z - point.Depth, 2));
+                if (dist < 1e-6) return point.Value;
+            }
+
+            double weightSum = 0;
+            double valueSum = 0;
+            int pointsUsed = 0;
+
+            foreach (var point in sourcePoints)
+            {
+                double dist = Math.Sqrt(Math.Pow(x - point.Distance, 2) + Math.Pow(z - point.Depth, 2));
+                if (dist > searchRadius) continue;
+
+                double weight = 1.0 / Math.Pow(dist == 0 ? 1e-10 : dist, power);
+                weightSum += weight;
+                valueSum += weight * point.Value;
+                pointsUsed++;
+            }
+
+            // 第二保险：如果搜索半径内点太少，用最近8个点
+            if (pointsUsed < 4 || weightSum == 0)
+            {
+                var nearest = sourcePoints
+                    .Select(p => new { Point = p, Dist = Math.Sqrt(Math.Pow(x - p.Distance, 2) + Math.Pow(z - p.Depth, 2)) })
+                    .OrderBy(p => p.Dist)
+                    .Take(8);
+
+                weightSum = 0; valueSum = 0;
+                foreach (var np in nearest)
+                {
+                    double d = np.Dist == 0 ? 1e-10 : np.Dist;
+                    double w = 1.0 / Math.Pow(d, power);
+                    weightSum += w;
+                    valueSum += w * np.Point.Value;
+                }
+            }
+
+            return weightSum > 0 ? valueSum / weightSum : 0;
+        }
         // ====================================================================================
         // 结果展示 (自定义深度)
         // ====================================================================================
@@ -397,76 +497,64 @@ namespace MapGISPlugin3
 
             if (points == null || points.Count == 0) return;
 
-            // 1. 获取用户设定的“显示深度下限”（输入正数，转化为负坐标）
-            // 例如输入 2000，代表想看到 -2000 米深的地方
-            double deepLimitAbs = (double)nudMaxDepth.Value;
-            if (deepLimitAbs <= 0) deepLimitAbs = 2000;
-            double minZ_Limit = -deepLimitAbs;
+            double userDepthInput = (double)nudMaxDepth.Value;
+            if (userDepthInput <= 0) userDepthInput = 2000;
+            double minZ_Limit = -userDepthInput;
 
-            // 2. 筛选数据
-            // 逻辑：保留 Value > 0 且 深度 >= -2000 的所有点
-            // (这样既保留了 -2000 到 0 的地下数据，也保留了 > 0 的地形数据)
-            var validPoints = points
-                .Where(p => p.Value > 0 && p.Depth >= minZ_Limit)
-                .ToList();
-
+            var validPoints = points.Where(p => p.Value > 0 && p.Depth >= minZ_Limit).ToList();
             if (validPoints.Count == 0)
             {
-                chart.Titles.Add("当前范围内无有效数据");
+                chart.Titles.Add("当前深度范围内无有效数据");
                 return;
             }
 
-            chart.Titles.Add($"MT 反演电阻率断面 ( > {minZ_Limit}m )").Font = new Font("微软雅黑", 12f, FontStyle.Bold);
+            // === 关键：智能缓存 + IDW 插值（和 MT2di 完全一致）===
+            if (m_LastInterpolatedResults == null || Math.Abs(userDepthInput - m_LastInterpolatedDepth) > 0.1)
+            {
+                var interpolated = PerformIDWInterpolation(validPoints, minZ_Limit);
+                if (interpolated.Count > 0)
+                {
+                    m_LastInterpolatedResults = interpolated;
+                    m_LastInterpolatedDepth = userDepthInput;
+                    validPoints = interpolated;
+                }
+            }
+            else
+            {
+                validPoints = m_LastInterpolatedResults.Where(p => p.Depth >= minZ_Limit).ToList();
+            }
+            // === 插值结束 ===
 
-            // 3. 动态计算数据的真实边界
+            chart.Titles.Add($"MT 一维反演电阻率断面图 ( > {minZ_Limit}m )").Font = new Font("微软雅黑", 12f, FontStyle.Bold);
+
             double dataMinX = validPoints.Min(p => p.Distance);
             double dataMaxX = validPoints.Max(p => p.Distance);
-
-            // Y轴上限：取数据中的最高点（比如山顶 +300m），如果没有正数则取0
             double maxDataZ = validPoints.Max(p => p.Depth);
             double dataMaxY = maxDataZ > 0 ? maxDataZ : 0;
 
-            // 4. 计算美观刻度
             var niceX = CalculateStrictNiceScale(dataMinX, dataMaxX);
-            // Y轴刻度范围：从 用户设定的最深处 到 数据的最高处
             var niceY = CalculateStrictNiceScale(minZ_Limit, dataMaxY);
 
             ChartArea ca = chart.ChartAreas.Add("ResultArea");
             ca.AxisX.Title = "距离 (m)";
-            ca.AxisY.Title = "高程 (m)"; // 改名为高程更准确
-
-            // 设置 X 轴
-            ca.AxisX.Minimum = niceX.Min - (niceX.Interval * 0.2);
-            ca.AxisX.Maximum = niceX.Max + (niceX.Interval * 0.2);
+            ca.AxisY.Title = "高程 (m)";
+            ca.AxisX.Minimum = niceX.Min;
+            ca.AxisX.Maximum = niceX.Max;
             ca.AxisX.Interval = niceX.Interval;
-
-            // 设置 Y 轴
-            ca.AxisY.Minimum = minZ_Limit; // 固定底部，例如 -2000
-                                           // 顶部稍微留白，让山顶不顶格
-            double topMargin = (dataMaxY - minZ_Limit) * 0.05;
-            ca.AxisY.Maximum = dataMaxY + topMargin;
+            ca.AxisY.Minimum = minZ_Limit;
+            ca.AxisY.Maximum = dataMaxY + (dataMaxY - minZ_Limit) * 0.05;
             ca.AxisY.Interval = niceY.Interval;
-
-            // 关键设置：正常坐标系（上正下负），不用反转
             ca.AxisY.IsReversed = false;
-
-            // 强制显示 0 刻度线（如果它在范围内）
             ca.AxisY.Crossing = 0;
-            ca.AxisY.MajorGrid.LineColor = Color.LightGray;
-            // 如果想强调 0 线（地表大概位置），可以加一条粗线
+
             StripLine zeroLine = new StripLine();
             zeroLine.Interval = 0;
-            zeroLine.StripWidth = 0; // 线宽由 BorderWidth 控制
-            zeroLine.IntervalOffset = 0;
+            zeroLine.StripWidth = 0;
             zeroLine.BorderColor = Color.Black;
             zeroLine.BorderWidth = 1;
             zeroLine.BorderDashStyle = ChartDashStyle.Dash;
             ca.AxisY.StripLines.Add(zeroLine);
 
-            // 强制显示末端标签
-            ca.AxisY.LabelStyle.IsEndLabelVisible = true;
-
-            // 色标处理 (保持不变)
             double minLog = Math.Log10(validPoints.Min(p => p.Value));
             double maxLog = Math.Log10(validPoints.Max(p => p.Value));
 
@@ -474,10 +562,9 @@ namespace MapGISPlugin3
             legend.Docking = Docking.Right;
             legend.Title = "lg(ρ/Ω·m)";
             legend.Font = new Font("Arial", 8F);
-            int levels = 10;
-            for (int i = 0; i <= levels; i++)
+            for (int i = 0; i <= 10; i++)
             {
-                double val = minLog + (maxLog - minLog) * i / levels;
+                double val = minLog + (maxLog - minLog) * i / 10.0;
                 legend.CustomItems.Add(new System.Windows.Forms.DataVisualization.Charting.LegendItem
                 {
                     Name = val.ToString("F1"),
@@ -488,27 +575,24 @@ namespace MapGISPlugin3
             }
             legend.CustomItems.Reverse();
 
-            // 绘图
             Series s = chart.Series.Add("Section");
             s.ChartType = SeriesChartType.Point;
             s.MarkerStyle = MarkerStyle.Square;
             s.BorderWidth = 0;
             s.IsVisibleInLegend = false;
 
-            // 动态点大小
-            int dynamicSize = (validPoints.Count > 5000) ? 6 : (validPoints.Count > 1000 ? 10 : 15);
+            int dynamicSize = (validPoints.Count > 10000) ? 8 : (validPoints.Count > 5000 ? 6 : 10);
             s.MarkerSize = dynamicSize;
 
             foreach (var p in validPoints)
             {
                 int idx = s.Points.AddXY(p.Distance, p.Depth);
                 s.Points[idx].Color = GetColorForValue(Math.Log10(p.Value), minLog, maxLog);
-                s.Points[idx].ToolTip = $"距离: {p.Distance:F0}\n高程: {p.Depth:F0}\n电阻率: {p.Value:F1}";
+                s.Points[idx].ToolTip = $"距离: {p.Distance:F0}m\n高程: {p.Depth:F0}m\n电阻率: {p.Value:F1} Ω·m";
             }
 
             BeautifyChartAxes(ca);
         }
-
 
         // ====================================================================================
         // 辅助函数 (补全所有缺失的方法)
