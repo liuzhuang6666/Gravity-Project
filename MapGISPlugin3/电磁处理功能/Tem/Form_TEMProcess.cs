@@ -20,6 +20,7 @@ using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
 using System.Threading;
 using System.Linq;
+using MapGIS.GeoObjects;
 
 namespace MapGISPlugin3
 {
@@ -48,8 +49,14 @@ namespace MapGISPlugin3
         private string _lastCalcResultPath = null;
         private List<InversionResultPoint> m_LastInversionResults = null;
         private string _runtimeRecordPath = null;
-        
+
+        // 替换原有测点进度追踪变量，适配record固定1行
         private int _totalStationsToCalc = 1;
+        private int _currentStationIndex = 0; // 当前正在计算的测点索引（从0开始）
+        private double _stationProgressRatio = 0.0; // 每个测点的进度占比（100%/总测点）
+        private double _currentSubProgress = 0.0; // 当前测点的子进度（0→0.6）
+        private string _lastRecordValue = ""; // 上一次读取的record值（用于判断是否更新）
+        private bool _isCurrentStationCompleted = false; // 当前测点是否已完成
         public Form_TEMProcess(IApplication hook)
         {
             InitializeComponent();
@@ -482,13 +489,24 @@ namespace MapGISPlugin3
                 // 4. 【修改：构造命令行参数】
                 // 格式: a.exe knowed tran workspace smooth depth growth initRes expError
                 string arguments = $"\"{tempKnowedFile}\" \"{tempTranFile}\" \"{workspaceName}\" {valSmooth} {valDepth} {valGrowth} {valInitRes} {valExpError}";
+                // ==================== 初始化进度状态（适配固定1行record） ====================
                 if (m_CurrentLineStations != null && m_CurrentLineStations.Count > 0)
                 {
                     _totalStationsToCalc = m_CurrentLineStations.Count;
+                    _stationProgressRatio = 100.0 / _totalStationsToCalc; // 每个测点的进度占比
+                    _currentStationIndex = 0; // 从第1个测点开始（索引0）
+                    _currentSubProgress = 0.0; // 子进度重置为0
+                    _lastRecordValue = ""; // 清空上一次record值
+                    _isCurrentStationCompleted = false; // 当前测点未完成
                 }
                 else
                 {
-                    _totalStationsToCalc = 1; // 防止除以0
+                    _totalStationsToCalc = 1;
+                    _stationProgressRatio = 100.0;
+                    _currentStationIndex = 0;
+                    _currentSubProgress = 0.0;
+                    _lastRecordValue = "";
+                    _isCurrentStationCompleted = false;
                 }
 
                 // 2. 初始化进度条
@@ -504,7 +522,7 @@ namespace MapGISPlugin3
                 textBox5.Text = "准备计算...";
                 // 启动进度条定时器
                 timerProgress.Start();
-
+                
                 // 5. 异步执行 a.exe
                 bool isSuccess = await Task.Run(() =>
                 {
@@ -690,14 +708,20 @@ namespace MapGISPlugin3
                 {
                     progressBarCalculate.Value = 0;
                 }
+                _currentStationIndex = 0;
+                _stationProgressRatio = 0.0;
+                _currentSubProgress = 0.0;
+                _lastRecordValue = "";
+                _isCurrentStationCompleted = false;
             }
         }
+        
         /// <summary>
         /// 定时器事件：逐步更新进度条
         /// </summary>
         private void timerProgress_Tick(object sender, EventArgs e)
         {
-            // 如果计算已经标记完成，直接拉满 (防止最后一点延迟)
+            // 如果计算已经标记完成，直接拉满
             if (_isCalculationCompleted)
             {
                 progressBarCalculate.Value = 100;
@@ -707,48 +731,61 @@ namespace MapGISPlugin3
             // 检查文件是否存在
             if (string.IsNullOrEmpty(_runtimeRecordPath) || !File.Exists(_runtimeRecordPath))
             {
-                // 文件还没生成时，进度为0
-                progressBarCalculate.Value = 0;
+                // 未生成record文件：推进当前测点的子进度（0→60%区间）
+                UpdateSubProgress();
+                // 计算当前显示进度
+                double currentProgress = CalculateCurrentDisplayProgress();
+                progressBarCalculate.Value = (int)Math.Min(100, Math.Max(0, currentProgress));
                 return;
             }
 
             try
             {
-                // 【关键】使用 FileShare.ReadWrite 模式读取，防止被 a.exe 占用锁死
+                // 读取record文件（固定1行3个数）
                 using (FileStream fs = new FileStream(_runtimeRecordPath, System.IO.FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                 using (StreamReader sr = new StreamReader(fs, Encoding.Default))
                 {
-                    string content = sr.ReadToEnd().Trim();
+                    string currentRecord = sr.ReadToEnd().Trim(); // 读取当前record值（如"1 1 0.154632"）
 
-                    // 如果文件为空，跳过
-                    if (string.IsNullOrEmpty(content)) return;
-
-                    // 按换行符分割，获取所有行
-                    string[] lines = content.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-                    int finishedCount = lines.Length; // 假设 1行 = 1个测点完成
-
-                    // 1. === 更新进度条 ===
-                    if (_totalStationsToCalc > 0)
+                    // --------------------- 核心：判断是否有新测点完成 ---------------------
+                    if (!string.IsNullOrEmpty(currentRecord) && currentRecord != _lastRecordValue)
                     {
-                        // 计算百分比: (已完成数 / 总数) * 100
-                        double percentage = (double)finishedCount / _totalStationsToCalc * 100.0;
+                        // record值变化 → 当前测点完成
+                        _isCurrentStationCompleted = true;
+                        _lastRecordValue = currentRecord; // 更新上一次record值
 
-                        // 限制在 0-100 之间 (防止异常情况超出)
-                        int val = (int)Math.Min(100, Math.Max(0, percentage));
+                        // 切换到下一个测点（如果还有未计算的）
+                        if (_currentStationIndex < _totalStationsToCalc - 1)
+                        {
+                            _currentStationIndex++; // 下一个测点索引
+                            _currentSubProgress = 0.0; // 重置子进度
+                            _isCurrentStationCompleted = false; // 新测点未完成
+                        }
+                        else
+                        {
+                            // 所有测点完成（最后一个测点）
+                            _isCalculationCompleted = true;
+                        }
+                    }
+                    // --------------------------------------------------------------------
 
-                        progressBarCalculate.Value = val;
+                    // 1. 推进子进度（当前测点未完成时）
+                    if (!_isCurrentStationCompleted)
+                    {
+                        UpdateSubProgress();
                     }
 
-                    // 2. === 更新拟合误差 (显示最后一行的数据) ===
-                    if (finishedCount > 0)
-                    {
-                        string lastLine = lines[finishedCount - 1];
-                        string[] parts = lastLine.Split(new char[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+                    // 2. 计算当前应显示的进度
+                    double currentDisplayProgress = CalculateCurrentDisplayProgress();
+                    progressBarCalculate.Value = (int)Math.Min(100, Math.Max(0, currentDisplayProgress));
 
-                        // 根据 record 文件格式获取误差值 (假设是第3列或最后一列)
+                    // 3. 更新拟合误差（保持原有逻辑，取最后一个数）
+                    if (!string.IsNullOrEmpty(currentRecord))
+                    {
+                        string[] parts = currentRecord.Split(new char[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
                         if (parts.Length >= 3)
                         {
-                            textBox5.Text = parts[2]; // 假设格式: 测线 测点 误差
+                            textBox5.Text = parts[2]; // 取第3个数作为误差
                         }
                         else if (parts.Length > 0)
                         {
@@ -759,21 +796,69 @@ namespace MapGISPlugin3
             }
             catch (Exception)
             {
-                // 忽略读取冲突，等待下一次 Timer Tick 即可，不影响程序运行
+                // 读取失败时，继续推进子进度，避免进度条停滞
+                if (!_isCurrentStationCompleted)
+                {
+                    UpdateSubProgress();
+                }
+                double currentDisplayProgress = CalculateCurrentDisplayProgress();
+                progressBarCalculate.Value = (int)Math.Min(100, Math.Max(0, currentDisplayProgress));
             }
         }
 
-        #endregion
+        // 新增：计算当前显示的总进度
+        private double CalculateCurrentDisplayProgress()
+        {
+            // 已完成的测点总进度（每个完成的测点占满整个区间）
+            double finishedProgress = _currentStationIndex * _stationProgressRatio;
 
-        #region --- 数据导出（新增） ---
+            // 当前测点的进度（未完成→子进度60%；已完成→100%）
+            double currentStationProgress = 0.0;
+            if (_isCurrentStationCompleted)
+            {
+                // 当前测点已完成→占满整个区间
+                currentStationProgress = _stationProgressRatio;
+            }
+            else
+            {
+                // 当前测点未完成→推进到区间的60%
+                currentStationProgress = _stationProgressRatio * _currentSubProgress;
+            }
 
-        /// <summary>
-        /// 【修正版】根据您的截图直接导出数据
-        /// 修正点：
-        /// 1. 直接读取表中的 "X" 和 "Y" 列
-        /// 2. 修正了带有空格的列名 "采样时间 us" 和 "感应电压 mV"
-        /// </summary>
-        private void ExportObservationDataToFile(string filePath)
+            // 总进度 = 已完成测点进度 + 当前测点进度
+            return finishedProgress + currentStationProgress;
+        }
+
+        // 保留之前的子进度推进方法（20分钟走到60%）
+        private void UpdateSubProgress()
+        {
+            double totalDurationSec = 20 * 60; // 单个测点计算时长（20分钟=1200秒）
+            double targetSubProgress = 0.6; // 目标：区间的60%
+            double stepPerTick = targetSubProgress / totalDurationSec; // 每秒推进步长（0.6/1200=0.0005）
+
+            // 子进度不超过0.6
+            if (_currentSubProgress < targetSubProgress)
+            {
+                _currentSubProgress += stepPerTick;
+                if (_currentSubProgress > targetSubProgress)
+                {
+                    _currentSubProgress = targetSubProgress;
+                }
+            }
+        }
+
+
+        #endregion
+
+        #region --- 数据导出（新增） ---
+
+        /// <summary>
+                /// 【修正版】根据您的截图直接导出数据
+                /// 修正点：
+                /// 1. 直接读取表中的 "X" 和 "Y" 列
+                /// 2. 修正了带有空格的列名 "采样时间 us" 和 "感应电压 mV"
+                /// </summary>
+        private void ExportObservationDataToFile(string filePath)
         {
             // 检查是否有数据
             if (m_CurrentLineData == null || m_CurrentLineData.Rows.Count == 0)
@@ -2792,6 +2877,245 @@ namespace MapGISPlugin3
             public double Distance { get; set; }
             public double Depth { get; set; }
             public double Resistivity { get; set; }
+        }
+        /// <summary>
+        /// 创建和“电法数据”同结构的Map（独立地图），仅用于展示图片（无需坐标处理）
+        /// </summary>
+        /// <param name="chart">要展示的电阻率断面图控件</param>
+        private void CreateImageDisplayMap(Chart chart)
+        {
+            Map newMap = null;
+            RasterLayer displayLayer = null;
+            Document projectDoc = null; // 保留你的原始接口
+            Maps projectMaps = null;    // 保留你的原始接口
+
+            // 前置校验：确保图表和图片有效
+            if (chart == null)
+            {
+                MessageBox.Show("断面图控件未初始化！", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            // 1. 获取新Map名称（和Chart标题一致）
+            string newMapName = string.Empty;
+            if (chart.Titles.Count > 0)
+            {
+                newMapName = chart.Titles[0].Text?.Trim();
+            }
+            if (string.IsNullOrWhiteSpace(newMapName))
+            {
+                newMapName = $"电阻率断面图_展示图_{DateTime.Now:yyyyMMddHHmmss}";
+            }
+
+            // 2. 校验图表是否已生成
+            bool isChartValid = chart.Series.Count > 0 || !string.IsNullOrEmpty(chart.ChartAreas[0]?.BackImage);
+            if (!isChartValid)
+            {
+                MessageBox.Show("请先生成电阻率断面图，再创建展示地图！", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            // 3. 生成临时图片（核心：添加白色背景+边框样式，不改动你的接口）
+            string tempImagePath = Path.ChangeExtension(Path.GetTempFileName(), ".png");
+
+            // 记录Chart原始样式（生成后恢复，不影响原控件显示）
+            System.Drawing.Color originalChartBackColor = chart.BackColor;
+            int originalChartBorderWidth = chart.BorderWidth;
+            Dictionary<ChartArea, (System.Drawing.Color BackColor, int BorderWidth, System.Drawing.Color BorderColor)> originalChartAreaProps = new Dictionary<ChartArea, (System.Drawing.Color, int, System.Drawing.Color)>();
+            Dictionary<Legend, (System.Drawing.Color BackColor, int BorderWidth, System.Drawing.Color BorderColor)> originalLegendProps = new Dictionary<Legend, (System.Drawing.Color, int, System.Drawing.Color)>();
+
+            try
+            {
+                // 👉 步骤1：记录原始样式（避免影响原Chart显示）
+                foreach (ChartArea ca in chart.ChartAreas)
+                {
+                    originalChartAreaProps[ca] = (ca.BackColor, ca.BorderWidth, ca.BorderColor);
+                }
+                foreach (Legend lg in chart.Legends)
+                {
+                    originalLegendProps[lg] = (lg.BackColor, lg.BorderWidth, lg.BorderColor);
+                }
+
+                // 👉 步骤2：设置Chart样式（白色背景+黑色边框，核心需求）
+                chart.BackColor = System.Drawing.Color.White;          // 整体背景白色
+                chart.BorderWidth = 0;                  // 取消整体默认边框（避免重复）
+
+                // 断面图区域（ChartArea）：白色背景+黑色边框
+                foreach (ChartArea chartArea in chart.ChartAreas)
+                {
+                    chartArea.BackColor = System.Drawing.Color.White;  // 图背景白色
+                    chartArea.BorderWidth = 1;          // 边框宽度1px
+                    chartArea.BorderColor = System.Drawing.Color.Black;// 边框黑色（醒目）
+                                                        // 内边距：避免内容贴边框
+                    chartArea.InnerPlotPosition.Auto = false;
+                    chartArea.InnerPlotPosition.X = 5;
+                    chartArea.InnerPlotPosition.Y = 5;
+                    chartArea.InnerPlotPosition.Width = 90;
+                    chartArea.InnerPlotPosition.Height = 90;
+                }
+
+                // 图例（Legend）：白色背景+黑色边框（和图统一风格）
+                foreach (Legend legend in chart.Legends)
+                {
+                    legend.BackColor = System.Drawing.Color.White;     // 图例背景白色
+                    legend.BorderWidth = 1;             // 边框宽度1px
+                    System.Drawing.Color black = System.Drawing.Color.Black;
+                    legend.BorderColor = black;   // 边框黑色
+                    
+                }
+
+                // 👉 步骤3：生成带样式的图片（用你的原始逻辑，仅捕获样式后的内容）
+                using (Bitmap chartBmp = new Bitmap(chartResistivity.ClientSize.Width, chartResistivity.ClientSize.Height))
+                {
+                    chartResistivity.Refresh(); // 刷新确保样式生效
+                    chartResistivity.DrawToBitmap(chartBmp, chartResistivity.ClientRectangle);
+                    chartBmp.Save(tempImagePath, System.Drawing.Imaging.ImageFormat.Png); // 无损保存
+                }
+
+                // 👉 步骤4：恢复Chart原始样式（不影响原控件显示）
+                chart.BackColor = originalChartBackColor;
+                chart.BorderWidth = originalChartBorderWidth;
+                foreach (var kvp in originalChartAreaProps)
+                {
+                    kvp.Key.BackColor = kvp.Value.BackColor;
+                    kvp.Key.BorderWidth = kvp.Value.BorderWidth;
+                    kvp.Key.BorderColor = kvp.Value.BorderColor;
+                }
+                foreach (var kvp in originalLegendProps)
+                {
+                    kvp.Key.BackColor = kvp.Value.BackColor;
+                    kvp.Key.BorderWidth = kvp.Value.BorderWidth;
+                    kvp.Key.BorderColor = kvp.Value.BorderColor;
+                    
+                }
+
+                // 4. 获取Maps集合（保留你的原始接口调用）
+                projectDoc = _hook.Document;
+                if (projectDoc == null)
+                {
+                    throw new Exception("未打开MapGIS项目，请先打开项目！");
+                }
+                projectMaps = projectDoc.GetMaps();
+                if (projectMaps == null)
+                {
+                    throw new Exception("项目地图集合为空！");
+                }
+
+                // 5. 检查同名地图（保留你的GetMap(i)调用）
+                for (int i = 0; i < projectMaps.Count; i++)
+                {
+                    Map existingMap = projectMaps.GetMap(i); // 你的原始接口，不改动
+                    if (existingMap != null && existingMap.Name == newMapName)
+                    {
+                        DialogResult result = MessageBox.Show(
+                            $"已存在名为【{newMapName}】的地图，是否覆盖？",
+                            "提示",
+                            MessageBoxButtons.YesNo,
+                            MessageBoxIcon.Question
+                        );
+                        if (result == DialogResult.Yes)
+                        {
+                            projectMaps.Remove(i);
+                            Marshal.ReleaseComObject(existingMap);
+                        }
+                        else
+                        {
+                            MessageBox.Show("取消创建展示地图！", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            return;
+                        }
+                        break;
+                    }
+                }
+
+                // 6. 创建新Map（保留你的逻辑）
+                newMap = new Map();
+                newMap.Name = newMapName;
+
+                // 7. 加载图片到RasterLayer（保留你的接口调用）
+                displayLayer = new RasterLayer();
+                displayLayer.URL = tempImagePath;
+                displayLayer.Name = $"{newMapName}_展示图层";
+
+                // 连接数据+验证有效性
+                if (!displayLayer.ConnectData() || !displayLayer.IsValid)
+                {
+                    throw new Exception("图片图层加载失败！");
+                }
+
+                // 双重保障：无数据颜色设为白色（避免黑色残留）
+                displayLayer.NoDataColor = System.Drawing.Color.White;
+
+                // 设置图层范围（保留你的逻辑）
+                using (Image img = Image.FromFile(tempImagePath))
+                {
+                    Rect imgRange = new Rect(0, 0, img.Width, img.Height);
+                    displayLayer.set_Range(imgRange);
+                }
+
+                // 8. 图层添加到Map（保留你的Append方法）
+                newMap.Append(displayLayer); // 你的原始接口，不改动
+
+                // 9. 新Map添加到集合（保留你的Append方法）
+                projectMaps.Append(newMap); // 你的原始接口，不改动
+
+                // 10. 刷新视图+提示（保留你的逻辑）
+                //_hook.ActiveView?.Refresh(); // 若你不需要自动刷新，可保持注释
+                MessageBox.Show(
+                    $"成功创建展示地图【{newMapName}】！\n" +
+                    $"地图结构与'电法数据'一致，已设置白色背景+黑色边框（图+图例均带框）。",
+                    "创建成功",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information
+                );
+            }
+            catch (COMException comEx)
+            {
+                MessageBox.Show($"MapGIS组件错误：{comEx.Message}\n错误码：{comEx.ErrorCode}", "严重错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"创建展示地图失败：{ex.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                // 释放资源（保留你的逻辑，若你之前注释了Close/Release，可保持）
+                if (displayLayer != null)
+                {
+                    try
+                    {
+                        //displayLayer.Close(); // 若你不需要关闭，可保持注释
+                        //Marshal.ReleaseComObject(displayLayer);
+                    }
+                    catch { }
+                }
+                if (newMap != null)
+                {
+                    try { Marshal.ReleaseComObject(newMap); } catch { }
+                }
+                if (projectMaps != null)
+                {
+                    try { Marshal.ReleaseComObject(projectMaps); } catch { }
+                }
+                if (projectDoc != null)
+                {
+                    try { Marshal.ReleaseComObject(projectDoc); } catch { }
+                }
+
+                // 删除临时图片
+                if (File.Exists(tempImagePath))
+                {
+                    try { File.Delete(tempImagePath); }
+                    catch (Exception ex) { Console.WriteLine($"删除临时文件失败：{ex.Message}"); }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 按钮3点击事件：将电阻率断面图生成到新的MapGIS地图（与电法数据同级）
+        /// </summary>
+        private void button3_Click(object sender, EventArgs e)
+        {
+            CreateImageDisplayMap(chartResistivity);
         }
     }
 }
