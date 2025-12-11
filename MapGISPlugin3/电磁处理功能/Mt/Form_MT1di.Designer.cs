@@ -358,6 +358,7 @@ namespace MapGISPlugin3
             // 
             // chartResultSection
             // 
+            this.chartResultSection.BackColor = System.Drawing.SystemColors.Control;
             chartArea2.Name = "ChartArea1";
             this.chartResultSection.ChartAreas.Add(chartArea2);
             this.chartResultSection.Dock = System.Windows.Forms.DockStyle.Bottom;

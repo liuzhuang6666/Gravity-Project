@@ -33,7 +33,11 @@
             System.Windows.Forms.DataVisualization.Charting.Legend legend1 = new System.Windows.Forms.DataVisualization.Charting.Legend();
             System.Windows.Forms.DataVisualization.Charting.Series series1 = new System.Windows.Forms.DataVisualization.Charting.Series();
             System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea3 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.Legend legend2 = new System.Windows.Forms.DataVisualization.Charting.Legend();
+            System.Windows.Forms.DataVisualization.Charting.Series series2 = new System.Windows.Forms.DataVisualization.Charting.Series();
             System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea4 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.Legend legend3 = new System.Windows.Forms.DataVisualization.Charting.Legend();
+            System.Windows.Forms.DataVisualization.Charting.Series series3 = new System.Windows.Forms.DataVisualization.Charting.Series();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
@@ -57,11 +61,13 @@
             this.label2 = new System.Windows.Forms.Label();
             this.cmbLineName = new System.Windows.Forms.ComboBox();
             this.cmbStationLayer = new System.Windows.Forms.ComboBox();
+            this.panel1 = new System.Windows.Forms.Panel();
+            this.splitContainer2 = new System.Windows.Forms.SplitContainer();
+            this.chartResistivity = new System.Windows.Forms.DataVisualization.Charting.Chart();
+            this.chartPhase = new System.Windows.Forms.DataVisualization.Charting.Chart();
             this.labelDepthRange = new System.Windows.Forms.Label();
             this.nudMaxDepth = new System.Windows.Forms.NumericUpDown();
             this.chartResultSection = new System.Windows.Forms.DataVisualization.Charting.Chart();
-            this.chartPhase = new System.Windows.Forms.DataVisualization.Charting.Chart();
-            this.chartResistivity = new System.Windows.Forms.DataVisualization.Charting.Chart();
             this.tabControl2 = new System.Windows.Forms.TabControl();
             this.tabPageDisplayTE = new System.Windows.Forms.TabPage();
             this.tabPageDisplayTM = new System.Windows.Forms.TabPage();
@@ -81,10 +87,15 @@
             ((System.ComponentModel.ISupportInitialize)(this.gridTE)).BeginInit();
             this.tabPage3.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.gridTM)).BeginInit();
+            this.panel1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer2)).BeginInit();
+            this.splitContainer2.Panel1.SuspendLayout();
+            this.splitContainer2.Panel2.SuspendLayout();
+            this.splitContainer2.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.chartResistivity)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.chartPhase)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.nudMaxDepth)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.chartResultSection)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.chartPhase)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.chartResistivity)).BeginInit();
             this.tabControl2.SuspendLayout();
             this.panelTitle.SuspendLayout();
             this.SuspendLayout();
@@ -105,11 +116,10 @@
             // 
             // splitContainer1.Panel2
             // 
+            this.splitContainer1.Panel2.Controls.Add(this.panel1);
             this.splitContainer1.Panel2.Controls.Add(this.labelDepthRange);
             this.splitContainer1.Panel2.Controls.Add(this.nudMaxDepth);
             this.splitContainer1.Panel2.Controls.Add(this.chartResultSection);
-            this.splitContainer1.Panel2.Controls.Add(this.chartPhase);
-            this.splitContainer1.Panel2.Controls.Add(this.chartResistivity);
             this.splitContainer1.Panel2.Controls.Add(this.tabControl2);
             this.splitContainer1.Size = new System.Drawing.Size(1650, 927);
             this.splitContainer1.SplitterDistance = 800;
@@ -351,6 +361,66 @@
             this.cmbStationLayer.TabIndex = 0;
             this.cmbStationLayer.SelectedIndexChanged += new System.EventHandler(this.cmbStationLayer_SelectedIndexChanged);
             // 
+            // panel1
+            // 
+            this.panel1.Controls.Add(this.splitContainer2);
+            this.panel1.Dock = System.Windows.Forms.DockStyle.Top;
+            this.panel1.Location = new System.Drawing.Point(0, 28);
+            this.panel1.Name = "panel1";
+            this.panel1.Size = new System.Drawing.Size(846, 399);
+            this.panel1.TabIndex = 12;
+            // 
+            // splitContainer2
+            // 
+            this.splitContainer2.Dock = System.Windows.Forms.DockStyle.Top;
+            this.splitContainer2.Location = new System.Drawing.Point(0, 0);
+            this.splitContainer2.Name = "splitContainer2";
+            // 
+            // splitContainer2.Panel1
+            // 
+            this.splitContainer2.Panel1.Controls.Add(this.chartResistivity);
+            // 
+            // splitContainer2.Panel2
+            // 
+            this.splitContainer2.Panel2.Controls.Add(this.chartPhase);
+            this.splitContainer2.Size = new System.Drawing.Size(846, 399);
+            this.splitContainer2.SplitterDistance = 415;
+            this.splitContainer2.TabIndex = 0;
+            // 
+            // chartResistivity
+            // 
+            chartArea2.Name = "ChartArea1";
+            this.chartResistivity.ChartAreas.Add(chartArea2);
+            this.chartResistivity.Dock = System.Windows.Forms.DockStyle.Fill;
+            legend1.Name = "Legend1";
+            this.chartResistivity.Legends.Add(legend1);
+            this.chartResistivity.Location = new System.Drawing.Point(0, 0);
+            this.chartResistivity.Name = "chartResistivity";
+            series1.ChartArea = "ChartArea1";
+            series1.Legend = "Legend1";
+            series1.Name = "Series1";
+            this.chartResistivity.Series.Add(series1);
+            this.chartResistivity.Size = new System.Drawing.Size(415, 399);
+            this.chartResistivity.TabIndex = 0;
+            this.chartResistivity.Text = "chart1";
+            // 
+            // chartPhase
+            // 
+            chartArea3.Name = "ChartArea1";
+            this.chartPhase.ChartAreas.Add(chartArea3);
+            this.chartPhase.Dock = System.Windows.Forms.DockStyle.Fill;
+            legend2.Name = "Legend1";
+            this.chartPhase.Legends.Add(legend2);
+            this.chartPhase.Location = new System.Drawing.Point(0, 0);
+            this.chartPhase.Name = "chartPhase";
+            series2.ChartArea = "ChartArea1";
+            series2.Legend = "Legend1";
+            series2.Name = "Series1";
+            this.chartPhase.Series.Add(series2);
+            this.chartPhase.Size = new System.Drawing.Size(427, 399);
+            this.chartPhase.TabIndex = 0;
+            this.chartPhase.Text = "chart2";
+            // 
             // labelDepthRange
             // 
             this.labelDepthRange.AutoSize = true;
@@ -367,7 +437,7 @@
             0,
             0,
             0});
-            this.nudMaxDepth.Location = new System.Drawing.Point(150, 433);
+            this.nudMaxDepth.Location = new System.Drawing.Point(150, 434);
             this.nudMaxDepth.Maximum = new decimal(new int[] {
             100000,
             0,
@@ -389,43 +459,21 @@
             // 
             // chartResultSection
             // 
-            chartArea2.Name = "ChartArea1";
-            this.chartResultSection.ChartAreas.Add(chartArea2);
+            this.chartResultSection.BackColor = System.Drawing.SystemColors.Control;
+            chartArea4.Name = "ChartArea1";
+            this.chartResultSection.ChartAreas.Add(chartArea4);
             this.chartResultSection.Dock = System.Windows.Forms.DockStyle.Bottom;
-            legend1.Name = "Legend1";
-            this.chartResultSection.Legends.Add(legend1);
-            this.chartResultSection.Location = new System.Drawing.Point(0, 467);
+            legend3.Name = "Legend1";
+            this.chartResultSection.Legends.Add(legend3);
+            this.chartResultSection.Location = new System.Drawing.Point(0, 465);
             this.chartResultSection.Name = "chartResultSection";
-            series1.ChartArea = "ChartArea1";
-            series1.Legend = "Legend1";
-            series1.Name = "Series1";
-            this.chartResultSection.Series.Add(series1);
-            this.chartResultSection.Size = new System.Drawing.Size(846, 460);
+            series3.ChartArea = "ChartArea1";
+            series3.Legend = "Legend1";
+            series3.Name = "Series1";
+            this.chartResultSection.Series.Add(series3);
+            this.chartResultSection.Size = new System.Drawing.Size(846, 462);
             this.chartResultSection.TabIndex = 8;
             this.chartResultSection.Text = "chart1";
-            // 
-            // chartPhase
-            // 
-            this.chartPhase.Anchor = System.Windows.Forms.AnchorStyles.Top;
-            this.chartPhase.BackColor = System.Drawing.SystemColors.Control;
-            chartArea3.Name = "ChartArea1";
-            this.chartPhase.ChartAreas.Add(chartArea3);
-            this.chartPhase.Location = new System.Drawing.Point(418, 26);
-            this.chartPhase.Name = "chartPhase";
-            this.chartPhase.Size = new System.Drawing.Size(443, 414);
-            this.chartPhase.TabIndex = 2;
-            this.chartPhase.Text = "chart3";
-            // 
-            // chartResistivity
-            // 
-            this.chartResistivity.BackColor = System.Drawing.SystemColors.Control;
-            chartArea4.Name = "ChartArea1";
-            this.chartResistivity.ChartAreas.Add(chartArea4);
-            this.chartResistivity.Location = new System.Drawing.Point(-12, 27);
-            this.chartResistivity.Name = "chartResistivity";
-            this.chartResistivity.Size = new System.Drawing.Size(439, 413);
-            this.chartResistivity.TabIndex = 1;
-            this.chartResistivity.Text = "chart2";
             // 
             // tabControl2
             // 
@@ -523,10 +571,15 @@
             ((System.ComponentModel.ISupportInitialize)(this.gridTE)).EndInit();
             this.tabPage3.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.gridTM)).EndInit();
+            this.panel1.ResumeLayout(false);
+            this.splitContainer2.Panel1.ResumeLayout(false);
+            this.splitContainer2.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer2)).EndInit();
+            this.splitContainer2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.chartResistivity)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.chartPhase)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.nudMaxDepth)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.chartResultSection)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.chartPhase)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.chartResistivity)).EndInit();
             this.tabControl2.ResumeLayout(false);
             this.panelTitle.ResumeLayout(false);
             this.ResumeLayout(false);
@@ -556,8 +609,6 @@
         private System.Windows.Forms.DataGridView gridTM;
         private System.Windows.Forms.TabControl tabControl2;
         private System.Windows.Forms.TabPage tabPageDisplayTM;
-        private System.Windows.Forms.DataVisualization.Charting.Chart chartPhase;
-        private System.Windows.Forms.DataVisualization.Charting.Chart chartResistivity;
         private System.Windows.Forms.TabPage tabPageDisplayTE;
         private System.Windows.Forms.RadioButton rbInversionTETM;
         private System.Windows.Forms.Panel panelTitle;
@@ -569,5 +620,9 @@
         private System.Windows.Forms.NumericUpDown nudMaxDepth;
         private System.Windows.Forms.TextBox txtActualError;
         private System.Windows.Forms.Label labelActualError;
+        private System.Windows.Forms.Panel panel1;
+        private System.Windows.Forms.SplitContainer splitContainer2;
+        private System.Windows.Forms.DataVisualization.Charting.Chart chartResistivity;
+        private System.Windows.Forms.DataVisualization.Charting.Chart chartPhase;
     }
 }

@@ -41,16 +41,18 @@ namespace MapGISPlugin3
         private DataTable m_CurrentLineData;
         private string m_CurrentSelectedStationName;
 
-        // 图例名称常量
+        // 图例名称常量 (保持代码一原样)
         private const string ProfileLegendName = "ProfileLegend";
         private const string ResistivityLegendName = "ResistivityLegend";
         private const string PhaseLegendName = "PhaseLegend";
 
         // --- 线程与计算控制 ---
         private CancellationTokenSource _progressCancellationTokenSource;
-        private List<InversionResultPoint> m_LastInversionResults = null; // 缓存最后一次计算结果
-        private List<InversionResultPoint> m_LastInterpolatedResults = null; // 缓存插值后的网格数据
-        private double m_LastInterpolatedDepth = -1;
+        private List<InversionResultPoint> m_LastInversionResults = null;
+
+        // 窗口拖动逻辑变量
+        private Point mousePoint = new Point();
+
         // --- 内部数据结构 ---
         private class StationInfo
         {
@@ -59,11 +61,12 @@ namespace MapGISPlugin3
             public double Y { get; set; }
         }
 
+        // 修改：根据 KNOW 文件格式定义结果点
         private class InversionResultPoint
         {
-            public double Distance { get; set; }
-            public double Depth { get; set; }
-            public double Value { get; set; } // 电阻率
+            public double Distance { get; set; } // 第一列
+            public double Depth { get; set; }    // 第二列 (负值)
+            public double Value { get; set; }    // 第三列 (电阻率)
         }
 
         private class CalculationResult
@@ -74,8 +77,6 @@ namespace MapGISPlugin3
             public string WorkspacePath { get; set; }
             public string ActualError { get; set; }
         }
-
-        private struct NiceScale { public double Min; public double Max; public double Interval; }
 
         // ====================================================================================
         // 初始化与加载
@@ -97,8 +98,8 @@ namespace MapGISPlugin3
         {
             LoadLayersFromMap();
             InitDragEvent();
-            InitializeChartStyles();
-
+            InitializeChartStyles(); // 恢复代码一的样式初始化
+            chartResultSection.Visible = false;
         }
 
         private void btnClose_Click(object sender, EventArgs e)
@@ -106,8 +107,6 @@ namespace MapGISPlugin3
             this.Close();
         }
 
-        // 窗口拖动逻辑
-        private Point mousePoint = new Point();
         private void InitDragEvent()
         {
             if (panelTitle != null)
@@ -123,31 +122,27 @@ namespace MapGISPlugin3
 
         private async void btnCalculate_Click(object sender, EventArgs e)
         {
-            // 1. 基础校验
             if (m_CurrentLineData == null || m_CurrentLineData.Rows.Count == 0)
             {
                 MessageBox.Show("请先选择测线并加载数据！", "提示");
                 return;
             }
 
-            // 2. 准备参数
             int its = (int)nudIterationCount.Value;
-            int iwd = rbInversionTE.Checked ? 0 : 1; // 0: TE, 1: TM
+            int iwd = rbInversionTE.Checked ? 0 : 1;
 
             string pluginDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             string tempRunDir = Path.Combine(Path.GetTempPath(), "MT1di_run_" + Guid.NewGuid().ToString("N").Substring(0, 8));
             string workspaceName = "result";
             string fullWorkspacePath = Path.Combine(tempRunDir, workspaceName);
 
-            // 3. UI 状态更新
             btnCalculate.Enabled = false;
             progressBar1.Value = 0;
-            txtActualError.Text = "";
-            // 4. 数据准备
+            txtActualError.Text = "计算中...";
+
             DataTable lineDataCopy = m_CurrentLineData.Copy();
             Dictionary<string, StationInfo> stationCoords = m_CurrentLineStations.ToDictionary(s => s.StationName);
 
-            // 5. 启动进度监控
             _progressCancellationTokenSource = new CancellationTokenSource();
             var cancellationToken = _progressCancellationTokenSource.Token;
 
@@ -155,26 +150,23 @@ namespace MapGISPlugin3
 
             try
             {
-                // 6. 后台执行计算
                 var calcResult = await Task.Run(() =>
                 {
                     return RunMTCalculationAsync(pluginDir, tempRunDir, workspaceName, lineDataCopy, stationCoords, iwd, its);
                 });
 
-                // 7. 停止监控
                 _progressCancellationTokenSource.Cancel();
                 try { await progressTask; } catch (OperationCanceledException) { }
 
-                // 8. 处理结果
                 if (calcResult.Success)
                 {
                     progressBar1.Value = 100;
                     if (!string.IsNullOrEmpty(calcResult.ActualError))
-                    {
                         txtActualError.Text = calcResult.ActualError;
-                    }
 
                     m_LastInversionResults = calcResult.Results;
+
+                    // 使用新的绘图逻辑
                     DisplayInversionResults(calcResult.Results);
 
                     MessageBox.Show($"计算完成！\n结果保存在: {calcResult.WorkspacePath}", "成功");
@@ -182,6 +174,7 @@ namespace MapGISPlugin3
                 else
                 {
                     progressBar1.Value = 0;
+                    // 清空显示
                     DisplayInversionResults(new List<InversionResultPoint>());
                     MessageBox.Show(calcResult.ErrorMessage, "计算错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
@@ -361,17 +354,14 @@ namespace MapGISPlugin3
                     if (string.IsNullOrWhiteSpace(line)) continue;
                     string[] parts = line.Split(new char[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
 
-                    // 格式通常为: 距离(X)  高程/深度(Z)  电阻率(Rho)
+                    // 格式验证：距离(X)  深度(Z,负值)  电阻率(Rho)
                     if (parts.Length >= 3 &&
                         double.TryParse(parts[0], out double d) &&
                         double.TryParse(parts[1], out double z) &&
                         double.TryParse(parts[2], out double val))
                     {
-                        // ================== 修正 ==================
-                        // 直接读取原始值 (Z)，不取绝对值，不加负号
-                        // 如果数据是正数(山上)，这里就是正数；如果是负数(地下)，这里就是负数
+                        // 直接读取文件中的深度值 (通常为负，表示地下)
                         points.Add(new InversionResultPoint { Distance = d, Depth = z, Value = val });
-                        // ==========================================
                     }
                 }
             }
@@ -379,106 +369,8 @@ namespace MapGISPlugin3
             return points;
         }
 
-        /// <summary>
-        /// IDW反距离加权插值 - 填充网格（完全来自你成功的 MT2di）
-        /// </summary>
-        /// <summary>
-        /// IDW反距离加权插值 - 填充网格（完全来自你成功的 MT2di）
-        /// </summary>
-        private List<InversionResultPoint> PerformIDWInterpolation(List<InversionResultPoint> sourcePoints, double minZ)
-        {
-            if (sourcePoints.Count == 0) return sourcePoints;
-
-            double minX = sourcePoints.Min(p => p.Distance);
-            double maxX = sourcePoints.Max(p => p.Distance);
-            double maxZ = sourcePoints.Max(p => p.Depth);
-            if (maxZ < 0) maxZ = 0;
-
-            double xRange = maxX - minX;
-            double zRange = maxZ - minZ;
-
-            // 动态网格密度（横向30米，纵向20米）-- 已增大间距，减少网格数量
-            int xSteps = Math.Min(400, Math.Max(20, (int)(xRange / 50)));
-            int zSteps = Math.Min(400, Math.Max(20, (int)(zRange / 30)));
-
-            double xStep = xRange / xSteps;
-            double zStep = zRange / zSteps;
-
-            var interpolatedPoints = new List<InversionResultPoint>();
-            double power = 2.0;
-            double searchRadius = Math.Max(xStep, zStep) * 8;
-
-            for (int i = 0; i <= xSteps; i++)
-            {
-                double x = minX + i * xStep;
-                for (int j = 0; j <= zSteps; j++)
-                {
-                    double z = maxZ - j * zStep;
-                    if (z < minZ) continue;
-
-                    double val = CalculateIDWValue(x, z, sourcePoints, power, searchRadius);
-                    if (val > 0)
-                    {
-                        interpolatedPoints.Add(new InversionResultPoint
-                        {
-                            Distance = x,
-                            Depth = z,
-                            Value = val
-                        });
-                    }
-                }
-            }
-            return interpolatedPoints.Count > 0 ? interpolatedPoints : sourcePoints;
-        }
-        /// <summary>
-        /// 计算单个网格点的 IDW 插值（黄金双保险机制）
-        /// </summary>
-        private double CalculateIDWValue(double x, double z, List<InversionResultPoint> sourcePoints, double power, double searchRadius)
-        {
-            // 第一步：精确命中源点直接返回
-            foreach (var point in sourcePoints)
-            {
-                double dist = Math.Sqrt(Math.Pow(x - point.Distance, 2) + Math.Pow(z - point.Depth, 2));
-                if (dist < 1e-6) return point.Value;
-            }
-
-            double weightSum = 0;
-            double valueSum = 0;
-            int pointsUsed = 0;
-
-            foreach (var point in sourcePoints)
-            {
-                double dist = Math.Sqrt(Math.Pow(x - point.Distance, 2) + Math.Pow(z - point.Depth, 2));
-                if (dist > searchRadius) continue;
-
-                double weight = 1.0 / Math.Pow(dist == 0 ? 1e-10 : dist, power);
-                weightSum += weight;
-                valueSum += weight * point.Value;
-                pointsUsed++;
-            }
-
-            // 第二保险：如果搜索半径内点太少，用最近8个点
-            if (pointsUsed < 4 || weightSum == 0)
-            {
-                var nearest = sourcePoints
-                    .Select(p => new { Point = p, Dist = Math.Sqrt(Math.Pow(x - p.Distance, 2) + Math.Pow(z - p.Depth, 2)) })
-                    .OrderBy(p => p.Dist)
-                    .Take(8);
-
-                weightSum = 0; valueSum = 0;
-                foreach (var np in nearest)
-                {
-                    double d = np.Dist == 0 ? 1e-10 : np.Dist;
-                    double w = 1.0 / Math.Pow(d, power);
-                    weightSum += w;
-                    valueSum += w * np.Point.Value;
-                }
-            }
-
-            return weightSum > 0 ? valueSum / weightSum : 0;
-        }
         // ====================================================================================
-        // 结果展示 (自定义深度)
+        // 【核心绘图】结果展示 (位图渲染 + 柱状显示 + 代码一的容器)
         // ====================================================================================
 
         private void nudMaxDepth_ValueChanged(object sender, EventArgs e)
@@ -489,113 +381,320 @@ namespace MapGISPlugin3
 
         private void DisplayInversionResults(List<InversionResultPoint> points)
         {
+            // 1. 基础校验
+            if (points == null || points.Count == 0)
+            {
+                // 确实没数据时，才清空显示
+                chartResultSection.Series.Clear();
+                chartResultSection.ChartAreas.Clear();
+                chartResultSection.Images.Clear();
+                chartResultSection.Titles.Clear();
+                chartResultSection.Visible = false;
+                return;
+            }
+
+            // 获取控件引用，但暂时不清空它，保持旧画面直到新画面就绪
             var chart = chartResultSection;
-            chart.Series.Clear();
-            chart.ChartAreas.Clear();
-            chart.Legends.Clear();
-            chart.Titles.Clear();
 
-            if (points == null || points.Count == 0) return;
+            // =========================================================
+            // 第一阶段：数据准备 (在内存中进行，不操作 UI)
+            // =========================================================
 
+            // 获取设置参数
             double userDepthInput = (double)nudMaxDepth.Value;
             if (userDepthInput <= 0) userDepthInput = 2000;
-            double minZ_Limit = -userDepthInput;
 
-            var validPoints = points.Where(p => p.Value > 0 && p.Depth >= minZ_Limit).ToList();
+            double minZ_Display = -userDepthInput;
+            double maxZ_Display = 0;
+
+            // 数据过滤
+            var validPoints = points.Where(p => p.Value > 0 && p.Depth >= minZ_Display && p.Depth <= 0.1).ToList();
+
             if (validPoints.Count == 0)
             {
+                // 如果筛选后没数据，这时再清空并提示
+                chart.Series.Clear();
+                chart.ChartAreas.Clear();
+                chart.Images.Clear();
+                chart.Titles.Clear();
                 chart.Titles.Add("当前深度范围内无有效数据");
                 return;
             }
 
-            // === 关键：智能缓存 + IDW 插值（和 MT2di 完全一致）===
-            if (m_LastInterpolatedResults == null || Math.Abs(userDepthInput - m_LastInterpolatedDepth) > 0.1)
-            {
-                var interpolated = PerformIDWInterpolation(validPoints, minZ_Limit);
-                if (interpolated.Count > 0)
+            // 数据分组与排序
+            var stationGroups = validPoints
+                .GroupBy(p => p.Distance)
+                .Select(g => new
                 {
-                    m_LastInterpolatedResults = interpolated;
-                    m_LastInterpolatedDepth = userDepthInput;
-                    validPoints = interpolated;
-                }
-            }
-            else
-            {
-                validPoints = m_LastInterpolatedResults.Where(p => p.Depth >= minZ_Limit).ToList();
-            }
-            // === 插值结束 ===
+                    Distance = g.Key,
+                    Layers = g.OrderByDescending(p => p.Depth).ToList()
+                })
+                .OrderBy(s => s.Distance)
+                .ToList();
 
-            chart.Titles.Add($"MT 一维反演电阻率断面图 ( > {minZ_Limit}m )").Font = new Font("微软雅黑", 12f, FontStyle.Bold);
+            if (stationGroups.Count == 0) return;
 
-            double dataMinX = validPoints.Min(p => p.Distance);
-            double dataMaxX = validPoints.Max(p => p.Distance);
-            double maxDataZ = validPoints.Max(p => p.Depth);
-            double dataMaxY = maxDataZ > 0 ? maxDataZ : 0;
-
-            var niceX = CalculateStrictNiceScale(dataMinX, dataMaxX);
-            var niceY = CalculateStrictNiceScale(minZ_Limit, dataMaxY);
-
-            ChartArea ca = chart.ChartAreas.Add("ResultArea");
-            ca.AxisX.Title = "距离 (m)";
-            ca.AxisY.Title = "高程 (m)";
-            ca.AxisX.Minimum = niceX.Min;
-            ca.AxisX.Maximum = niceX.Max;
-            ca.AxisX.Interval = niceX.Interval;
-            ca.AxisY.Minimum = minZ_Limit;
-            ca.AxisY.Maximum = dataMaxY + (dataMaxY - minZ_Limit) * 0.05;
-            ca.AxisY.Interval = niceY.Interval;
-            ca.AxisY.IsReversed = false;
-            ca.AxisY.Crossing = 0;
-
-            StripLine zeroLine = new StripLine();
-            zeroLine.Interval = 0;
-            zeroLine.StripWidth = 0;
-            zeroLine.BorderColor = Color.Black;
-            zeroLine.BorderWidth = 1;
-            zeroLine.BorderDashStyle = ChartDashStyle.Dash;
-            ca.AxisY.StripLines.Add(zeroLine);
-
+            // 计算色标范围
             double minLog = Math.Log10(validPoints.Min(p => p.Value));
             double maxLog = Math.Log10(validPoints.Max(p => p.Value));
 
-            Legend legend = chart.Legends.Add("ColorScale");
-            legend.Docking = Docking.Right;
-            legend.Title = "lg(ρ/Ω·m)";
-            legend.Font = new Font("Arial", 8F);
-            for (int i = 0; i <= 10; i++)
+            // 计算几何参数
+            double minX = stationGroups.Min(s => s.Distance);
+            double maxX = stationGroups.Max(s => s.Distance);
+            double rangeX = maxX - minX;
+            if (rangeX <= 0) rangeX = 100;
+
+            double[] stationWidths = new double[stationGroups.Count];
+            double[] stationLeftEdges = new double[stationGroups.Count];
+
+            for (int i = 0; i < stationGroups.Count; i++)
             {
-                double val = minLog + (maxLog - minLog) * i / 10.0;
-                legend.CustomItems.Add(new System.Windows.Forms.DataVisualization.Charting.LegendItem
+                double leftBound, rightBound;
+                double currentX = stationGroups[i].Distance;
+
+                if (i == 0)
                 {
-                    Name = val.ToString("F1"),
-                    Color = GetColorForValue(val, minLog, maxLog),
-                    MarkerStyle = MarkerStyle.Square,
-                    MarkerSize = 14
-                });
+                    leftBound = currentX - minX;
+                    if (stationGroups.Count > 1)
+                        rightBound = (currentX + stationGroups[i + 1].Distance) / 2 - minX;
+                    else
+                        rightBound = rangeX;
+                }
+                else if (i == stationGroups.Count - 1)
+                {
+                    leftBound = (stationGroups[i - 1].Distance + currentX) / 2 - minX;
+                    rightBound = rangeX;
+                }
+                else
+                {
+                    leftBound = (stationGroups[i - 1].Distance + currentX) / 2 - minX;
+                    rightBound = (currentX + stationGroups[i + 1].Distance) / 2 - minX;
+                }
+                stationLeftEdges[i] = leftBound;
+                stationWidths[i] = rightBound - leftBound;
             }
-            legend.CustomItems.Reverse();
 
-            Series s = chart.Series.Add("Section");
-            s.ChartType = SeriesChartType.Point;
-            s.MarkerStyle = MarkerStyle.Square;
-            s.BorderWidth = 0;
-            s.IsVisibleInLegend = false;
+            // =========================================================
+            // 第二阶段：后台绘图 (最耗时的步骤)
+            // =========================================================
 
-            int dynamicSize = (validPoints.Count > 10000) ? 8 : (validPoints.Count > 5000 ? 6 : 10);
-            s.MarkerSize = dynamicSize;
+            // 预先生成 Bitmap，此时还没有贴到 Chart 上，界面不会白屏
+            int bmpWidth = Math.Max(chart.Width - 100, 800);
+            int bmpHeight = Math.Max(chart.Height - 100, 400);
 
-            foreach (var p in validPoints)
+            // 使用临时变量存储生成的图片
+            Bitmap readyBitmap = new Bitmap(bmpWidth, bmpHeight);
+
+            using (Graphics g = Graphics.FromImage(readyBitmap))
             {
-                int idx = s.Points.AddXY(p.Distance, p.Depth);
-                s.Points[idx].Color = GetColorForValue(Math.Log10(p.Value), minLog, maxLog);
-                s.Points[idx].ToolTip = $"距离: {p.Distance:F0}m\n高程: {p.Depth:F0}m\n电阻率: {p.Value:F1} Ω·m";
-            }
+                g.Clear(Color.White);
 
-            BeautifyChartAxes(ca);
+                double xScale = bmpWidth / rangeX;
+                double yScale = bmpHeight / Math.Abs(minZ_Display);
+
+                for (int i = 0; i < stationGroups.Count; i++)
+                {
+                    var group = stationGroups[i];
+                    var layers = group.Layers;
+
+                    double xPixel = stationLeftEdges[i] * xScale;
+                    double wPixel = stationWidths[i] * xScale;
+                    if (wPixel < 1) wPixel = 1;
+
+                    for (int j = 0; j < layers.Count; j++)
+                    {
+                        var layer = layers[j];
+                        double zTop, zBottom;
+
+                        if (j == 0)
+                        {
+                            zTop = maxZ_Display;
+                            if (layers.Count > 1) zBottom = (layer.Depth + layers[j + 1].Depth) / 2;
+                            else zBottom = layer.Depth;
+                        }
+                        else if (j == layers.Count - 1)
+                        {
+                            zTop = (layers[j - 1].Depth + layer.Depth) / 2;
+                            zBottom = minZ_Display;
+                        }
+                        else
+                        {
+                            zTop = (layers[j - 1].Depth + layer.Depth) / 2;
+                            zBottom = (layer.Depth + layers[j + 1].Depth) / 2;
+                        }
+
+                        zTop = Math.Min(maxZ_Display, Math.Max(minZ_Display, zTop));
+                        zBottom = Math.Min(maxZ_Display, Math.Max(minZ_Display, zBottom));
+
+                        if (zBottom >= zTop) continue;
+
+                        float yPixel = (float)(Math.Abs(zTop) * yScale);
+                        float hPixel = (float)(Math.Abs(zBottom - zTop) * yScale);
+
+                        if (hPixel > 0)
+                        {
+                            Color color = GetColorForValueSmooth(Math.Log10(layer.Value), minLog, maxLog);
+                            using (SolidBrush brush = new SolidBrush(color))
+                            {
+                                g.FillRectangle(brush, (float)xPixel, yPixel, (float)wPixel + 0.5f, hPixel + 0.5f);
+                            }
+                        }
+                    }
+                }
+            } // Graphics 释放，但 readyBitmap 还活着
+
+            // =========================================================
+            // 第三阶段：UI 瞬间替换 (毫秒级)
+            // =========================================================
+
+            // 挂起 UI 逻辑，防止刷新闪烁
+            chart.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(chart)).BeginInit();
+
+            try
+            {
+                // 1. 此时才清空旧内容
+                chart.Series.Clear();
+                chart.ChartAreas.Clear();
+                chart.Legends.Clear();
+                chart.Titles.Clear();
+                chart.Images.Clear(); // 移除旧背景图
+
+                // 2. 添加标题
+                chart.Titles.Add($"MT 一维反演电阻率断面图 (0 ~ {minZ_Display}m)").Font = new Font("微软雅黑", 12f, FontStyle.Bold);
+
+                // 3. 设置背景图
+                ChartArea ca = chart.ChartAreas.Add("ResultArea");
+                string imgName = "BackImage_" + Guid.NewGuid().ToString();
+
+                // 将准备好的 Bitmap 放入 NamedImage
+                // 注意：这里不需要再Clone了，因为 readyBitmap 是我们刚生成的
+                chart.Images.Add(new NamedImage(imgName, readyBitmap));
+
+                ca.BackImage = imgName;
+                ca.BackImageWrapMode = ChartImageWrapMode.Scaled;
+
+                // 4. 设置轴范围
+                ca.AxisX.Minimum = minX;
+                ca.AxisX.Maximum = maxX;
+                ca.AxisY.Minimum = minZ_Display;
+                ca.AxisY.Maximum = maxZ_Display;
+
+                // 5. 设置细分刻度 (修复坐标轴过大的问题)
+                double xInterval = CalculateNiceInterval(rangeX, 10);
+                double yInterval = CalculateNiceInterval(Math.Abs(minZ_Display - maxZ_Display), 8);
+
+                ca.AxisX.Interval = xInterval;
+                ca.AxisY.Interval = yInterval;
+
+                ca.AxisX.MinorGrid.Enabled = true;
+                ca.AxisX.MinorGrid.Interval = xInterval / 2;
+                ca.AxisX.MinorGrid.LineColor = Color.FromArgb(20, Color.Gray);
+
+                ca.AxisY.MinorGrid.Enabled = true;
+                ca.AxisY.MinorGrid.Interval = yInterval / 2;
+                ca.AxisY.MinorGrid.LineColor = Color.FromArgb(20, Color.Gray);
+
+                BeautifyChartAxes(ca);
+
+                // 6. 重新添加图例
+                Legend legend = chart.Legends.Add("ColorScale");
+                legend.Docking = Docking.Right;
+                legend.Title = "lg(ρ/Ω·m)";
+                legend.Font = new Font("Arial", 8F);
+
+                int legendSteps = 10;
+                for (int i = legendSteps; i >= 0; i--)
+                {
+                    double val = minLog + (maxLog - minLog) * i / legendSteps;
+                    legend.CustomItems.Add(new System.Windows.Forms.DataVisualization.Charting.LegendItem
+                    {
+                        Name = val.ToString("F1"),
+                        Color = GetColorForValueSmooth(val, minLog, maxLog),
+                        MarkerStyle = MarkerStyle.Square,
+                        MarkerSize = 14
+                    });
+                }
+
+                // 7. 哑序列撑开坐标轴
+                Series sDummy = chart.Series.Add("Dummy");
+                sDummy.ChartType = SeriesChartType.Point;
+                sDummy.Points.AddXY(minX, maxZ_Display);
+                sDummy.Points.AddXY(maxX, minZ_Display);
+                sDummy.Color = Color.Transparent;
+                sDummy.IsVisibleInLegend = false;
+                chart.Visible = true;
+            }
+            finally
+            {
+                // 恢复 UI 刷新
+                ((System.ComponentModel.ISupportInitialize)(chart)).EndInit();
+                chart.ResumeLayout();
+            }
+        }
+        // ====================================================================================
+        // 辅助函数：颜色与美化 (移植自 CSAMT 代码)
+        // ====================================================================================
+        /// <summary>
+        /// 计算美观的刻度间隔（1, 2, 5 的倍数），确保坐标轴有足够的细分
+        /// </summary>
+        private double CalculateNiceInterval(double range, int targetTicks)
+        {
+            if (range <= 0 || targetTicks <= 0) return 1;
+
+            double roughInterval = range / targetTicks;
+            double magnitude = Math.Pow(10, Math.Floor(Math.Log10(roughInterval)));
+            double residual = roughInterval / magnitude;
+
+            double niceInterval;
+            if (residual <= 1.5)
+                niceInterval = 1 * magnitude;
+            else if (residual <= 3)
+                niceInterval = 2 * magnitude;
+            else if (residual <= 7)
+                niceInterval = 5 * magnitude;
+            else
+                niceInterval = 10 * magnitude;
+
+            return niceInterval;
+        }
+        private Color GetColorForValueSmooth(double value, double min, double max)
+        {
+            if (min >= max) return Color.Gray;
+            double normalized = Math.Max(0, Math.Min(1, (value - min) / (max - min)));
+            return GetJetColor(normalized);
+        }
+
+        private Color GetJetColor(double v)
+        {
+            double r, g, b;
+            if (v < 0.125) { r = 0; g = 0; b = 0.5 + v * 4; }
+            else if (v < 0.375) { r = 0; g = (v - 0.125) * 4; b = 1; }
+            else if (v < 0.625) { r = (v - 0.375) * 4; g = 1; b = 1 - (v - 0.375) * 4; }
+            else if (v < 0.875) { r = 1; g = 1 - (v - 0.625) * 4; b = 0; }
+            else { r = 1 - (v - 0.875) * 4; g = 0; b = 0; }
+            return Color.FromArgb((int)(Math.Max(0, Math.Min(1, r)) * 255),
+                                  (int)(Math.Max(0, Math.Min(1, g)) * 255),
+                                  (int)(Math.Max(0, Math.Min(1, b)) * 255));
+        }
+
+        private void BeautifyChartAxes(ChartArea area)
+        {
+            if (area == null) return;
+            area.AxisX.LabelStyle.Format = "F0";
+            area.AxisY.LabelStyle.Format = "F0";
+            area.AxisX.LabelStyle.Font = new Font("Arial", 8f);
+            area.AxisY.LabelStyle.Font = new Font("Arial", 8f);
+            area.AxisX.MajorGrid.LineColor = Color.FromArgb(64, Color.Gray);
+            area.AxisY.MajorGrid.LineColor = Color.FromArgb(64, Color.Gray);
+            area.AxisX.Title = "距离 (m)";
+            area.AxisY.Title = "深度 (m)";
+            area.BorderColor = Color.Black;
+            area.BorderDashStyle = ChartDashStyle.Solid;
         }
 
         // ====================================================================================
-        // 辅助函数 (补全所有缺失的方法)
+        // 【完全恢复】代码一 原有的图表逻辑 (Profile, Resistivity, Phase)
         // ====================================================================================
 
         private void UpdateDataGrids()
@@ -606,10 +705,8 @@ namespace MapGISPlugin3
                 gridTM.DataSource = null;
                 return;
             }
-
             try
             {
-                // 确保列存在，防止异常
                 List<string> teCols = new List<string> { "测点编号", "周期" };
                 if (m_CurrentLineData.Columns.Contains("视电阻率_TE")) teCols.Add("视电阻率_TE");
                 if (m_CurrentLineData.Columns.Contains("相位_TE")) teCols.Add("相位_TE");
@@ -634,47 +731,6 @@ namespace MapGISPlugin3
         {
             try { if (row.Table.Columns.Contains(colName) && row[colName] != DBNull.Value) return Convert.ToDouble(row[colName]); } catch { }
             return defaultVal;
-        }
-
-        private Color GetColorForValue(double value, double min, double max)
-        {
-            if (min >= max) return Color.Black;
-            double normalized = (value - min) / (max - min);
-            if (normalized < 0.25) return Color.FromArgb(0, (int)(255 * (normalized * 4)), 255);
-            else if (normalized < 0.5) return Color.FromArgb(0, 255, (int)(255 * (1 - (normalized - 0.25) * 4)));
-            else if (normalized < 0.75) return Color.FromArgb((int)(255 * ((normalized - 0.5) * 4)), 255, 0);
-            else return Color.FromArgb(255, (int)(255 * (1 - (normalized - 0.75) * 4)), 0);
-        }
-
-        private NiceScale CalculateStrictNiceScale(double min, double max)
-        {
-            if (min >= max) return new NiceScale { Min = min - 10, Max = max + 10, Interval = 10 };
-            double range = max - min;
-            double roughInterval = range / 5.0;
-            double magnitude = Math.Pow(10, Math.Floor(Math.Log10(roughInterval)));
-            double normalizedInterval = roughInterval / magnitude;
-            double niceInterval;
-            if (normalizedInterval < 1.5) niceInterval = 1.0;
-            else if (normalizedInterval < 3.0) niceInterval = 2.0;
-            else if (normalizedInterval < 7.0) niceInterval = 5.0;
-            else niceInterval = 10.0;
-            niceInterval *= magnitude;
-            double niceMin = Math.Floor(min / niceInterval) * niceInterval;
-            double niceMax = Math.Ceiling(max / niceInterval) * niceInterval;
-            return new NiceScale { Min = niceMin, Max = niceMax, Interval = niceInterval };
-        }
-
-        private void BeautifyChartAxes(ChartArea area)
-        {
-            if (area == null) return;
-            area.AxisX.LabelStyle.Format = "F0";
-            area.AxisY.LabelStyle.Format = "F0";
-            area.AxisX.LabelStyle.Font = new Font("Arial", 8f);
-            area.AxisY.LabelStyle.Font = new Font("Arial", 8f);
-            area.AxisX.MajorGrid.LineColor = Color.FromArgb(64, Color.Gray);
-            area.AxisY.MajorGrid.LineColor = Color.FromArgb(64, Color.Gray);
-            area.BorderColor = Color.Black;
-            area.BorderDashStyle = ChartDashStyle.Solid;
         }
 
         private void cmbStationLayer_SelectedIndexChanged(object sender, EventArgs e)
@@ -802,17 +858,22 @@ namespace MapGISPlugin3
             return dt;
         }
 
+        // --- 恢复 chartProfileView 逻辑 ---
         private void UpdateProfileView()
         {
             if (chartProfileView == null) return;
             chartProfileView.Series.Clear();
             if (chartProfileView.Legends[ProfileLegendName] == null) InitChartLegend(chartProfileView, ProfileLegendName);
+
+            // 恢复 ChartArea 设置
             if (chartProfileView.ChartAreas.Count > 0)
             {
                 var chartArea = chartProfileView.ChartAreas[0];
                 chartArea.Position = new ElementPosition(8, 5, 85, 90);
                 chartArea.InnerPlotPosition = new ElementPosition(10, 10, 85, 85);
+                BeautifyProfileViewAxes(chartArea);
             }
+
             Series s = chartProfileView.Series.Add("测点");
             s.ChartType = SeriesChartType.Point;
             s.MarkerStyle = MarkerStyle.Circle;
@@ -820,22 +881,24 @@ namespace MapGISPlugin3
             s.Color = Color.Blue;
             s.Legend = ProfileLegendName;
             if (m_CurrentLineStations == null || m_CurrentLineStations.Count == 0) return;
+
             double minX = m_CurrentLineStations.Min(x => x.X), maxX = m_CurrentLineStations.Max(x => x.X);
             double minY = m_CurrentLineStations.Min(x => x.Y), maxY = m_CurrentLineStations.Max(x => x.Y);
             double rangeX = maxX - minX, rangeY = maxY - minY;
             double marginX = (rangeX == 0) ? 100 : rangeX * 0.1;
             double marginY = (rangeY == 0) ? 100 : rangeY * 0.1;
+
             foreach (var sta in m_CurrentLineStations)
             {
                 int idx = s.Points.AddXY(sta.X, sta.Y);
                 s.Points[idx].Label = sta.StationName;
                 s.Points[idx].Tag = sta.StationName;
             }
+
             chartProfileView.ChartAreas[0].AxisX.Minimum = minX - marginX;
             chartProfileView.ChartAreas[0].AxisX.Maximum = maxX + marginX;
             chartProfileView.ChartAreas[0].AxisY.Minimum = minY - marginY;
             chartProfileView.ChartAreas[0].AxisY.Maximum = maxY + marginY;
-            BeautifyProfileViewAxes(chartProfileView.ChartAreas[0]);
             chartProfileView.ChartAreas[0].RecalculateAxesScale();
             CalibrateLegendSize(chartProfileView);
         }
@@ -852,29 +915,33 @@ namespace MapGISPlugin3
             UpdateRightPanelCharts();
         }
 
+        // --- 恢复 chartResistivity/Phase 逻辑 ---
         private void UpdateRightPanelCharts()
         {
             chartResistivity.Series.Clear();
             chartPhase.Series.Clear();
             if (chartResistivity.Legends[ResistivityLegendName] == null) InitChartLegend(chartResistivity, ResistivityLegendName);
             if (chartPhase.Legends[PhaseLegendName] == null) InitChartLegend(chartPhase, PhaseLegendName);
-            string seriesName = tabControl2.SelectedTab == tabPageDisplayTE ? "TE模式" : "TM模式";
+
             string resField = tabControl2.SelectedTab == tabPageDisplayTE ? "视电阻率_TE" : "视电阻率_TM";
             string phaseField = tabControl2.SelectedTab == tabPageDisplayTE ? "相位_TE" : "相位_TM";
+
             Series sRes = chartResistivity.Series.Add("视电阻率");
             sRes.ChartType = SeriesChartType.Spline;
             sRes.MarkerStyle = MarkerStyle.Circle;
             sRes.MarkerSize = 5;
             sRes.BorderWidth = 2;
             sRes.Legend = ResistivityLegendName;
-            sRes.LegendText = $"{seriesName} 视电阻率";
+            sRes.LegendText = $"视电阻率";
+
             Series sPhase = chartPhase.Series.Add("相位");
             sPhase.ChartType = SeriesChartType.Spline;
             sPhase.MarkerStyle = MarkerStyle.Circle;
             sPhase.MarkerSize = 5;
             sPhase.BorderWidth = 2;
             sPhase.Legend = PhaseLegendName;
-            sPhase.LegendText = $"{seriesName} 相位";
+            sPhase.LegendText = $"相位";
+
             if (m_CurrentLineData != null && !string.IsNullOrEmpty(m_CurrentSelectedStationName))
             {
                 DataView dv = new DataView(m_CurrentLineData);
@@ -895,8 +962,10 @@ namespace MapGISPlugin3
             chartResistivity.ChartAreas[0].AxisY.Title = "视电阻率";
             chartPhase.ChartAreas[0].AxisX.Title = "周期(s)";
             chartPhase.ChartAreas[0].AxisY.Title = "相位";
-            BeautifyChartAxes(chartResistivity.ChartAreas[0]);
+
+            BeautifyChartAxes(chartResistivity.ChartAreas[0]); // 使用通用的 Beautify
             BeautifyChartAxes(chartPhase.ChartAreas[0]);
+
             CalibrateLegendSize(chartResistivity);
             CalibrateLegendSize(chartPhase);
         }
@@ -937,6 +1006,7 @@ namespace MapGISPlugin3
             if (chartPhase.Series.Count > 0) chartPhase.Series.Clear();
         }
 
+        // 恢复 CalibrateLegendSize
         private void CalibrateLegendSize(Chart chart)
         {
             if (chart.Legends.Count == 0 || chart.Series.Count == 0) return;
@@ -948,6 +1018,7 @@ namespace MapGISPlugin3
             else legend.Position = new ElementPosition(60, 2, 35, Math.Min(totalHeightPercent, 12));
         }
 
+        // 恢复 BeautifyProfileViewAxes
         private void BeautifyProfileViewAxes(ChartArea area)
         {
             if (area == null) return;
@@ -977,29 +1048,25 @@ namespace MapGISPlugin3
 
         private void tabControl2_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (!string.IsNullOrEmpty(m_CurrentSelectedStationName))
-                UpdateRightPanelCharts();
+            if (!string.IsNullOrEmpty(m_CurrentSelectedStationName)) UpdateRightPanelCharts();
         }
 
         private void ClearAllDisplays()
         {
             chartProfileView.Series.Clear(); chartResistivity.Series.Clear(); chartPhase.Series.Clear();
-            if (chartResultSection != null) chartResultSection.Series.Clear();
+            if (chartResultSection != null)
+            {
+                chartResultSection.Series.Clear();
+                chartResultSection.Images.Clear();
+                chartResultSection.Visible = false;
+            }
             m_CurrentLineStations?.Clear();
             m_CurrentLineData?.Clear();
             m_CurrentSelectedStationName = null;
         }
 
-        // ====================================================================================
-        // 空事件占位符 (防止设计器报错)
-        // ====================================================================================
-
-        // 这就是你报错 CS1061 缺失的方法，现在补上一个空的
-        private void timerProgress_Tick(object sender, EventArgs e)
-        {
-            // 计时器已废弃，此方法仅用于兼容旧的设计器代码
-        }
-
+        // 空事件占位符
+        private void timerProgress_Tick(object sender, EventArgs e) { }
         private void splitContainer1_Panel2_Paint(object sender, PaintEventArgs e) { }
         private void panelResultBox_Paint(object sender, PaintEventArgs e) { }
         private void progressBar2_Click(object sender, EventArgs e) { }
