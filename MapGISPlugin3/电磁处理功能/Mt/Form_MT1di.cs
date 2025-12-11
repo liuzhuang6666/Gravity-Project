@@ -922,7 +922,8 @@ namespace MapGISPlugin3
             chartPhase.Series.Clear();
             if (chartResistivity.Legends[ResistivityLegendName] == null) InitChartLegend(chartResistivity, ResistivityLegendName);
             if (chartPhase.Legends[PhaseLegendName] == null) InitChartLegend(chartPhase, PhaseLegendName);
-
+            AdjustChartAreaLayout(chartResistivity.ChartAreas[0]);
+            AdjustChartAreaLayout(chartPhase.ChartAreas[0]);
             string resField = tabControl2.SelectedTab == tabPageDisplayTE ? "视电阻率_TE" : "视电阻率_TM";
             string phaseField = tabControl2.SelectedTab == tabPageDisplayTE ? "相位_TE" : "相位_TM";
 
@@ -958,18 +959,38 @@ namespace MapGISPlugin3
             chartResistivity.ChartAreas[0].AxisX.IsLogarithmic = true;
             chartResistivity.ChartAreas[0].AxisY.IsLogarithmic = true;
             chartPhase.ChartAreas[0].AxisX.IsLogarithmic = true;
+
+
+            BeautifyChartAxes(chartResistivity.ChartAreas[0]); // 使用通用的 Beautify
+            BeautifyChartAxes(chartPhase.ChartAreas[0]);
             chartResistivity.ChartAreas[0].AxisX.Title = "周期(s)";
             chartResistivity.ChartAreas[0].AxisY.Title = "视电阻率";
             chartPhase.ChartAreas[0].AxisX.Title = "周期(s)";
             chartPhase.ChartAreas[0].AxisY.Title = "相位";
-
-            BeautifyChartAxes(chartResistivity.ChartAreas[0]); // 使用通用的 Beautify
-            BeautifyChartAxes(chartPhase.ChartAreas[0]);
-
             CalibrateLegendSize(chartResistivity);
             CalibrateLegendSize(chartPhase);
         }
+        private void AdjustChartAreaLayout(ChartArea area)
+        {
+            if (area == null) return;
 
+            // 1. 设置 ChartArea 在整个控件中的位置 (通常占满)
+            area.Position.Auto = false;
+            area.Position.X = 0;
+            area.Position.Y = 0;
+            area.Position.Width = 90;
+            area.Position.Height = 80;
+
+            // 2. 设置 InnerPlotPosition (实际画线和格网的区域，不含轴标签)
+            // Auto = false 禁止自动调整，防止被图例挤压或反之
+            area.InnerPlotPosition.Auto = false;
+
+            // X=10: 左侧留 10% 给 Y 轴数值标签
+            // Y=15: 顶部留 15% 给图例 (这是你要的下移效果)
+            // Width=85: 宽度
+            // Height=78: 高度 (下方留些空间给 X 轴标签)
+            area.InnerPlotPosition = new ElementPosition(22, 20, 85, 90);
+        }
         private void InitChartLegend(Chart chart, string legendName)
         {
             chart.Legends.Clear();

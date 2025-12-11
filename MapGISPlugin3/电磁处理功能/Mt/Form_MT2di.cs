@@ -100,6 +100,10 @@ namespace MapGISPlugin3
             LoadLayersFromMap();
             InitDragEvent();
             InitializeChartStyles();
+            if (chartResultSection != null)
+            {
+                chartResultSection.Visible = false;  // 初始隐藏
+            }
         }
 
         private void btnClose_Click(object sender, EventArgs e)
@@ -154,6 +158,7 @@ namespace MapGISPlugin3
             progressBar1.Value = 0;
             txtActualError.Text = "";
             if (chartResultSection != null) chartResultSection.Series.Clear();
+            if (chartResultSection != null) chartResultSection.Visible = false;
 
             // 4. 数据准备 (复制数据以防UI线程修改)
             DataTable lineDataCopy = m_CurrentLineData.Copy();
@@ -440,7 +445,8 @@ namespace MapGISPlugin3
         private void DisplayInversionResults(List<InversionResultPoint> points)
         {
             var chart = chartResultSection;
-
+            bool wasVisible = chart.Visible;
+            chart.Visible = false;
             // ========== 阶段1：数据准备（不操作UI，避免卡顿）==========
             if (points == null || points.Count == 0)
             {
@@ -701,6 +707,7 @@ namespace MapGISPlugin3
             {
                 ((System.ComponentModel.ISupportInitialize)(chart)).EndInit();
                 chart.ResumeLayout();
+                chart.Visible = true;
             }
         }
         /// <summary>
@@ -1047,21 +1054,45 @@ namespace MapGISPlugin3
         private void BeautifyChartAxes(ChartArea area)
         {
             if (area == null) return;
-            area.AxisX.LabelStyle.Format = "0.###";
-            area.AxisX.LabelStyle.Angle = -45;
-            area.AxisX.LabelStyle.IsStaggered = true;
-            area.AxisX.LabelStyle.Font = new Font("Arial", 8f);
-            area.AxisX.TitleFont = new Font("微软雅黑", 10f, FontStyle.Bold);
-            area.AxisY.LabelStyle.Format = "0.##";
-            area.AxisY.LabelStyle.Font = new Font("Arial", 9f);
-            area.AxisY.TitleFont = new Font("微软雅黑", 10f, FontStyle.Bold);
-            area.AxisX.MajorGrid.LineColor = Color.LightGray;
-            area.AxisY.MajorGrid.LineColor = Color.LightGray;
-            area.BorderColor = Color.Black;
-            area.BorderDashStyle = ChartDashStyle.Solid;
-        }
 
+            // 边框设置
+            area.BorderDashStyle = ChartDashStyle.Solid;
+            area.BorderColor = Color.Black;
+            area.BorderWidth = 1;
+
+            // 标签格式
+            area.AxisX.LabelStyle.Format = "0.###";
+            area.AxisY.LabelStyle.Format = "0.##";
+            area.AxisX.LabelStyle.Font = new Font("Arial", 9f);
+            area.AxisY.LabelStyle.Font = new Font("Arial", 9f);
+            area.AxisX.TitleFont = new Font("微软雅黑", 10f);
+            area.AxisY.TitleFont = new Font("微软雅黑", 10f);
+            area.AxisX.LabelStyle.Angle = 0;
+
+            // 网格线
+            area.AxisX.MajorGrid.LineWidth = 1;
+            area.AxisX.MajorGrid.LineColor = Color.LightGray;
+            area.AxisY.MajorGrid.LineWidth = 1;
+            area.AxisY.MajorGrid.LineColor = Color.LightGray;
+
+            area.AxisX.MinorGrid.Enabled = true;
+            area.AxisX.MinorGrid.LineDashStyle = ChartDashStyle.Dot;
+            area.AxisX.MinorGrid.LineColor = Color.Gainsboro;
+            area.AxisY.MinorGrid.Enabled = true;
+            area.AxisY.MinorGrid.LineDashStyle = ChartDashStyle.Dot;
+            area.AxisY.MinorGrid.LineColor = Color.Gainsboro;
+
+            // 坐标轴
+            area.AxisX.LineWidth = 1;
+            area.AxisX.LineColor = Color.Black;
+            area.AxisY.LineWidth = 1;
+            area.AxisY.LineColor = Color.Black;
+
+            // ❌ 不要在这里设置 Position 或 InnerPlotPosition！
+        }
         // --- 基本UI交互与图层加载 ---
+
+
         private void cmbStationLayer_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (m_SelectedStationLayer != null) try { Marshal.ReleaseComObject(m_SelectedStationLayer); } catch { }
@@ -1239,12 +1270,52 @@ namespace MapGISPlugin3
 
         private void UpdateRightPanelCharts()
         {
+
+
+
             chartResistivity.Series.Clear();
             chartPhase.Series.Clear();
+
+            chartResistivity.BackColor = Color.White;
+            chartPhase.BackColor = Color.White;
+
+            chartResistivity.Legends.Clear();
+            chartPhase.Legends.Clear();
+
+            // 创建图例
+            InitChartLegend(chartResistivity, ResistivityLegendName);
+            InitChartLegend(chartPhase, PhaseLegendName);
+
+            // ========== 【新增】为图例预留空间 ==========
+            if (chartResistivity.ChartAreas.Count > 0)
+            {
+                var ca = chartResistivity.ChartAreas[0];
+                // 调整ChartArea位置：左、上、宽、高（百分比）
+                ca.Position = new ElementPosition(0, 10, 100, 80);  
+                ca.InnerPlotPosition = new ElementPosition(20, 5, 75, 85);  // 绘图区域
+            }
+
+            if (chartPhase.ChartAreas.Count > 0)
+            {
+                var ca = chartPhase.ChartAreas[0];
+                ca.Position = new ElementPosition(0, 10, 100, 80);
+                ca.InnerPlotPosition = new ElementPosition(15, 5, 80, 85);
+            }
+            // ========== 预留空间结束 ==========
+
+            if (string.IsNullOrEmpty(m_CurrentSelectedStationName) || m_CurrentLineData == null)
+            {
+                return;
+            }
+
             if (chartResistivity.Legends[ResistivityLegendName] == null) InitChartLegend(chartResistivity, ResistivityLegendName);
             if (chartPhase.Legends[PhaseLegendName] == null) InitChartLegend(chartPhase, PhaseLegendName);
+
             string resField = tabControl2.SelectedTab == tabPageDisplayTE ? "视电阻率_TE" : "视电阻率_TM";
             string phaseField = tabControl2.SelectedTab == tabPageDisplayTE ? "相位_TE" : "相位_TM";
+
+
+
             Series sRes = chartResistivity.Series.Add("视电阻率");
             sRes.ChartType = SeriesChartType.Spline;
             sRes.MarkerStyle = MarkerStyle.Circle;
@@ -1275,12 +1346,14 @@ namespace MapGISPlugin3
             chartResistivity.ChartAreas[0].AxisX.IsLogarithmic = true;
             chartResistivity.ChartAreas[0].AxisY.IsLogarithmic = true;
             chartPhase.ChartAreas[0].AxisX.IsLogarithmic = true;
-            chartResistivity.ChartAreas[0].AxisX.Title = "周期(s)";
-            chartResistivity.ChartAreas[0].AxisY.Title = "视电阻率";
-            chartPhase.ChartAreas[0].AxisX.Title = "周期(s)";
-            chartPhase.ChartAreas[0].AxisY.Title = "相位";
             BeautifyChartAxes(chartResistivity.ChartAreas[0]);
             BeautifyChartAxes(chartPhase.ChartAreas[0]);
+
+            chartResistivity.ChartAreas[0].AxisX.Title = "周期";
+            chartResistivity.ChartAreas[0].AxisY.Title = "视电阻率";
+            chartPhase.ChartAreas[0].AxisX.Title = "周期";
+            chartPhase.ChartAreas[0].AxisY.Title = "相位";
+
             CalibrateLegendSize(chartResistivity);
             CalibrateLegendSize(chartPhase);
         }
@@ -1288,21 +1361,32 @@ namespace MapGISPlugin3
         private void InitChartLegend(Chart chart, string legendName)
         {
             chart.Legends.Clear();
+
             Legend legend = new Legend(legendName)
             {
-                IsDockedInsideChartArea = false,
-                Docking = Docking.Top,
-                Alignment = StringAlignment.Far,
+                // 停靠设置
+                IsDockedInsideChartArea = false,  // 必须在ChartArea外部
+                Docking = Docking.Top,             // 停靠在顶部
+                Alignment = StringAlignment.Far,   // 靠右对齐
+
+                // 样式设置
                 LegendStyle = LegendStyle.Table,
+                TableStyle = LegendTableStyle.Auto,
+                IsEquallySpacedItems = false,
+
+                // 外观
                 BorderColor = Color.LightGray,
                 BorderWidth = 1,
                 BackColor = Color.White,
                 Font = new Font("微软雅黑", 8f),
-                Position = new ElementPosition(65, 3, 30, 10)
+
+                // 【关键】不设置固定Position，让它自动布局
             };
+
             chart.Legends.Add(legend);
         }
-
+        
+        
         private void InitializeChartStyles()
         {
             ClearDefaultSeries();
