@@ -2353,103 +2353,103 @@ namespace MapGISPlugin3
 
         }
 
-        private void button1_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                // === 1. 定义基础数据 (S280 的原始深度和电阻率) ===
-                double[] baseDepths = new double[] {
-  -10, -22.6798, -28.3072, -34.4975, -41.3067, -48.7969, -57.0361, -66.0992,
-  -76.0687, -87.0351, -99.0981, -112.367, -126.964, -143.02, -160.681,
-  -180.109, -201.479, -224.986, -250.845, -279.288, -310.577, -344.994,
-  -382.853, -424.498, -470.307, -520.697, -576.126, -637.099, -704.168,
-  -777.944, -859.098, -948.368, -1495.13
-};
+//        private void button1_Click(object sender, EventArgs e)
+//        {
+//            try
+//            {
+//                // === 1. 定义基础数据 (S280 的原始深度和电阻率) ===
+//                double[] baseDepths = new double[] {
+//  -10, -22.6798, -28.3072, -34.4975, -41.3067, -48.7969, -57.0361, -66.0992,
+//  -76.0687, -87.0351, -99.0981, -112.367, -126.964, -143.02, -160.681,
+//  -180.109, -201.479, -224.986, -250.845, -279.288, -310.577, -344.994,
+//  -382.853, -424.498, -470.307, -520.697, -576.126, -637.099, -704.168,
+//  -777.944, -859.098, -948.368, -1495.13
+//};
 
-                double[] baseResValues = new double[] {
-  1.76905e+06, 1.75329e+06, 1.72141e+06, 1.6744e+06, 1.61339e+06, 1.53964e+06, 1.45454e+06,
-  1.3597e+06, 1.25698e+06, 1.14853e+06, 1.03674e+06, 924136, 813270, 706512, 605885,
-  512928, 428614, 353356, 287093, 229422, 179755, 137462, 101957, 72726.6,
-  49285.2, 31117.8, 17649.4, 8305.2, 2645.2, 302.899, 49.8578, 438.492, 55.3218
-};
+//                double[] baseResValues = new double[] {
+//  1.76905e+06, 1.75329e+06, 1.72141e+06, 1.6744e+06, 1.61339e+06, 1.53964e+06, 1.45454e+06,
+//  1.3597e+06, 1.25698e+06, 1.14853e+06, 1.03674e+06, 924136, 813270, 706512, 605885,
+//  512928, 428614, 353356, 287093, 229422, 179755, 137462, 101957, 72726.6,
+//  49285.2, 31117.8, 17649.4, 8305.2, 2645.2, 302.899, 49.8578, 438.492, 55.3218
+//};
 
-                Random rnd = new Random();
+//                Random rnd = new Random();
 
-                // 用于存储模拟数据的新列表
-                List<InversionResultPoint> mockResults = new List<InversionResultPoint>();
+//                // 用于存储模拟数据的新列表
+//                List<InversionResultPoint> mockResults = new List<InversionResultPoint>();
 
-                // === 2. 生成 10 个测点的数据 ===
-                double startX = 461490;
-                double startY = 4567050;
-                int stationCount = 10;
-                double spacing = 50.0; // 测点间距 50米
+//                // === 2. 生成 10 个测点的数据 ===
+//                double startX = 461490;
+//                double startY = 4567050;
+//                int stationCount = 10;
+//                double spacing = 50.0; // 测点间距 50米
 
-                // 为了计算 Distance，这里我们简单假设沿直线的 Distance 就是 i * spacing
-                // 在真实数据中，Distance 是根据 X/Y 计算的
+//                // 为了计算 Distance，这里我们简单假设沿直线的 Distance 就是 i * spacing
+//                // 在真实数据中，Distance 是根据 X/Y 计算的
 
-                for (int i = 0; i < stationCount; i++)
-                {
-                    double currentX = startX + (i * spacing);
-                    double currentY = startY;
-                    string stationName = $"S{280 + i * 10}";
+//                for (int i = 0; i < stationCount; i++)
+//                {
+//                    double currentX = startX + (i * spacing);
+//                    double currentY = startY;
+//                    string stationName = $"S{280 + i * 10}";
 
-                    // 当前测点沿测线的相对距离 (假设从 0 开始)
-                    double relativeDist = i * spacing;
+//                    // 当前测点沿测线的相对距离 (假设从 0 开始)
+//                    double relativeDist = i * spacing;
 
-                    for (int j = 0; j < baseDepths.Length; j++)
-                    {
-                        double z = baseDepths[j]; // 负值
-                        double originalRes = baseResValues[j];
-                        double finalRes = originalRes;
+//                    for (int j = 0; j < baseDepths.Length; j++)
+//                    {
+//                        double z = baseDepths[j]; // 负值
+//                        double originalRes = baseResValues[j];
+//                        double finalRes = originalRes;
 
-                        // --- 模拟地质异常 (中间测点深部低阻) ---
-                        bool isMiddleStation = (i >= 3 && i <= 6);
-                        bool isDeep = (z < -200 && z > -800);
+//                        // --- 模拟地质异常 (中间测点深部低阻) ---
+//                        bool isMiddleStation = (i >= 3 && i <= 6);
+//                        bool isDeep = (z < -200 && z > -800);
 
-                        if (isMiddleStation && isDeep)
-                        {
-                            finalRes = originalRes * (0.01 + rnd.NextDouble() * 0.04); // 低阻
-                        }
-                        else
-                        {
-                            double noise = 0.9 + (rnd.NextDouble() * 0.2);
-                            finalRes = originalRes * noise;
-                        }
+//                        if (isMiddleStation && isDeep)
+//                        {
+//                            finalRes = originalRes * (0.01 + rnd.NextDouble() * 0.04); // 低阻
+//                        }
+//                        else
+//                        {
+//                            double noise = 0.9 + (rnd.NextDouble() * 0.2);
+//                            finalRes = originalRes * noise;
+//                        }
 
-                        // 添加到列表
-                        mockResults.Add(new InversionResultPoint
-                        {
-                            StationName = stationName,
-                            X = currentX,
-                            Y = currentY,
-                            Distance = relativeDist, // 这一点很重要，绘图依赖这个
-                            Depth = z,               // 保持负值
-                            Resistivity = finalRes
-                        });
-                    }
-                }
+//                        // 添加到列表
+//                        mockResults.Add(new InversionResultPoint
+//                        {
+//                            StationName = stationName,
+//                            X = currentX,
+//                            Y = currentY,
+//                            Distance = relativeDist, // 这一点很重要，绘图依赖这个
+//                            Depth = z,               // 保持负值
+//                            Resistivity = finalRes
+//                        });
+//                    }
+//                }
 
-                // === 3. 更新缓存并绘图 ===
-                // 将模拟数据存入缓存，这样调整深度旋钮时也能重绘模拟数据
-                m_LastInversionResults = mockResults;
+//                // === 3. 更新缓存并绘图 ===
+//                // 将模拟数据存入缓存，这样调整深度旋钮时也能重绘模拟数据
+//                m_LastInversionResults = mockResults;
 
-                // 设置一个合适的显示深度 (例如 1500m)，确保能看到全部模拟数据
-                nudMaxDepth1.Value = 1500;
+//                // 设置一个合适的显示深度 (例如 1500m)，确保能看到全部模拟数据
+//                nudMaxDepth1.Value = 1500;
 
-                // 调用新的绘图逻辑
-                DisplayInversionResults(m_LastInversionResults);
+//                // 调用新的绘图逻辑
+//                DisplayInversionResults(m_LastInversionResults);
 
-                MessageBox.Show($"生成了 {stationCount} 个测点的数据并已绘制。\n\n" +
-                  $"预期效果：\n" +
-                  $"1. 使用新版“砌砖法”绘图。\n" +
-                  $"2. 图表中间底部 (-200m ~ -800m) 应该会出现明显的【蓝色/冷色区域】。\n" +
-                  $"3. 尝试调整右上角的深度旋钮，图表应能实时响应。", "测试成功");
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"测试失败: {ex.Message}", "错误");
-            }
-        }
+//                MessageBox.Show($"生成了 {stationCount} 个测点的数据并已绘制。\n\n" +
+//                  $"预期效果：\n" +
+//                  $"1. 使用新版“砌砖法”绘图。\n" +
+//                  $"2. 图表中间底部 (-200m ~ -800m) 应该会出现明显的【蓝色/冷色区域】。\n" +
+//                  $"3. 尝试调整右上角的深度旋钮，图表应能实时响应。", "测试成功");
+//            }
+//            catch (Exception ex)
+//            {
+//                MessageBox.Show($"测试失败: {ex.Message}", "错误");
+//            }
+//        }
         
         // --- 【新增】复用 MT1di 的数据结构 ---
         private struct ResultPoint
@@ -3060,13 +3060,7 @@ namespace MapGISPlugin3
 
                 // 10. 刷新视图+提示（保留你的逻辑）
                 //_hook.ActiveView?.Refresh(); // 若你不需要自动刷新，可保持注释
-                MessageBox.Show(
-                    $"成功创建展示地图【{newMapName}】！\n" +
-                    $"地图结构与'电法数据'一致，已设置白色背景+黑色边框（图+图例均带框）。",
-                    "创建成功",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Information
-                );
+                MessageBox.Show("创建成功");
             }
             catch (COMException comEx)
             {

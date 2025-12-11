@@ -1760,7 +1760,7 @@ namespace MapGISPlugin3
             // 获取用户设置的最大深度
             double userMaxDepth = (double)nudMaxDepth.Value;
 
-            chart.Titles.Add($"CSAMT 一维反演电阻率剖面图 (0 ~ -{userMaxDepth: F0}m)");
+            chart.Titles.Add($"CSAMT 一维反演电阻率剖面图 (0 ~ -{userMaxDepth:F0}m)");
             chart.Titles[0].Font = new System.Drawing.Font("微软雅黑", 12f, FontStyle.Bold);
 
             ChartArea ca = chart.ChartAreas.Add("ResultArea");
@@ -2230,6 +2230,222 @@ namespace MapGISPlugin3
             {
                 Console.WriteLine($"Highlight layout station error: {ex.Message}");
             }
+        }
+        // <summary>
+        /// 创建和“电法数据”同结构的Map（独立地图），仅用于展示图片（无需坐标处理）
+        /// </summary>
+        /// <param name="chart">要展示的电阻率断面图控件</param>
+        private void CreateImageDisplayMap(Chart chart)
+        {
+            Map newMap = null;
+            RasterLayer displayLayer = null;
+            Document projectDoc = null;
+            Maps projectMaps = null;
+
+            // 前置校验：确保图表和图片有效
+            if (chart == null)
+            {
+                MessageBox.Show("断面图控件未初始化！", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            // 1. 获取新Map名称（和Chart标题一致）
+            string newMapName = string.Empty;
+            if (chart.Titles.Count > 0)
+            {
+                newMapName = chart.Titles[0].Text?.Trim();
+            }
+            if (string.IsNullOrWhiteSpace(newMapName))
+            {
+                newMapName = $"电阻率断面图_展示图_{DateTime.Now:yyyyMMddHHmmss}";
+            }
+
+            // 2. 校验图表是否已生成（适配反演图和视电阻率图）
+            bool isChartValid = chart.Series.Count > 0 || (chart.ChartAreas.Count > 0 && !string.IsNullOrEmpty(chart.ChartAreas[0]?.BackImage));
+            if (!isChartValid)
+            {
+                MessageBox.Show("请先生成对应图表（反演结果/视电阻率），再创建展示地图！", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            // 3. 生成临时图片（核心：保留样式+不压缩绘图区域）
+            string tempImagePath = Path.ChangeExtension(Path.GetTempFileName(), ".png");
+
+            // 记录Chart原始样式（生成后恢复，不影响原控件显示）
+            System.Drawing.Color originalChartBackColor = chart.BackColor;
+            int originalChartBorderWidth = chart.BorderWidth;
+            Dictionary<ChartArea, (System.Drawing.Color BackColor, int BorderWidth, System.Drawing.Color BorderColor, bool InnerPlotAuto)> originalChartAreaProps = new Dictionary<ChartArea, (System.Drawing.Color, int, System.Drawing.Color, bool)>();
+            Dictionary<Legend, (System.Drawing.Color BackColor, int BorderWidth, System.Drawing.Color BorderColor)> originalLegendProps = new Dictionary<Legend, (System.Drawing.Color, int, System.Drawing.Color)>();
+
+            try
+            {
+                // 👉 步骤1：记录原始样式（新增记录InnerPlotPosition.Auto状态）
+                foreach (ChartArea ca in chart.ChartAreas)
+                {
+                    originalChartAreaProps[ca] = (ca.BackColor, ca.BorderWidth, ca.BorderColor, ca.InnerPlotPosition.Auto);
+                }
+                foreach (Legend lg in chart.Legends)
+                {
+                    originalLegendProps[lg] = (lg.BackColor, lg.BorderWidth, lg.BorderColor);
+                }
+
+                // 👉 步骤2：设置Chart样式（保留需求样式，删除压缩绘图区域的代码）
+                chart.BackColor = System.Drawing.Color.White;          // 保留：整体白色背景
+                chart.BorderWidth = 0;                                 // 保留：取消整体默认边框（避免重复）
+
+                // 断面图区域（ChartArea）：保留背景+边框，删除InnerPlotPosition固定值（不压缩绘图区域）
+                foreach (ChartArea chartArea in chart.ChartAreas)
+                {
+                    chartArea.BackColor = System.Drawing.Color.White;  // 保留：图背景白色
+                    chartArea.BorderWidth = 1;                          // 保留：1px黑色边框
+                    chartArea.BorderColor = System.Drawing.Color.Black;
+                    chartArea.InnerPlotPosition.Auto = true;           // 关键：恢复自动绘图区域，不压缩（避免坐标被挡）
+                                                                       //  删除：之前的固定InnerPlotPosition设置（X=5、Y=5等）
+                }
+
+                // 图例（Legend）：保留白色背景+黑色边框（不修改其他属性）
+                foreach (Legend legend in chart.Legends)
+                {
+                    legend.BackColor = System.Drawing.Color.White;     // 保留：图例白色背景
+                    legend.BorderWidth = 1;                             // 保留：1px黑色边框
+                    legend.BorderColor = System.Drawing.Color.Black;
+                }
+
+                // 👉 步骤3：生成带样式的图片（用原图完整大小，不裁剪）
+                using (Bitmap chartBmp = new Bitmap(chart.ClientSize.Width, chart.ClientSize.Height))
+                {
+                    chart.Refresh(); // 刷新确保样式生效
+                    chart.DrawToBitmap(chartBmp, chart.ClientRectangle); // 捕获原图完整区域（包括坐标）
+                    chartBmp.Save(tempImagePath, System.Drawing.Imaging.ImageFormat.Png); // 无损保存
+                }
+
+                // 👉 步骤4：恢复Chart原始样式（包括InnerPlotPosition.Auto状态）
+                chart.BackColor = originalChartBackColor;
+                chart.BorderWidth = originalChartBorderWidth;
+                foreach (var kvp in originalChartAreaProps)
+                {
+                    kvp.Key.BackColor = kvp.Value.BackColor;
+                    kvp.Key.BorderWidth = kvp.Value.BorderWidth;
+                    kvp.Key.BorderColor = kvp.Value.BorderColor;
+                    kvp.Key.InnerPlotPosition.Auto = kvp.Value.InnerPlotAuto; // 恢复绘图区域自动分配
+                }
+                foreach (var kvp in originalLegendProps)
+                {
+                    kvp.Key.BackColor = kvp.Value.BackColor;
+                    kvp.Key.BorderWidth = kvp.Value.BorderWidth;
+                    kvp.Key.BorderColor = kvp.Value.BorderColor;
+                }
+
+                // 4. MapGIS相关操作（保持你的原始接口，不改动）
+                projectDoc = _hook.Document;
+                if (projectDoc == null)
+                {
+                    throw new Exception("未打开MapGIS项目，请先打开项目！");
+                }
+                projectMaps = projectDoc.GetMaps();
+                if (projectMaps == null)
+                {
+                    throw new Exception("项目地图集合为空！");
+                }
+
+                // 5. 检查同名地图（保持不变）
+                for (int i = 0; i < projectMaps.Count; i++)
+                {
+                    Map existingMap = projectMaps.GetMap(i);
+                    if (existingMap != null && existingMap.Name == newMapName)
+                    {
+                        DialogResult result = MessageBox.Show(
+                            $"已存在名为【{newMapName}】的地图，是否覆盖？",
+                            "提示",
+                            MessageBoxButtons.YesNo,
+                            MessageBoxIcon.Question
+                        );
+                        if (result == DialogResult.Yes)
+                        {
+                            projectMaps.Remove(i);
+                            Marshal.ReleaseComObject(existingMap);
+                        }
+                        else
+                        {
+                            MessageBox.Show("取消创建展示地图！", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            return;
+                        }
+                        break;
+                    }
+                }
+
+                // 6. 创建新Map并加载图层（保持不变）
+                newMap = new Map();
+                newMap.Name = newMapName;
+
+                displayLayer = new RasterLayer();
+                displayLayer.URL = tempImagePath;
+                displayLayer.Name = $"{newMapName}_展示图层";
+
+                if (!displayLayer.ConnectData() || !displayLayer.IsValid)
+                {
+                    throw new Exception("图片图层加载失败！");
+                }
+
+                displayLayer.NoDataColor = System.Drawing.Color.White;
+
+                // 设置图层范围（和图片尺寸一致，确保显示完整）
+                using (Image img = Image.FromFile(tempImagePath))
+                {
+                    Rect imgRange = new Rect(0, 0, img.Width, img.Height);
+                    displayLayer.set_Range(imgRange);
+                }
+
+                // 7. 添加图层和地图（保持你的原始接口）
+                newMap.Append(displayLayer);
+                projectMaps.Append(newMap);
+
+                MessageBox.Show("创建成功");
+            }
+            catch (COMException comEx)
+            {
+                MessageBox.Show($"MapGIS组件错误：{comEx.Message}\n错误码：{comEx.ErrorCode}", "严重错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"创建展示地图失败：{ex.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                // 释放资源（保持不变）
+                if (displayLayer != null)
+                {
+                    try
+                    {
+                        //displayLayer.Close();
+                        //Marshal.ReleaseComObject(displayLayer);
+                    }
+                    catch { }
+                }
+                if (newMap != null)
+                {
+                    try { Marshal.ReleaseComObject(newMap); } catch { }
+                }
+                if (projectMaps != null)
+                {
+                    try { Marshal.ReleaseComObject(projectMaps); } catch { }
+                }
+                if (projectDoc != null)
+                {
+                    try { Marshal.ReleaseComObject(projectDoc); } catch { }
+                }
+
+                // 删除临时图片
+                if (File.Exists(tempImagePath))
+                {
+                    try { File.Delete(tempImagePath); }
+                    catch (Exception ex) { Console.WriteLine($"删除临时文件失败：{ex.Message}"); }
+                }
+            }
+        }
+        private void button1_Click(object sender, EventArgs e)
+        {
+            CreateImageDisplayMap(chartResultSection);
         }
 
         private void UpdateSelectedStationInfo(string stationName)

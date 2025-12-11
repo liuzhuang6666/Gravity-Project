@@ -54,7 +54,6 @@
             this.tabPageLayout = new System.Windows.Forms.TabPage();
             this.gridData = new System.Windows.Forms.DataGridView();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
-            this.button1 = new System.Windows.Forms.Button();
             this.cmbLineName = new System.Windows.Forms.ComboBox();
             this.label2 = new System.Windows.Forms.Label();
             this.cmbStationLayer = new System.Windows.Forms.ComboBox();
@@ -81,8 +80,8 @@
             this.chartVoltage = new System.Windows.Forms.DataVisualization.Charting.Chart();
             this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
             this.splitContainerRight = new System.Windows.Forms.SplitContainer();
-            this.chartResistivity = new System.Windows.Forms.DataVisualization.Charting.Chart();
             this.button3 = new System.Windows.Forms.Button();
+            this.chartResistivity = new System.Windows.Forms.DataVisualization.Charting.Chart();
             this.panelDepthControl.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nudMaxDepth1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.nudMaxDepth)).BeginInit();
@@ -115,7 +114,7 @@
             this.panelDepthControl.Controls.Add(this.nudMaxDepth);
             this.panelDepthControl.Controls.Add(this.lblMaxDepth);
             this.panelDepthControl.Location = new System.Drawing.Point(-1, -1);
-            this.panelDepthControl.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.panelDepthControl.Margin = new System.Windows.Forms.Padding(2);
             this.panelDepthControl.Name = "panelDepthControl";
             this.panelDepthControl.Size = new System.Drawing.Size(179, 19);
             this.panelDepthControl.TabIndex = 1;
@@ -128,7 +127,7 @@
             0,
             0});
             this.nudMaxDepth1.Location = new System.Drawing.Point(86, 0);
-            this.nudMaxDepth1.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.nudMaxDepth1.Margin = new System.Windows.Forms.Padding(2);
             this.nudMaxDepth1.Maximum = new decimal(new int[] {
             10000,
             0,
@@ -171,7 +170,7 @@
             0,
             0});
             this.nudMaxDepth.Location = new System.Drawing.Point(459, 4);
-            this.nudMaxDepth.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.nudMaxDepth.Margin = new System.Windows.Forms.Padding(2);
             this.nudMaxDepth.Maximum = new decimal(new int[] {
             10000,
             0,
@@ -313,7 +312,7 @@
             this.tabPageLayout.Controls.Add(this.chartProfileView);
             this.tabPageLayout.Location = new System.Drawing.Point(4, 22);
             this.tabPageLayout.Name = "tabPageLayout";
-            this.tabPageLayout.Padding = new System.Windows.Forms.Padding(3, 3, 3, 3);
+            this.tabPageLayout.Padding = new System.Windows.Forms.Padding(3);
             this.tabPageLayout.Size = new System.Drawing.Size(442, 573);
             this.tabPageLayout.TabIndex = 0;
             this.tabPageLayout.Text = "布置图";
@@ -334,7 +333,6 @@
             // 
             // groupBox1
             // 
-            this.groupBox1.Controls.Add(this.button1);
             this.groupBox1.Controls.Add(this.cmbLineName);
             this.groupBox1.Controls.Add(this.label2);
             this.groupBox1.Controls.Add(this.cmbStationLayer);
@@ -346,23 +344,12 @@
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "数据选择";
             // 
-            // button1
-            // 
-            this.button1.Location = new System.Drawing.Point(343, 13);
-            this.button1.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(50, 15);
-            this.button1.TabIndex = 4;
-            this.button1.Text = "button1";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.MouseClick += new System.Windows.Forms.MouseEventHandler(this.button1_Click);
-            // 
             // cmbLineName
             // 
             this.cmbLineName.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbLineName.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.cmbLineName.Location = new System.Drawing.Point(233, 34);
-            this.cmbLineName.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.cmbLineName.Margin = new System.Windows.Forms.Padding(2);
             this.cmbLineName.Name = "cmbLineName";
             this.cmbLineName.Size = new System.Drawing.Size(165, 20);
             this.cmbLineName.TabIndex = 3;
@@ -383,7 +370,7 @@
             this.cmbStationLayer.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbStationLayer.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.cmbStationLayer.Location = new System.Drawing.Point(26, 34);
-            this.cmbStationLayer.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.cmbStationLayer.Margin = new System.Windows.Forms.Padding(2);
             this.cmbStationLayer.Name = "cmbStationLayer";
             this.cmbStationLayer.Size = new System.Drawing.Size(165, 20);
             this.cmbStationLayer.TabIndex = 1;
@@ -403,7 +390,7 @@
             // 
             this.btnCalculate.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.btnCalculate.Location = new System.Drawing.Point(32, 187);
-            this.btnCalculate.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.btnCalculate.Margin = new System.Windows.Forms.Padding(2);
             this.btnCalculate.Name = "btnCalculate";
             this.btnCalculate.Size = new System.Drawing.Size(100, 30);
             this.btnCalculate.TabIndex = 4;
@@ -442,7 +429,7 @@
             this.tabPageParams.Controls.Add(this.groupBox2);
             this.tabPageParams.Location = new System.Drawing.Point(4, 22);
             this.tabPageParams.Name = "tabPageParams";
-            this.tabPageParams.Padding = new System.Windows.Forms.Padding(3, 3, 3, 3);
+            this.tabPageParams.Padding = new System.Windows.Forms.Padding(3);
             this.tabPageParams.Size = new System.Drawing.Size(442, 573);
             this.tabPageParams.TabIndex = 1;
             this.tabPageParams.Text = "模型与反演控制参数";
@@ -463,9 +450,9 @@
             this.groupBox2.Controls.Add(this.label8);
             this.groupBox2.Controls.Add(this.textBox1);
             this.groupBox2.Location = new System.Drawing.Point(14, 30);
-            this.groupBox2.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.groupBox2.Margin = new System.Windows.Forms.Padding(2);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Padding = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.groupBox2.Padding = new System.Windows.Forms.Padding(2);
             this.groupBox2.Size = new System.Drawing.Size(415, 219);
             this.groupBox2.TabIndex = 14;
             this.groupBox2.TabStop = false;
@@ -592,7 +579,7 @@
             this.tabPageCurve.Controls.Add(this.chartZProfile);
             this.tabPageCurve.Location = new System.Drawing.Point(4, 22);
             this.tabPageCurve.Name = "tabPageCurve";
-            this.tabPageCurve.Padding = new System.Windows.Forms.Padding(3, 3, 3, 3);
+            this.tabPageCurve.Padding = new System.Windows.Forms.Padding(3);
             this.tabPageCurve.Size = new System.Drawing.Size(442, 573);
             this.tabPageCurve.TabIndex = 2;
             this.tabPageCurve.Text = "感应电动势剖面曲线图";
@@ -650,6 +637,17 @@
             this.splitContainerRight.SplitterDistance = 293;
             this.splitContainerRight.TabIndex = 24;
             // 
+            // button3
+            // 
+            this.button3.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.button3.Location = new System.Drawing.Point(544, 0);
+            this.button3.Name = "button3";
+            this.button3.Size = new System.Drawing.Size(75, 20);
+            this.button3.TabIndex = 2;
+            this.button3.Text = "一键成图";
+            this.button3.UseVisualStyleBackColor = true;
+            this.button3.Click += new System.EventHandler(this.button3_Click);
+            // 
             // chartResistivity
             // 
             this.chartResistivity.BackColor = System.Drawing.SystemColors.Control;
@@ -671,17 +669,6 @@
             this.chartResistivity.TabIndex = 0;
             this.chartResistivity.Text = "Resistivity Section";
             // 
-            // button3
-            // 
-            this.button3.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.button3.Location = new System.Drawing.Point(524, 0);
-            this.button3.Name = "button3";
-            this.button3.Size = new System.Drawing.Size(75, 20);
-            this.button3.TabIndex = 2;
-            this.button3.Text = "一键成图";
-            this.button3.UseVisualStyleBackColor = true;
-            this.button3.Click += new System.EventHandler(this.button3_Click);
-            // 
             // Form_TEMProcess
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -691,7 +678,7 @@
             this.Controls.Add(this.tabControlLeft);
             this.Controls.Add(this.panel1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
-            this.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.Margin = new System.Windows.Forms.Padding(2);
             this.MaximumSize = new System.Drawing.Size(1100, 650);
             this.MinimumSize = new System.Drawing.Size(1100, 650);
             this.Name = "Form_TEMProcess";
@@ -778,7 +765,6 @@
         private System.Windows.Forms.Panel panelDepthControl;
         private System.Windows.Forms.Label lblMaxDepth1;
         private System.Windows.Forms.NumericUpDown nudMaxDepth1;
-        private System.Windows.Forms.Button button1;
         private System.Windows.Forms.Button button3;
     }
 }
