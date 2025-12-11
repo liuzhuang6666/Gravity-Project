@@ -58,7 +58,7 @@ namespace MapGISPlugin3
             m_StationDistances = new Dictionary<string, (double, double)>();
             m_LastInversionResults = null;  // 添加这行
 
-            chartProfileView.MouseClick -= chartProfileView_MouseClick;
+/*            chartProfileView.MouseClick -= chartProfileView_MouseClick;*/
         }
 
         #region 图层加载
@@ -1256,6 +1256,7 @@ namespace MapGISPlugin3
             UpdateSelectedStationInfo(stationName);
 
             HighlightLayoutStation(stationName);
+            HighlightProfileViewStation(stationName);  // 添加这一行
             UpdateRightPanelCharts();
             UpdateCalcDataGridForCurrentStation(stationName);
         }
@@ -1308,6 +1309,19 @@ namespace MapGISPlugin3
             resLegend.LegendStyle = LegendStyle.Table;
             resLegend.IsEquallySpacedItems = false;
             resLegend.TableStyle = LegendTableStyle.Auto;
+
+            // ========== 添加坐标轴标题 ==========
+            // chartResistivity 坐标轴标题
+            chartResistivity.ChartAreas[0].AxisX.Title = "频率 (Hz)";
+            chartResistivity.ChartAreas[0].AxisY.Title = "视电阻率 (Ω·m)";
+            chartResistivity.ChartAreas[0].AxisX.TitleFont = new System.Drawing.Font("微软雅黑", 10f);
+            chartResistivity.ChartAreas[0].AxisY.TitleFont = new System.Drawing.Font("微软雅黑", 10f);
+
+            // chartPhase 坐标轴标题
+            chartPhase.ChartAreas[0].AxisX.Title = "频率 (Hz)";
+            chartPhase.ChartAreas[0].AxisY.Title = "相位 (°)";
+            chartPhase.ChartAreas[0].AxisX.TitleFont = new System.Drawing.Font("微软雅黑", 10f);
+            chartPhase.ChartAreas[0].AxisY.TitleFont = new System.Drawing.Font("微软雅黑", 10f);
 
             Legend phaseLegend = chartPhase.Legends.Add("LegendPhase");
             phaseLegend.Docking = Docking.Top;
@@ -2241,8 +2255,49 @@ namespace MapGISPlugin3
 
         private void chartProfileView_MouseClick(object sender, MouseEventArgs e)
         {
-            // 计算页不再用于点选
+            var hitTestResult = chartProfileView.HitTest(e.X, e.Y);
+
+            if (hitTestResult.ChartElementType == ChartElementType.DataPoint)
+            {
+                DataPoint dataPoint = (DataPoint)hitTestResult.Object;
+                string stationName = dataPoint.Tag?.ToString();
+
+                if (!string.IsNullOrEmpty(stationName))
+                {
+                    SelectStationAndRefreshCharts(stationName);
+                    HighlightProfileViewStation(stationName);
+                }
+            }
         }
+
+        private void HighlightProfileViewStation(string stationName)
+        {
+            try
+            {
+                if (chartProfileView.Series.Count > 0 && chartProfileView.Series.FindByName("Stations") != null)
+                {
+                    foreach (var point in chartProfileView.Series["Stations"].Points)
+                    {
+                        if (point.Tag?.ToString() == stationName)
+                        {
+                            point.MarkerColor = System.Drawing.Color.Red;
+                            point.MarkerSize = 10;
+                        }
+                        else
+                        {
+                            point.MarkerColor = System.Drawing.Color.Blue;
+                            point.MarkerSize = 6;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Highlight profile view station error: {ex.Message}");
+            }
+        }
+
+
 
         private void btnGenerateModel_Click(object sender, EventArgs e)
         {
