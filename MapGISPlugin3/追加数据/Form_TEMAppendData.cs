@@ -453,8 +453,8 @@ namespace MapGISPlugin3
                     // TEM 观测数据字段名（与Form_TEMImport一致）
                     observationRecord["测线号"] = rowData.LineName;
                     observationRecord["测点号"] = rowData.StationName;
-                    observationRecord["X"] = rowData.X;
-                    observationRecord["Y"] = rowData.Y;
+                    observationRecord["X坐标"] = rowData.X;
+                    observationRecord["Y坐标"] = rowData.Y;
                     observationRecord["采样时间_us"] = rowData.SamplingTime_us;
                     observationRecord["有效面积"] = rowData.EffectiveArea;
                     observationRecord["感应电压_mV"] = rowData.InducedVoltage_mV;
