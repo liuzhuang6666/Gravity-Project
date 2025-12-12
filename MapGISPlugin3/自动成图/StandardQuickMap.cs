@@ -99,13 +99,20 @@ namespace MapGISPlugin3
         }
 
         // 【保留】发射源结构 (依旧读属性坐标)
+        // 【修改前】是固定的 ABCD 坐标
+        // private class TransmitterInfo { public double PointA_X... }
+
+        // 【修改后】改为动态列表，支持任意数量的点，且不强制闭合
         private class TransmitterInfo
         {
-            public double PointA_X, PointA_Y;
-            public double PointB_X, PointB_Y;
-            public double PointC_X, PointC_Y;
-            public double PointD_X, PointD_Y;
-            public bool IsValid = false;
+            // 用于存储所有有效的坐标点 (按 A->B->C->D 顺序)
+            public List<Dot> Points = new List<Dot>();
+
+            // 只要有2个或以上的点，就可以连成线，视为有效
+            public bool IsValid
+            {
+                get { return Points != null && Points.Count >= 2; }
+            }
         }
         // 用于保存图例信息的简单类
         public class LegendItemInfo
@@ -727,7 +734,7 @@ namespace MapGISPlugin3
                 // --- A. 发射源处理 ---
                 if (layerName.Contains("发射源"))
                 {
-                    //MessageBox.Show($"【调试】发现发射源图层：[{layerName}]\n正在尝试读取属性坐标...");
+                    MessageBox.Show($"【调试】发现发射源图层：[{layerName}]\n正在尝试读取属性坐标...");
 
                     // ★ 调用专门的属性读取方法
                     tranInfo = GetTransmitterData(sfCls);
@@ -738,7 +745,7 @@ namespace MapGISPlugin3
                 // --- B. 测点处理 ---
                 else if (layerName.Contains("测点"))
                 {
-                    //MessageBox.Show($"【调试】发现测点图层：[{layerName}]\n正在尝试读取几何坐标...");
+                    MessageBox.Show($"【调试】发现测点图层：[{layerName}]\n正在尝试读取几何坐标...");
 
                     // ★ 调用专门的几何读取方法
                     var stations = GetStationData(sfCls);
@@ -810,9 +817,15 @@ namespace MapGISPlugin3
             Rect innerRect = map.Range;
             double mapWidth = innerRect.XMax - innerRect.XMin;
             double mapHeight = innerRect.YMax - innerRect.YMin;
-            double scaleUnit = mapWidth / 300.0;
-            if (scaleUnit <= 0.0001) scaleUnit = 1.0;
-            if (mapHeight > mapWidth) scaleUnit = mapHeight / 300.0;
+            double minSide = Math.Min(mapWidth, mapHeight);
+            // 这里的 300 是个经验值，假设A3纸宽约300-400mm
+            double scaleUnit = minSide / 300.0;
+
+            // 增加一个上限限制，防止长条图导致字体过大
+            if (scaleUnit > (mapWidth / 150.0))
+            {
+                scaleUnit = mapWidth / 150.0;
+            }
 
             // 获取当前样式索引
             int selectedStyleIndex = 0;
@@ -830,17 +843,21 @@ namespace MapGISPlugin3
             // ↓↓↓ 5. 核心修改：绘制读取到的业务数据 ↓↓↓
             // =========================================================
 
-            // --- 5.1 绘制发射源 (A-B-C-D-A) ---
+            // --- 5.1 绘制发射源 (按实际点序连线，不强制闭合) ---
             if (tranInfo != null && tranInfo.IsValid && drawLineCls != null)
             {
-                //MessageBox.Show("【调试】准备绘制发射源框...\n(蓝色粗线)"); // 调试弹窗
-
+                // 构造线对象
                 GeoVarLine tranLine = new GeoVarLine();
-                tranLine.Append(new Dot(tranInfo.PointA_X, tranInfo.PointA_Y));
-                tranLine.Append(new Dot(tranInfo.PointB_X, tranInfo.PointB_Y));
-                tranLine.Append(new Dot(tranInfo.PointC_X, tranInfo.PointC_Y));
-                tranLine.Append(new Dot(tranInfo.PointD_X, tranInfo.PointD_Y));
-                tranLine.Append(new Dot(tranInfo.PointA_X, tranInfo.PointA_Y)); // 闭合
+
+                // 【核心修改】遍历列表，有多少点加多少点
+                foreach (Dot dot in tranInfo.Points)
+                {
+                    tranLine.Append(new Dot(dot.X, dot.Y));
+                }
+
+                // ★★★ 注意：这里删除了 tranLine.Append(PointA) 这行代码 ★★★
+                // 删除了它，就不会强制把终点连回起点了。
+                // 如果用户想要闭合，他在属性表里可以再加一行点名为 "E"，坐标和 "A" 一样即可。
 
                 GeoLines gl = new GeoLines();
                 gl.Append(tranLine);
@@ -849,17 +866,13 @@ namespace MapGISPlugin3
                 LinInfo tranPen = new LinInfo();
                 tranPen.LinStyID = 1;
                 tranPen.OutClr = new int[] { 5 };
-                tranPen.OutPenW = new float[] { (float)(0.5 * scaleUnit) }; // 0.5mm 显眼一点
+                tranPen.OutPenW = new float[] { (float)(0.5 * scaleUnit) };
 
                 drawLineCls.Append(gl, null, tranPen);
 
                 // 自动添加图例
                 if (!_dynamicLegends.Exists(x => x.Name == "发射源"))
                     _dynamicLegends.Add(new LegendItemInfo { Name = "发射源", SymID = 0, Color = 5 });
-            }
-            else
-            {
-                // MessageBox.Show("【调试】未检测到有效的发射源数据，跳过绘制。");
             }
 
             // =========================================================
@@ -1225,12 +1238,18 @@ namespace MapGISPlugin3
         /// <summary>
         /// 【修正版】读取发射源数据（已修复 ReleaseComObject 报错）
         /// </summary>
+        /// <summary>
+        /// 【修正版】读取发射源数据 (支持非闭合、支持缺省)
+        /// </summary>
         private TransmitterInfo GetTransmitterData(SFeatureCls layer)
         {
             TransmitterInfo info = new TransmitterInfo();
             if (layer == null) return info;
 
             RecordSet rs = null;
+            // 使用字典临时存储，防止读取顺序乱序 (例如先读到C后读到A)
+            Dictionary<string, Dot> tempDict = new Dictionary<string, Dot>();
+
             try
             {
                 rs = layer.Select(null);
@@ -1245,22 +1264,36 @@ namespace MapGISPlugin3
                         att = rs.Att;
                         if (att != null)
                         {
-                            // ... 读取 name, x, y (保持原有逻辑) ...
+                            // 1. 读取点名
                             object objName = att["点名"];
+                            if (objName == null) objName = att["Name"];
                             string name = objName?.ToString()?.Trim().ToUpper();
-                            object objX = att["X坐标"];
-                            object objY = att["Y坐标"];
-                            double x = 0, y = 0;
-                            if (objX != null) double.TryParse(objX.ToString(), out x);
-                            if (objY != null) double.TryParse(objY.ToString(), out y);
 
-                            // 赋值
-                            switch (name)
+                            // 2. 读取坐标 (兼容 X/x/X坐标)
+                            object objX = att["X坐标"];
+                            if (objX == null) objX = att["X"];
+                            if (objX == null) objX = att["x"];
+
+                            object objY = att["Y坐标"];
+                            if (objY == null) objY = att["Y"];
+                            if (objY == null) objY = att["y"];
+
+                            // 3. 解析数值
+                            if (!string.IsNullOrEmpty(name) && objX != null && objY != null)
                             {
-                                case "A": info.PointA_X = x; info.PointA_Y = y; break;
-                                case "B": info.PointB_X = x; info.PointB_Y = y; break;
-                                case "C": info.PointC_X = x; info.PointC_Y = y; break;
-                                case "D": info.PointD_X = x; info.PointD_Y = y; break;
+                                if (double.TryParse(objX.ToString(), out double x) &&
+                                    double.TryParse(objY.ToString(), out double y))
+                                {
+                                    // 排除 (0,0) 的无效点 (可选，视你的数据情况而定)
+                                    if (Math.Abs(x) > 0.0001 || Math.Abs(y) > 0.0001)
+                                    {
+                                        // 存入字典
+                                        if (!tempDict.ContainsKey(name))
+                                        {
+                                            tempDict.Add(name, new Dot(x, y));
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -1272,22 +1305,14 @@ namespace MapGISPlugin3
                     rs.MoveNext();
                 }
 
-                // =================================================
-                // ★★★ 核心修改：读取完后，判断位置是否有效 ★★★
-                // =================================================
-                if (info.PointA_X != 0 || info.PointA_Y != 0)
+                // 4. 【关键步骤】按 A->B->C->D... 的顺序将存在的点加入列表
+                // 这样即使缺了 D，列表里就只有 A,B,C，画出来就是折线，不会飞向原点
+                string[] order = { "A", "B", "C", "D", "E", "F" }; // 可以按需扩充
+                foreach (string key in order)
                 {
-                    // 判断规则：检查 A 点是否在多边形内
-                    // 或者是计算中心点判断，这里简单起见用 A 点判断
-                    if (IsPointInClipRegion(info.PointA_X, info.PointA_Y))
+                    if (tempDict.ContainsKey(key))
                     {
-                        info.IsValid = true;
-                    }
-                    else
-                    {
-                        // 如果 A 点不在范围内，标记为无效，MakeData 就不会画它了
-                        info.IsValid = false;
-                        // MessageBox.Show("发射源在裁剪范围外，已过滤。");
+                        info.Points.Add(tempDict[key]);
                     }
                 }
             }
@@ -1296,6 +1321,17 @@ namespace MapGISPlugin3
             {
                 if (rs != null && System.Runtime.InteropServices.Marshal.IsComObject(rs))
                     System.Runtime.InteropServices.Marshal.ReleaseComObject(rs);
+            }
+
+            // 5. 校验：检查第一个点是否在裁剪范围内 (逻辑保持不变)
+            if (info.Points.Count > 0)
+            {
+                Dot firstPoint = info.Points[0];
+                // 如果第一个点不在范围内，视为整个数据无效 (过滤)
+                if (!IsPointInClipRegion(firstPoint.X, firstPoint.Y))
+                {
+                    info.Points.Clear(); // 清空列表，标记为无效
+                }
             }
 
             return info;
@@ -1314,68 +1350,85 @@ namespace MapGISPlugin3
         // 【完全替换这个方法】
         private void DrawGraphicScale(SFeatureCls lineCls, AnnotationCls annCls, Rect rect, double unit, int mapScale)
         {
-            // 参数名已统一为 rect，防止报错
-            if (lineCls == null || annCls == null || rect == null) return;
+            // 参数检查
+            if (lineCls == null || annCls == null || rect == null) return;
 
-            // 1. 水平居中：利用 rect (外框) 的宽度居中，刚好在左右图例/表格的中间
-            double centerX = (rect.XMin + rect.XMax) / 2.0;
+            // ====================================================================
+            // 1. 定位逻辑修改：从“居中”改为“靠左”
+            // ====================================================================
 
-            // 2. 垂直定位：【核心修改】
-            // 图例和表格的顶部大约在 rect.YMin - 15.0
-            // 图例和表格的底部大约在 rect.YMin - 53.0
-            // 我们把比例尺的基准线放在 -35.0 的位置，视觉上就居中了
-            double baseY = rect.YMin - (35.0 * unit);
+            // 图例通常在左下角，宽度大约是 40.0 * unit。
+            // 为了不重叠，我们将比例尺的起始点放在图例右侧，留出 10.0 * unit 的间隙。
+            // 所以偏移量 = 40 (图例宽) + 10 (间隙) = 50.0 * unit
+            double offsetFromLeft = 50.0 * unit;
 
-            // 文字显示在尺子的上方
-            double textY = baseY + (6.0 * unit);
+            // 计算比例尺左起点的 X 坐标
+            double startX = rect.XMin + offsetFromLeft;
 
-            // --- 以下绘制逻辑保持不变 ---
-            int segmentCount = 4;
+            // Y轴定位 (保持不变)
+            // 基准线在图框底边下方 35mm 处
+            double baseY = rect.YMin - (35.0 * unit);
+            // 文字显示在尺子上方 6mm 处
+            double textY = baseY + (6.0 * unit);
+
+            // ====================================================================
+            // 2. 尺寸计算
+            // ====================================================================
+            int segmentCount = 4;
             double segmentLenMm = 10.0;
             double segmentLen = segmentLenMm * unit;
             double totalLen = segmentCount * segmentLen;
-            double startX = centerX - (totalLen / 2.0);
             double valuePerSegment = mapScale / 100.0;
 
+            // 计算比例尺本身的中心点 X (用于上方数字文字居中)
+            double barCenterX = startX + (totalLen / 2.0);
+
+            // 样式定义
             LinInfo lineInfo = new LinInfo { LinStyID = 1, OutClr = new int[] { 1 }, OutPenW = new float[] { (float)(0.05 * unit) } };
             TextAnnInfo txtInfo = new TextAnnInfo { Ovprnt = true };
 
             float fontSizeNum = (float)(3.5 * unit);
             float fontSizeScale = (float)(3.0 * unit);
 
-            // 数字比例尺 (例如 "1 : 10 000")
-            string scaleText = $"1 : {mapScale.ToString("N0").Replace(",", " ")}";
+            // ====================================================================
+            // 3. 绘制内容
+            // ====================================================================
+
+            // --- A. 数字比例尺 (例如 "1 : 10 000") ---
+            string scaleText = $"1 : {mapScale.ToString("N0").Replace(",", " ")}";
             TextAnno numAnno = new TextAnno();
             numAnno.Text = scaleText;
             numAnno.Height = fontSizeNum;
             numAnno.Width = fontSizeNum;
 
-            double numTextLen = scaleText.Length * numAnno.Width;
-            numAnno.AnchorDot = new Dot(centerX - numTextLen / 2.0, textY);
+            // 计算文字长度并居中于比例尺上方
+            // 注意：这里使用 barCenterX 而不是全局 centerX
+            double numTextLen = scaleText.Length * numAnno.Width; // 简单估算宽度
+            numAnno.AnchorDot = new Dot(barCenterX - numTextLen / 2.0, textY);
             annCls.Append(numAnno, null, txtInfo);
 
-            // 图形比例尺 (主横线)
-            GeoVarLine mainLine = new GeoVarLine();
+            // --- B. 图形比例尺 (主横线) ---
+            GeoVarLine mainLine = new GeoVarLine();
             mainLine.Append(new Dot(startX, baseY));
             mainLine.Append(new Dot(startX + totalLen, baseY));
             GeoLines glMain = new GeoLines(); glMain.Append(mainLine);
             lineCls.Append(glMain, null, lineInfo);
 
-            // 刻度和数值
-            for (int i = 0; i <= segmentCount; i++)
+            // --- C. 刻度和数值 ---
+            for (int i = 0; i <= segmentCount; i++)
             {
                 double currentX = startX + i * segmentLen;
                 double currentValue = i * valuePerSegment;
 
-                // 大刻度 (向上画)
-                GeoVarLine tick = new GeoVarLine();
+                // 大刻度 (向上画)
+                GeoVarLine tick = new GeoVarLine();
                 tick.Append(new Dot(currentX, baseY));
                 tick.Append(new Dot(currentX, baseY + 1.5 * unit));
                 GeoLines glTick = new GeoLines(); glTick.Append(tick);
                 lineCls.Append(glTick, null, lineInfo);
 
-                // 刻度数值
-                string valText = currentValue.ToString("0.##");
+                // 刻度数值
+                string valText = currentValue.ToString("0.##");
                 TextAnno valAnno = new TextAnno();
                 valAnno.Text = valText;
                 valAnno.Height = fontSizeScale;
@@ -1385,8 +1438,8 @@ namespace MapGISPlugin3
                 valAnno.AnchorDot = new Dot(currentX - valTextLen / 2.0, baseY - fontSizeScale - (1.0 * unit));
                 annCls.Append(valAnno, null, txtInfo);
 
-                // 小刻度
-                if (i == 0)
+                // 小刻度 (仅在第一段绘制)
+                if (i == 0)
                 {
                     int subSegments = 5;
                     double subLen = segmentLen / subSegments;
@@ -1402,8 +1455,8 @@ namespace MapGISPlugin3
                 }
             }
 
-            // 单位 "m"
-            TextAnno unitAnno = new TextAnno();
+            // --- D. 单位 "m" ---
+            TextAnno unitAnno = new TextAnno();
             unitAnno.Text = "m";
             unitAnno.Height = fontSizeScale;
             unitAnno.Width = fontSizeScale;

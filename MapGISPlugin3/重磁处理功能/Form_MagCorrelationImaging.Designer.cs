@@ -204,7 +204,7 @@
             this.groupBox1.Size = new System.Drawing.Size(297, 293);
             this.groupBox1.TabIndex = 15;
             this.groupBox1.TabStop = false;
-            this.groupBox1.Text = "结果显示";
+            this.groupBox1.Text = "选择磁力异常图层";
             // 
             // groupBox2
             // 

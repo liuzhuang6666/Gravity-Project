@@ -132,14 +132,14 @@
             | System.Windows.Forms.AnchorStyles.Left)));
             this.groupBox1.AutoSize = true;
             this.groupBox1.Controls.Add(this.treeViewLayers);
-            this.groupBox1.Location = new System.Drawing.Point(18, 45);
+            this.groupBox1.Location = new System.Drawing.Point(13, 38);
             this.groupBox1.Margin = new System.Windows.Forms.Padding(4);
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.Padding = new System.Windows.Forms.Padding(4);
             this.groupBox1.Size = new System.Drawing.Size(297, 305);
             this.groupBox1.TabIndex = 15;
             this.groupBox1.TabStop = false;
-            this.groupBox1.Text = "结果显示";
+            this.groupBox1.Text = "选择重力异常图层";
             // 
             // groupBox2
             // 
