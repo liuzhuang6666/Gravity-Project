@@ -137,7 +137,7 @@ namespace MapGISPlugin3
             // 磁法窗口：包括化极
             this.comboBox1.Items.Add("化极");
             this.comboBox1.Items.Add("方向导数");
-            this.comboBox1.Items.Add("二次导数");
+            this.comboBox1.Items.Add("二阶导数");
             this.comboBox1.Items.Add("三分量");
             this.comboBox1.Items.Add("正则化滤波");
             this.comboBox1.Items.Add("补偿滤波");
@@ -993,7 +993,7 @@ namespace MapGISPlugin3
                         return;
                     }
                     break;
-                case "二次导数":
+                case "二阶导数":
                     if (string.IsNullOrWhiteSpace(txtIsm.Text) || !int.TryParse(txtIsm.Text, out ism))
                     {
                         MessageBox.Show("请输入有效的计算模式（整数）！", "输入错误", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -1118,7 +1118,7 @@ namespace MapGISPlugin3
                         }
                     }
                     // 【新增】处理二次导数
-                    else if (modeStr == "二次导数")
+                    else if (modeStr == "二阶导数")
                     {
                         string resultDatPath;
                         if (ExecuteSecondDerivativeAlgorithm(_inputFilePath, ism, out resultDatPath))
@@ -1466,7 +1466,7 @@ namespace MapGISPlugin3
                     pnlDeriv.Visible = true;
                     break;
                 // 【新增】显示二次导数面板
-                case "二次导数":
+                case "二阶导数":
                     pnlSecond.Visible = true;
                     break;
                 // case "分量":

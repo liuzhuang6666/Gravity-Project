@@ -136,7 +136,7 @@ namespace MapGISPlugin3
             this.m_mtr2.ShowRuler = true;
             // 重力窗口：不包括化极
             this.comboBox1.Items.Add("方向导数");
-            this.comboBox1.Items.Add("二次导数");
+            this.comboBox1.Items.Add("二阶导数");
             this.comboBox1.Items.Add("正则化滤波");
             this.comboBox1.Items.Add("补偿滤波");
             this.comboBox1.Items.Add("延拓");
@@ -976,7 +976,7 @@ namespace MapGISPlugin3
                         return;
                     }
                     break;
-                case "二次导数":
+                case "二阶导数":
                     if (string.IsNullOrWhiteSpace(txtIsm.Text) || !int.TryParse(txtIsm.Text, out ism))
                     {
                         MessageBox.Show("请输入有效的计算模式（整数）！", "输入错误", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -1060,7 +1060,7 @@ namespace MapGISPlugin3
                         }
                     }
                     // 【新增】处理二次导数
-                    else if (modeStr == "二次导数")
+                    else if (modeStr == "二阶级导数")
                     {
                         string resultDatPath;
                         if (ExecuteSecondDerivativeAlgorithm(_inputFilePath, ism, out resultDatPath))
@@ -1404,7 +1404,7 @@ namespace MapGISPlugin3
                     pnlDeriv.Visible = true;
                     break;
                 // 【新增】显示二次导数面板
-                case "二次导数":
+                case "二阶导数":
                     pnlSecond.Visible = true;
                     break;
                 // case "分量":

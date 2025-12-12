@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Windows.Forms;
 using System.Xml;
 
@@ -92,25 +93,28 @@ namespace MapGISPlugin3
         #region 原有事件处理
         private void textEdit_name_KeyPress(object sender, KeyPressEventArgs e)
         {
-            string errorMsg = "";
-            if (!e.Handled)
+            // 1. 允许控制键（如退格键 Backspace），否则无法删除
+            if (char.IsControl(e.KeyChar))
             {
-                Server server = new Server();
-                char[] invalidChars = server.GetInvalidChars(InvalidCharType.DataBaseName);
-                if (invalidChars != null)
-                {
-                    List<char> invalidCharList = new List<char>(invalidChars);
-                    invalidCharList.Remove((char)3);
-                    invalidCharList.Remove((char)22);
-                    invalidCharList.Remove((char)24);
-                    invalidChars = invalidCharList.ToArray();
-                }
-                if (!MapGIS.Desktop.UI.Controls.KeyPressValidate.ValidateKeyChar(sender as TextEdit, e.KeyChar, 32, out errorMsg, invalidChars))
-                    e.Handled = true;
-                server.Dispose();
+                return;
             }
-            if (!string.IsNullOrEmpty(errorMsg))
+
+            // 2. 获取操作系统定义的文件名非法字符 (包含 \ / : * ? " < > | 等)
+            char[] invalidChars = Path.GetInvalidFileNameChars();
+
+            // 3. 检查输入的字符是否在非法字符列表中
+            if (invalidChars.Contains(e.KeyChar))
+            {
+                e.Handled = true; // 阻止输入
+
+                string errorMsg = "名称不能包含下列任何字符: \\ / : * ? \" < > |";
                 toolTipController1.ShowHint(errorMsg, sender as Control, DevExpress.Utils.ToolTipLocation.BottomCenter);
+            }
+            else
+            {
+                // 如果输入合法，隐藏之前的提示
+                toolTipController1.HideHint();
+            }
         }
 
         private void simpleButton_ok_Click(object sender, EventArgs e)
