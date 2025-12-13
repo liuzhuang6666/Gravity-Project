@@ -27,12 +27,36 @@ namespace MapGISPlugin3
 
         private string _selectedStationUrl = "";
         private string _selectedSoundingUrl = "";
-
+        // 在类的成员变量区域添加：
+        private enum SelectionTarget { None, Station, Sounding }
+        private SelectionTarget _currentSelectionTarget = SelectionTarget.None;
+        // 修改构造函数，添加文本框点击事件绑定：
         public Form_MTAppendData(IApplication hook)
         {
             InitializeComponent();
             _hook = hook;
             InitDragEvent();
+
+            // 添加文本框点击事件
+            txtSelectedStation.Click += txtSelectedStation_Click;
+            txtSelectedSounding.Click += txtSelectedSounding_Click;
+        }
+
+        // 添加两个新的事件处理方法：
+        private void txtSelectedStation_Click(object sender, EventArgs e)
+        {
+            _currentSelectionTarget = SelectionTarget.Station;
+            // 高亮显示当前激活的文本框
+            txtSelectedStation.BackColor = System.Drawing.Color.LightYellow;
+            txtSelectedSounding.BackColor = System.Drawing.SystemColors.Control;
+        }
+
+        private void txtSelectedSounding_Click(object sender, EventArgs e)
+        {
+            _currentSelectionTarget = SelectionTarget.Sounding;
+            // 高亮显示当前激活的文本框
+            txtSelectedSounding.BackColor = System.Drawing.Color.LightYellow;
+            txtSelectedStation.BackColor = System.Drawing.SystemColors.Control;
         }
 
         private void Form_MTAppendData_Load(object sender, EventArgs e)
@@ -170,23 +194,57 @@ namespace MapGISPlugin3
             }
         }
 
+        // 替换原有的 treeViewLayers_AfterSelect 方法：
         private void treeViewLayers_AfterSelect(object sender, TreeViewEventArgs e)
         {
             if (e.Node == null || e.Node.Tag == null) return;
 
-            if (e.Node.Tag is VectorLayer)
+            // 根据当前激活的目标文本框来决定填入哪个
+            if (_currentSelectionTarget == SelectionTarget.Station)
             {
-                VectorLayer vl = e.Node.Tag as VectorLayer;
-                txtSelectedStation.Text = vl.Name;
-                _selectedStationUrl = vl.URL;
-                FindCorrespondingSoundingTable(e.Node.Parent, vl.Name);
+                // 用户想要选择测点图层
+                if (e.Node.Tag is VectorLayer)
+                {
+                    VectorLayer vl = e.Node.Tag as VectorLayer;
+                    txtSelectedStation.Text = vl.Name;
+                    _selectedStationUrl = vl.URL;
+                }
+                else if (e.Node.Tag is ObjectLayer)
+                {
+                    // 用户选择了ObjectLayer但目标是测点，给出提示
+                    MessageBox.Show("请选择矢量图层（蓝色）作为测点图层。", "提示");
+                }
             }
-            else if (e.Node.Tag is ObjectLayer)
+            else if (_currentSelectionTarget == SelectionTarget.Sounding)
             {
-                ObjectLayer ol = e.Node.Tag as ObjectLayer;
-                txtSelectedSounding.Text = ol.Name;
-                _selectedSoundingUrl = ol.URL;
-                FindCorrespondingStationLayer(e.Node.Parent, ol.Name);
+                // 用户想要选择测深数据
+                if (e.Node.Tag is ObjectLayer)
+                {
+                    ObjectLayer ol = e.Node.Tag as ObjectLayer;
+                    txtSelectedSounding.Text = ol.Name;
+                    _selectedSoundingUrl = ol.URL;
+                }
+                else if (e.Node.Tag is VectorLayer)
+                {
+                    // 用户选择了VectorLayer但目标是测深数据，给出提示
+                    MessageBox.Show("请选择对象图层（绿色）作为测深数据。", "提示");
+                }
+            }
+            else
+            {
+                // 没有激活任何文本框时，保持原有的自动判断逻辑（可选）
+                if (e.Node.Tag is VectorLayer)
+                {
+                    VectorLayer vl = e.Node.Tag as VectorLayer;
+                    txtSelectedStation.Text = vl.Name;
+                    _selectedStationUrl = vl.URL;
+                }
+                else if (e.Node.Tag is ObjectLayer)
+                {
+                    ObjectLayer ol = e.Node.Tag as ObjectLayer;
+                    txtSelectedSounding.Text = ol.Name;
+                    _selectedSoundingUrl = ol.URL;
+                }
             }
         }
 

@@ -30,12 +30,34 @@ namespace MapGISPlugin3
         private ObjectCls _targetSoundingCls = null;
         private string _selectedStationUrl = "";
         private string _selectedSoundingUrl = "";
-
+        // 在类的成员变量区域（约第25行附近）添加：
+        private enum SelectionTarget { None, Station, Sounding }
+        private SelectionTarget _currentSelectionTarget = SelectionTarget.None;
         public Form_CSAMTAppendData(IApplication hook)
         {
             InitializeComponent();
             _hook = hook;
             InitDragEvent();
+
+            // 添加文本框点击事件
+            txtSelectedStation.Click += txtSelectedStation_Click;
+            txtSelectedSounding.Click += txtSelectedSounding_Click;
+        }
+
+        private void txtSelectedStation_Click(object sender, EventArgs e)
+        {
+            _currentSelectionTarget = SelectionTarget.Station;
+            // 高亮显示当前激活的文本框
+            txtSelectedStation.BackColor = System.Drawing.Color.LightYellow;
+            txtSelectedSounding.BackColor = System.Drawing.SystemColors.Control;
+        }
+
+        private void txtSelectedSounding_Click(object sender, EventArgs e)
+        {
+            _currentSelectionTarget = SelectionTarget.Sounding;
+            // 高亮显示当前激活的文本框
+            txtSelectedSounding.BackColor = System.Drawing.Color.LightYellow;
+            txtSelectedStation.BackColor = System.Drawing.SystemColors.Control;
         }
 
         private void Form_CSAMTAppendData_Load(object sender, EventArgs e)
@@ -198,75 +220,53 @@ namespace MapGISPlugin3
         {
             if (e.Node == null || e.Node.Tag == null) return;
 
-            // 根据选择的节点类型更新显示
-            if (e.Node.Tag is VectorLayer)
+            if (_currentSelectionTarget == SelectionTarget.Station)
             {
-                VectorLayer vl = e.Node.Tag as VectorLayer;
-                txtSelectedStation.Text = vl.Name;
-                _selectedStationUrl = vl.URL;
-
-                // 尝试自动查找对应的测深数据表
-                FindCorrespondingSoundingTable(e.Node.Parent, vl.Name);
-            }
-            else if (e.Node.Tag is ObjectLayer)
-            {
-                ObjectLayer ol = e.Node.Tag as ObjectLayer;
-                txtSelectedSounding.Text = ol.Name;
-                _selectedSoundingUrl = ol.URL;
-
-                // 尝试自动查找对应的测点图层
-                FindCorrespondingStationLayer(e.Node.Parent, ol.Name);
-            }
-        }
-
-        /// <summary>
-        /// 根据测点图层名称查找对应的测深数据表
-        /// </summary>
-        private void FindCorrespondingSoundingTable(TreeNode parentNode, string stationName)
-        {
-            if (parentNode == null) return;
-
-            // 提取基础名称（去掉"CSAMT测点"后缀）
-            string baseName = stationName.Replace("CSAMT测点", "").Trim('_');
-
-            foreach (TreeNode node in parentNode.Nodes)
-            {
-                if (node.Tag is ObjectLayer)
+                // 用户想要选择测点图层
+                if (e.Node.Tag is VectorLayer)
                 {
-                    ObjectLayer ol = node.Tag as ObjectLayer;
-                    if (ol.Name.Contains(baseName) && ol.Name.Contains("测深"))
-                    {
-                        txtSelectedSounding.Text = ol.Name;
-                        _selectedSoundingUrl = ol.URL;
-                        break;
-                    }
+                    VectorLayer vl = e.Node.Tag as VectorLayer;
+                    txtSelectedStation.Text = vl.Name;
+                    _selectedStationUrl = vl.URL;
+                }
+                else if (e.Node.Tag is ObjectLayer)
+                {
+                    MessageBox.Show("请选择矢量图层（蓝色）作为测点图层。", "提示");
+                }
+            }
+            else if (_currentSelectionTarget == SelectionTarget.Sounding)
+            {
+                // 用户想要选择测深数据
+                if (e.Node.Tag is ObjectLayer)
+                {
+                    ObjectLayer ol = e.Node.Tag as ObjectLayer;
+                    txtSelectedSounding.Text = ol.Name;
+                    _selectedSoundingUrl = ol.URL;
+                }
+                else if (e.Node.Tag is VectorLayer)
+                {
+                    MessageBox.Show("请选择对象图层（绿色）作为测深数据。", "提示");
+                }
+            }
+            else
+            {
+                // 没有激活任何文本框时的默认行为
+                if (e.Node.Tag is VectorLayer)
+                {
+                    VectorLayer vl = e.Node.Tag as VectorLayer;
+                    txtSelectedStation.Text = vl.Name;
+                    _selectedStationUrl = vl.URL;
+                }
+                else if (e.Node.Tag is ObjectLayer)
+                {
+                    ObjectLayer ol = e.Node.Tag as ObjectLayer;
+                    txtSelectedSounding.Text = ol.Name;
+                    _selectedSoundingUrl = ol.URL;
                 }
             }
         }
 
-        /// <summary>
-        /// 根据测深数据表名称查找对应的测点图层
-        /// </summary>
-        private void FindCorrespondingStationLayer(TreeNode parentNode, string soundingName)
-        {
-            if (parentNode == null) return;
 
-            string baseName = soundingName.Replace("CSAMT测深数据", "").Trim('_');
-
-            foreach (TreeNode node in parentNode.Nodes)
-            {
-                if (node.Tag is VectorLayer)
-                {
-                    VectorLayer vl = node.Tag as VectorLayer;
-                    if (vl.Name.Contains(baseName) && vl.Name.Contains("测点"))
-                    {
-                        txtSelectedStation.Text = vl.Name;
-                        _selectedStationUrl = vl.URL;
-                        break;
-                    }
-                }
-            }
-        }
 
         /// <summary>
         /// 确定按钮 - 执行追加操作

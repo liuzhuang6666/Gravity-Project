@@ -814,18 +814,28 @@ namespace MapGISPlugin3
             // =========================================================
             // ↓↓↓ 4. 计算布局参数 scaleUnit (绘图尺寸基准) ↓↓↓
             // =========================================================
-            Rect innerRect = map.Range;
+
+            // 【修改前】 使用全图范围，导致框选无效，永远显示全图
+            // Rect innerRect = map.Range; 
+
+            // 【修改后】 使用这一行！使用 SaveUI 中计算好的框选范围
+            Rect innerRect = this.dataRange.Clone();
+
+            // 如果 dataRange 为空（防御性编程），再回退到全图
+            if (innerRect == null || (innerRect.XMax - innerRect.XMin) <= 0)
+            {
+                innerRect = map.Range;
+            }
+
+            // ---------------------------------------------------------
+            // 下面的逻辑依然依赖 innerRect，现在它是框选范围了
+            // ---------------------------------------------------------
+
             double mapWidth = innerRect.XMax - innerRect.XMin;
             double mapHeight = innerRect.YMax - innerRect.YMin;
-            double minSide = Math.Min(mapWidth, mapHeight);
-            // 这里的 300 是个经验值，假设A3纸宽约300-400mm
-            double scaleUnit = minSide / 300.0;
-
-            // 增加一个上限限制，防止长条图导致字体过大
-            if (scaleUnit > (mapWidth / 150.0))
-            {
-                scaleUnit = mapWidth / 150.0;
-            }
+            double scaleUnit = mapWidth / 300.0;
+            if (scaleUnit <= 0.0001) scaleUnit = 1.0;
+            if (mapHeight > mapWidth) scaleUnit = mapHeight / 300.0;
 
             // 获取当前样式索引
             int selectedStyleIndex = 0;
@@ -843,21 +853,16 @@ namespace MapGISPlugin3
             // ↓↓↓ 5. 核心修改：绘制读取到的业务数据 ↓↓↓
             // =========================================================
 
-            // --- 5.1 绘制发射源 (按实际点序连线，不强制闭合) ---
+            // --- 5.1 绘制发射源 (A-B-C-D-A) ---
             if (tranInfo != null && tranInfo.IsValid && drawLineCls != null)
             {
                 // 构造线对象
                 GeoVarLine tranLine = new GeoVarLine();
-
-                // 【核心修改】遍历列表，有多少点加多少点
-                foreach (Dot dot in tranInfo.Points)
-                {
-                    tranLine.Append(new Dot(dot.X, dot.Y));
-                }
-
-                // ★★★ 注意：这里删除了 tranLine.Append(PointA) 这行代码 ★★★
-                // 删除了它，就不会强制把终点连回起点了。
-                // 如果用户想要闭合，他在属性表里可以再加一行点名为 "E"，坐标和 "A" 一样即可。
+                tranLine.Append(new Dot(tranInfo.PointA_X, tranInfo.PointA_Y));
+                tranLine.Append(new Dot(tranInfo.PointB_X, tranInfo.PointB_Y));
+                tranLine.Append(new Dot(tranInfo.PointC_X, tranInfo.PointC_Y));
+                tranLine.Append(new Dot(tranInfo.PointD_X, tranInfo.PointD_Y));
+                tranLine.Append(new Dot(tranInfo.PointA_X, tranInfo.PointA_Y)); // 闭合
 
                 GeoLines gl = new GeoLines();
                 gl.Append(tranLine);
@@ -2623,7 +2628,7 @@ namespace MapGISPlugin3
             // ★★★ 新增这一行：等值线间距 ★★★
             "等值线间距"
             };
-                }
+            }
             else // 其他默认样式
             {
                 requiredKeys = new string[] { "主标题", "左下角附注", "右下角附注" };
@@ -3232,9 +3237,9 @@ namespace MapGISPlugin3
             // 
             // 
             this.splitContainerControl1.Panel2.Controls.Add(this.groupControl_Styles);
-            this.splitContainerControl1.Panel2.Location = new System.Drawing.Point(325, 0);
+            this.splitContainerControl1.Panel2.Location = new System.Drawing.Point(328, 0);
             this.splitContainerControl1.Panel2.Name = "";
-            this.splitContainerControl1.Panel2.Size = new System.Drawing.Size(475, 650);
+            this.splitContainerControl1.Panel2.Size = new System.Drawing.Size(472, 650);
             this.splitContainerControl1.Panel2.TabIndex = 1;
             this.splitContainerControl1.Size = new System.Drawing.Size(800, 650);
             this.splitContainerControl1.SplitterPosition = 320;
@@ -3269,12 +3274,12 @@ namespace MapGISPlugin3
             this.contentColumn});
             this.treeList_Ann.DataSource = null;
             this.treeList_Ann.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.treeList_Ann.Location = new System.Drawing.Point(2, 21);
+            this.treeList_Ann.Location = new System.Drawing.Point(3, 33);
             this.treeList_Ann.Name = "treeList_Ann";
             this.treeList_Ann.OptionsView.ShowRoot = false;
             this.treeList_Ann.RepositoryItems.AddRange(new DevExpress.XtraEditors.Repository.RepositoryItem[] {
             this.contentMemoEdit});
-            this.treeList_Ann.Size = new System.Drawing.Size(316, 367);
+            this.treeList_Ann.Size = new System.Drawing.Size(314, 354);
             this.treeList_Ann.TabIndex = 0;
             this.treeList_Ann.CellValueChanged += new DevExpress.XtraTreeList.CellValueChangedEventHandler(this.treeList_Ann_CellValueChanged);
             // 
@@ -3314,10 +3319,10 @@ namespace MapGISPlugin3
             // labelControl_WH
             // 
             this.labelControl_WH.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.labelControl_WH.Location = new System.Drawing.Point(2, 174);
+            this.labelControl_WH.Location = new System.Drawing.Point(3, 165);
             this.labelControl_WH.Name = "labelControl_WH";
             this.labelControl_WH.Padding = new System.Windows.Forms.Padding(5);
-            this.labelControl_WH.Size = new System.Drawing.Size(78, 24);
+            this.labelControl_WH.Size = new System.Drawing.Size(109, 32);
             this.labelControl_WH.TabIndex = 0;
             this.labelControl_WH.Text = "输出宽高: ...";
             // 
@@ -3337,14 +3342,15 @@ namespace MapGISPlugin3
             // 
             this.comboBoxEdit_Scale.Location = new System.Drawing.Point(80, 23);
             this.comboBoxEdit_Scale.Name = "comboBoxEdit_Scale";
+            this.comboBoxEdit_Scale.Size = new System.Drawing.Size(100, 28);
             this.comboBoxEdit_Scale.TabIndex = 0;
             this.comboBoxEdit_Scale.EditValueChanging += new DevExpress.XtraEditors.Controls.ChangingEventHandler(this.comboBoxEdit_Scale_EditValueChanging);
             // 
             // labelControl_Sacle
             // 
-            this.labelControl_Sacle.Location = new System.Drawing.Point(10, -12);
+            this.labelControl_Sacle.Location = new System.Drawing.Point(10, 26);
             this.labelControl_Sacle.Name = "labelControl_Sacle";
-            this.labelControl_Sacle.Size = new System.Drawing.Size(40, 14);
+            this.labelControl_Sacle.Size = new System.Drawing.Size(60, 22);
             this.labelControl_Sacle.TabIndex = 1;
             this.labelControl_Sacle.Text = "比例尺:";
             // 
@@ -3354,7 +3360,7 @@ namespace MapGISPlugin3
             this.groupControl_Styles.Dock = System.Windows.Forms.DockStyle.Fill;
             this.groupControl_Styles.Location = new System.Drawing.Point(0, 0);
             this.groupControl_Styles.Name = "groupControl_Styles";
-            this.groupControl_Styles.Size = new System.Drawing.Size(475, 650);
+            this.groupControl_Styles.Size = new System.Drawing.Size(472, 650);
             this.groupControl_Styles.TabIndex = 0;
             this.groupControl_Styles.Text = "图饰样式";
             // 
@@ -3363,9 +3369,9 @@ namespace MapGISPlugin3
             this.listView_Style.Dock = System.Windows.Forms.DockStyle.Fill;
             this.listView_Style.HideSelection = false;
             this.listView_Style.LargeImageList = this.largeImgList;
-            this.listView_Style.Location = new System.Drawing.Point(2, 21);
+            this.listView_Style.Location = new System.Drawing.Point(3, 33);
             this.listView_Style.Name = "listView_Style";
-            this.listView_Style.Size = new System.Drawing.Size(471, 627);
+            this.listView_Style.Size = new System.Drawing.Size(466, 614);
             this.listView_Style.TabIndex = 0;
             this.listView_Style.UseCompatibleStateImageBehavior = false;
             this.listView_Style.SelectedIndexChanged += new System.EventHandler(this.listView_Style_SelectedIndexChanged);
@@ -3403,7 +3409,7 @@ namespace MapGISPlugin3
             // button1
             // 
             this.button1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.button1.Location = new System.Drawing.Point(580, 10);
+            this.button1.Location = new System.Drawing.Point(578, 10);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(75, 30);
             this.button1.TabIndex = 2;

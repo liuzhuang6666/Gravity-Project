@@ -27,12 +27,33 @@ namespace MapGISPlugin3
 
         private string _selectedStationUrl = "";
         private string _selectedObservationUrl = "";
-
+        // 在类的成员变量区域添加：
+        private enum SelectionTarget { None, Station, Observation }
+        private SelectionTarget _currentSelectionTarget = SelectionTarget.None;
         public Form_TEMAppendData(IApplication hook)
         {
             InitializeComponent();
             _hook = hook;
             InitDragEvent();
+
+            // 添加文本框点击事件
+            txtSelectedStation.Click += txtSelectedStation_Click;
+            txtSelectedObservation.Click += txtSelectedObservation_Click;
+        }
+
+        // 添加两个新的事件处理方法：
+        private void txtSelectedStation_Click(object sender, EventArgs e)
+        {
+            _currentSelectionTarget = SelectionTarget.Station;
+            txtSelectedStation.BackColor = System.Drawing.Color.LightYellow;
+            txtSelectedObservation.BackColor = System.Drawing.SystemColors.Control;
+        }
+
+        private void txtSelectedObservation_Click(object sender, EventArgs e)
+        {
+            _currentSelectionTarget = SelectionTarget.Observation;
+            txtSelectedObservation.BackColor = System.Drawing.Color.LightYellow;
+            txtSelectedStation.BackColor = System.Drawing.SystemColors.Control;
         }
 
         private void Form_TEMAppendData_Load(object sender, EventArgs e)
@@ -170,23 +191,52 @@ namespace MapGISPlugin3
             }
         }
 
+        // 替换原有的 treeViewLayers_AfterSelect 方法：
         private void treeViewLayers_AfterSelect(object sender, TreeViewEventArgs e)
         {
             if (e.Node == null || e.Node.Tag == null) return;
 
-            if (e.Node.Tag is VectorLayer)
+            if (_currentSelectionTarget == SelectionTarget.Station)
             {
-                VectorLayer vl = e.Node.Tag as VectorLayer;
-                txtSelectedStation.Text = vl.Name;
-                _selectedStationUrl = vl.URL;
-                FindCorrespondingObservationTable(e.Node.Parent, vl.Name);
+                if (e.Node.Tag is VectorLayer)
+                {
+                    VectorLayer vl = e.Node.Tag as VectorLayer;
+                    txtSelectedStation.Text = vl.Name;
+                    _selectedStationUrl = vl.URL;
+                }
+                else if (e.Node.Tag is ObjectLayer)
+                {
+                    MessageBox.Show("请选择矢量图层（蓝色）作为测点图层。", "提示");
+                }
             }
-            else if (e.Node.Tag is ObjectLayer)
+            else if (_currentSelectionTarget == SelectionTarget.Observation)
             {
-                ObjectLayer ol = e.Node.Tag as ObjectLayer;
-                txtSelectedObservation.Text = ol.Name;
-                _selectedObservationUrl = ol.URL;
-                FindCorrespondingStationLayer(e.Node.Parent, ol.Name);
+                if (e.Node.Tag is ObjectLayer)
+                {
+                    ObjectLayer ol = e.Node.Tag as ObjectLayer;
+                    txtSelectedObservation.Text = ol.Name;
+                    _selectedObservationUrl = ol.URL;
+                }
+                else if (e.Node.Tag is VectorLayer)
+                {
+                    MessageBox.Show("请选择对象图层（绿色）作为观测数据。", "提示");
+                }
+            }
+            else
+            {
+                // 默认行为
+                if (e.Node.Tag is VectorLayer)
+                {
+                    VectorLayer vl = e.Node.Tag as VectorLayer;
+                    txtSelectedStation.Text = vl.Name;
+                    _selectedStationUrl = vl.URL;
+                }
+                else if (e.Node.Tag is ObjectLayer)
+                {
+                    ObjectLayer ol = e.Node.Tag as ObjectLayer;
+                    txtSelectedObservation.Text = ol.Name;
+                    _selectedObservationUrl = ol.URL;
+                }
             }
         }
 
