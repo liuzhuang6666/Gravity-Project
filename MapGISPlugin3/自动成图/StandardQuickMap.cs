@@ -833,9 +833,17 @@ namespace MapGISPlugin3
 
             double mapWidth = innerRect.XMax - innerRect.XMin;
             double mapHeight = innerRect.YMax - innerRect.YMin;
-            double scaleUnit = mapWidth / 300.0;
-            if (scaleUnit <= 0.0001) scaleUnit = 1.0;
-            if (mapHeight > mapWidth) scaleUnit = mapHeight / 300.0;
+
+            // 这里的 300 意味着假设图纸宽度大约 300mm
+            // scaleUnit 决定了字体、线宽的相对大小
+            double minSide = Math.Min(mapWidth, mapHeight);
+            double scaleUnit = minSide / 300.0;
+
+            // 增加一个上限限制，防止长条图导致字体过大
+            if (scaleUnit > (mapWidth / 150.0))
+            {
+                scaleUnit = mapWidth / 150.0;
+            }
 
             // 获取当前样式索引
             int selectedStyleIndex = 0;
@@ -853,16 +861,27 @@ namespace MapGISPlugin3
             // ↓↓↓ 5. 核心修改：绘制读取到的业务数据 ↓↓↓
             // =========================================================
 
-            // --- 5.1 绘制发射源 (A-B-C-D-A) ---
+            // --- 5.1 绘制发射源 (智能闭合逻辑) ---
             if (tranInfo != null && tranInfo.IsValid && drawLineCls != null)
             {
                 // 构造线对象
                 GeoVarLine tranLine = new GeoVarLine();
-                tranLine.Append(new Dot(tranInfo.PointA_X, tranInfo.PointA_Y));
-                tranLine.Append(new Dot(tranInfo.PointB_X, tranInfo.PointB_Y));
-                tranLine.Append(new Dot(tranInfo.PointC_X, tranInfo.PointC_Y));
-                tranLine.Append(new Dot(tranInfo.PointD_X, tranInfo.PointD_Y));
-                tranLine.Append(new Dot(tranInfo.PointA_X, tranInfo.PointA_Y)); // 闭合
+
+                // 1. 添加所有坐标点
+                foreach (Dot dot in tranInfo.Points)
+                {
+                    tranLine.Append(new Dot(dot.X, dot.Y));
+                }
+
+                // 2. 【核心逻辑】根据点数决定是否闭合
+                // 如果点数大于2 (例如三角形、矩形)，则强制把终点连回起点
+                if (tranInfo.Points.Count > 2)
+                {
+                    // 获取第一个点的坐标
+                    Dot firstPoint = tranInfo.Points[0];
+                    // 添加到末尾，形成闭合回路
+                    tranLine.Append(new Dot(firstPoint.X, firstPoint.Y));
+                }
 
                 GeoLines gl = new GeoLines();
                 gl.Append(tranLine);
@@ -2607,6 +2626,10 @@ namespace MapGISPlugin3
             {
                 selectedStyleTag = (int)listView_Style.SelectedItems[0].Tag;
             }
+            if (selectedStyleTag == 0)
+            {
+                selectedStyleTag = 200;
+            }
 
             // 定义当前样式需要的字段列表
             string[] requiredKeys;
@@ -2795,6 +2818,7 @@ namespace MapGISPlugin3
             {
                 selectedStyleTag = (int)listView_Style.SelectedItems[0].Tag;
             }
+            if (selectedStyleTag == 0) selectedStyleTag = 200;
 
             // ---------------------------------------------------------
             // ★★★ 核心修改：根据样式ID返回不同的主标题 ★★★
