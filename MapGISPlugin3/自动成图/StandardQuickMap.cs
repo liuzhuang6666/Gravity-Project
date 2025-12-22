@@ -185,7 +185,7 @@ namespace MapGISPlugin3
             else
             {
                 // [调试] 如果弹这个框，说明读取成功了
-                MessageBox.Show("成功读取步长: " + autoStep);
+                // MessageBox.Show("成功读取步长: " + autoStep);
             }
 
             // --- 生成层级列表 ---
@@ -652,7 +652,7 @@ namespace MapGISPlugin3
                         if (Math.Abs(max - min) < 0.000001) max = min + 1.0;
 
                         // 成功了！弹窗提示一下 (调试通过后可注释掉)
-                        MessageBox.Show($"【成功】在图层 [{layer.Name}] 中读取到数据！\nMin = {min}\nMax = {max}\n(读取对象: {t.Name})");
+                        // MessageBox.Show($"【成功】在图层 [{layer.Name}] 中读取到数据！\nMin = {min}\nMax = {max}\n(读取对象: {t.Name})");
 
                         found = true;
                         break; // 找到了就停止
@@ -668,14 +668,14 @@ namespace MapGISPlugin3
             if (!found)
             {
                 // 依然没找到，说明属性名可能还是不对，或者波段也没取到
-                MessageBox.Show("【失败】已找到 gra.grd，但无法读取其 MinValue/MaxValue 属性。\n图例将使用默认范围 0-100。");
+                // MessageBox.Show("【失败】已找到 gra.grd，但无法读取其 MinValue/MaxValue 属性。\n图例将使用默认范围 0-100。");
             }
         }
 
         private Map MakeData()
         {
             // [调试 Step 1]
-            MessageBox.Show("开始执行 MakeData 成图流程...");
+            // MessageBox.Show("开始执行 MakeData 成图流程...");
 
             // 1. 基础初始化 (保持原逻辑)
             _dynamicLegends.Clear();
@@ -734,7 +734,7 @@ namespace MapGISPlugin3
                 // --- A. 发射源处理 ---
                 if (layerName.Contains("发射源"))
                 {
-                    MessageBox.Show($"【调试】发现发射源图层：[{layerName}]\n正在尝试读取属性坐标...");
+                    // MessageBox.Show($"【调试】发现发射源图层：[{layerName}]\n正在尝试读取属性坐标...");
 
                     // ★ 调用专门的属性读取方法
                     tranInfo = GetTransmitterData(sfCls);
@@ -745,7 +745,7 @@ namespace MapGISPlugin3
                 // --- B. 测点处理 ---
                 else if (layerName.Contains("测点"))
                 {
-                    MessageBox.Show($"【调试】发现测点图层：[{layerName}]\n正在尝试读取几何坐标...");
+                    // MessageBox.Show($"【调试】发现测点图层：[{layerName}]\n正在尝试读取几何坐标...");
 
                     // ★ 调用专门的几何读取方法
                     var stations = GetStationData(sfCls);
@@ -993,7 +993,7 @@ namespace MapGISPlugin3
 
                 else if (selectedStyleIndex == 300) // 重磁数据成图样式
                 {
-                    MessageBox.Show("4. 命中样式 300！准备绘制等值线图例 (DrawContourLegend)...");
+                    // MessageBox.Show("4. 命中样式 300！准备绘制等值线图例 (DrawContourLegend)...");
                     DrawMapGrid(drawLineCls, innerRect, scaleUnit);
                     DrawGraphicScale(drawLineCls, drawAnnCls, outerRect, scaleUnit, scale);
                     DrawSurveyLineTable(drawLineCls, drawAnnCls, outerRect, scaleUnit);

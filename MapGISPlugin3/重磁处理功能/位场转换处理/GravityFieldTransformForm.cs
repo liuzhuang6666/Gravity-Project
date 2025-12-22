@@ -487,7 +487,7 @@ namespace MapGISPlugin3
                                     $"输入 GRD 文件:\n{inputGrdPath}\n\n" +
                                     $"磁倾角(oi): {oi}\n" +
                                     $"磁偏角(od): {od}";
-                MessageBox.Show(debug_msg1, "调试点 1: 执行前检查");
+                // MessageBox.Show(debug_msg1, "调试点 1: 执行前检查");
                 if (!File.Exists(exePath))
                 {
                     MessageBox.Show($"算法模块 (a.exe) 丢失！\n请确保它位于以下路径：\n{exePath}", "文件丢失", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -517,7 +517,7 @@ namespace MapGISPlugin3
                                         $"是否正常退出: {exited}\n" +
                                         $"退出码 (ExitCode): {(exited ? process.ExitCode.ToString() : "N/A (超时)")}\n\n" +
                                         $"标准错误流信息 (如果有):\n-----\n{errorOutput}\n-----";
-                    MessageBox.Show(debug_msg2, "调试点 2: 进程执行结果");
+                    // MessageBox.Show(debug_msg2, "调试点 2: 进程执行结果");
                     if (exited)
                     {
                         if (process.ExitCode != 0)
@@ -558,7 +558,7 @@ namespace MapGISPlugin3
                                  $"文件路径:\n{resultDatPath}\n\n" +
                                  "状态: 文件不存在！";
                 }
-                MessageBox.Show(debug_msg3, "调试点 3: 结果文件检查");
+                // MessageBox.Show(debug_msg3, "调试点 3: 结果文件检查");
                 if (!File.Exists(resultDatPath))
                 {
                     MessageBox.Show("算法执行完毕，但未在预期位置找到结果文件 result.dat！", "结果文件丢失", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -589,7 +589,7 @@ namespace MapGISPlugin3
                                     $"输入 GRD 文件:\n{inputGrdPath}\n\n" +
                                     $"方位角(ori): {ori}\n" +
                                     $"阶数(ord): {ord}";
-                MessageBox.Show(debug_msg1, "调试点 1: 执行前检查");
+                // MessageBox.Show(debug_msg1, "调试点 1: 执行前检查");
                 if (!File.Exists(exePath))
                 {
                     MessageBox.Show($"算法模块 (a.exe) 丢失！\n请确保它位于以下路径：\n{exePath}", "文件丢失", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -618,7 +618,7 @@ namespace MapGISPlugin3
                                         $"是否正常退出: {exited}\n" +
                                         $"退出码 (ExitCode): {(exited ? process.ExitCode.ToString() : "N/A (超时)")}\n\n" +
                                         $"标准错误流信息 (如果有):\n-----\n{errorOutput}\n-----";
-                    MessageBox.Show(debug_msg2, "调试点 2: 进程执行结果");
+                    // MessageBox.Show(debug_msg2, "调试点 2: 进程执行结果");
                     if (exited)
                     {
                         if (process.ExitCode != 0)
@@ -657,7 +657,7 @@ namespace MapGISPlugin3
                                  $"文件路径:\n{resultDatPath}\n\n" +
                                  "状态: 文件不存在！";
                 }
-                MessageBox.Show(debug_msg3, "调试点 3: 结果文件检查");
+                // MessageBox.Show(debug_msg3, "调试点 3: 结果文件检查");
                 if (!File.Exists(resultDatPath))
                 {
                     MessageBox.Show("算法执行完毕，但未在预期位置找到结果文件 result.dat！", "结果文件丢失", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -687,7 +687,7 @@ namespace MapGISPlugin3
                                     $"工作目录:\n{algorithmDir}\n\n" +
                                     $"输入 GRD 文件:\n{inputGrdPath}\n\n" +
                                     $"计算模式(ism): {ism}";
-                MessageBox.Show(debug_msg1, "调试点 1: 执行前检查");
+                // MessageBox.Show(debug_msg1, "调试点 1: 执行前检查");
                 if (!File.Exists(exePath))
                 {
                     MessageBox.Show($"算法模块 (a.exe) 丢失！\n请确保它位于以下路径：\n{exePath}", "文件丢失", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -716,7 +716,7 @@ namespace MapGISPlugin3
                                         $"是否正常退出: {exited}\n" +
                                         $"退出码 (ExitCode): {(exited ? process.ExitCode.ToString() : "N/A (超时)")}\n\n" +
                                         $"标准错误流信息 (如果有):\n-----\n{errorOutput}\n-----";
-                    MessageBox.Show(debug_msg2, "调试点 2: 进程执行结果");
+                    // MessageBox.Show(debug_msg2, "调试点 2: 进程执行结果");
                     if (exited)
                     {
                         if (process.ExitCode != 0)
@@ -755,7 +755,7 @@ namespace MapGISPlugin3
                                  $"文件路径:\n{resultDatPath}\n\n" +
                                  "状态: 文件不存在！";
                 }
-                MessageBox.Show(debug_msg3, "调试点 3: 结果文件检查");
+                // MessageBox.Show(debug_msg3, "调试点 3: 结果文件检查");
                 if (!File.Exists(resultDatPath))
                 {
                     MessageBox.Show("算法执行完毕，但未在预期位置找到结果文件 result.dat！", "结果文件丢失", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -1060,7 +1060,7 @@ namespace MapGISPlugin3
                         }
                     }
                     // 【新增】处理二次导数
-                    else if (modeStr == "二阶级导数")
+                    else if (modeStr == "二阶导数")
                     {
                         string resultDatPath;
                         if (ExecuteSecondDerivativeAlgorithm(_inputFilePath, ism, out resultDatPath))

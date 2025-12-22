@@ -2439,11 +2439,11 @@ namespace MapGISPlugin3
                 // 调用新的绘图逻辑
                 DisplayInversionResults(m_LastInversionResults);
 
-                MessageBox.Show($"生成了 {stationCount} 个测点的数据并已绘制。\n\n" +
-                  $"预期效果：\n" +
-                  $"1. 使用新版“砌砖法”绘图。\n" +
-                  $"2. 图表中间底部 (-200m ~ -800m) 应该会出现明显的【蓝色/冷色区域】。\n" +
-                  $"3. 尝试调整右上角的深度旋钮，图表应能实时响应。", "测试成功");
+                // MessageBox.Show($"生成了 {stationCount} 个测点的数据并已绘制。\n\n" +
+                //   $"预期效果：\n" +
+                //   $"1. 使用新版“砌砖法”绘图。\n" +
+                //   $"2. 图表中间底部 (-200m ~ -800m) 应该会出现明显的【蓝色/冷色区域】。\n" +
+                //   $"3. 尝试调整右上角的深度旋钮，图表应能实时响应。", "测试成功");
             }
             catch (Exception ex)
             {
