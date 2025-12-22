@@ -841,7 +841,7 @@ namespace MapGISPlugin3
                     writer.WriteLine(yllcorner + " " + (yllcorner + cellsize * (rows - 1)));
                     writer.WriteLine(grid.Cast<double>().Min() + " " + grid.Cast<double>().Max());
 
-                    for (int row = rows - 1; row >= 0; row--)
+                    for (int row = 0; row < rows; row++)  // 改成从 0 到 rows-1
                     {
                         for (int col = 0; col < cols; col++)
                         {
