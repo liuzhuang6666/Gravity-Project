@@ -62,13 +62,13 @@ namespace MapGISPlugin3
         {
             using (OpenFileDialog openFileDialog = new OpenFileDialog())
             {
-                openFileDialog.Title = "请选择数据文件";
-                openFileDialog.Filter = "GRD 栅格文件|*.grd|所有文件|*.*";
+                openFileDialog.Title = "请选择栅格数据文件";
+                // 修改：增加 .tif 和 .tiff 的支持
+                openFileDialog.Filter = "栅格文件|*.grd;*.tif;*.tiff|GRD 栅格文件|*.grd|TIF 影像文件|*.tif;*.tiff|所有文件|*.*";
                 openFileDialog.RestoreDirectory = true;
 
                 if (openFileDialog.ShowDialog() == DialogResult.OK)
                 {
-                    // 将用户选择的文件路径显示在文本框中
                     textBoxDataPath.Text = openFileDialog.FileName;
                 }
             }
@@ -109,7 +109,7 @@ namespace MapGISPlugin3
                 }
 
                 // 3. 加载GRD数据并添加到找到的地图中
-                LoadGrdToMap(targetMap, dataPath);
+                LoadRasterToMap(targetMap, dataPath);
 
                 // 4. 成功后关闭窗体
                 this.DialogResult = DialogResult.OK;
@@ -152,34 +152,42 @@ namespace MapGISPlugin3
         /// <summary>
         /// 将指定的GRD文件作为图层加载到目标地图中
         /// </summary>
-        private void LoadGrdToMap(Map targetMap, string filePath)
+        /// <summary>
+        /// 将指定的栅格文件（GRD/TIF）作为图层加载到目标地图中
+        /// </summary>
+        private void LoadRasterToMap(Map targetMap, string filePath)
         {
             RasterDataSet rstDataSet = null;
             try
             {
                 rstDataSet = new RasterDataSet();
+
+                // MapGIS 的 RasterDataSet.Open 通常通过文件后缀自动识别驱动
                 if (rstDataSet.Open(filePath, RasAccessType.RasAccessType_ReadOnly))
                 {
+                    // 如果你的 SDK 版本对 RasterLayer 也有构造函数限制（报错 CS1729），
+                    // 请参考 VectorLayer 改为：RasterLayer rstLayer = new RasterLayer(IntPtr.Zero, null);
                     RasterLayer rstLayer = new RasterLayer();
+
                     rstLayer.AttachData(rstDataSet);
-                    // 使用文件名作为默认图层名
+
+                    // 使用文件名作为图层名
                     rstLayer.Name = Path.GetFileNameWithoutExtension(filePath);
 
-                    // 将图层添加到目标地图
+                    // 添加到目标地图
                     targetMap.Append(rstLayer);
 
-                    MessageBox.Show($"数据 '{rstLayer.Name}' 已成功添加到地图 '{targetMap.Name}' 中！", "成功", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show($"栅格数据 '{rstLayer.Name}' 已成功添加到地图 '{targetMap.Name}' 中！",
+                                    "成功", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 else
                 {
-                    throw new Exception("打开GRD文件失败。请检查文件是否有效或被占用。");
+                    throw new Exception("打开栅格文件失败。请检查文件格式是否受支持或文件被占用。");
                 }
             }
             catch (Exception ex)
             {
-                // 如果发生异常，确保关闭数据集
                 if (rstDataSet != null) rstDataSet.Close();
-                // 重新抛出异常，让上层调用者（btnOK_Click）知道出错了
                 throw ex;
             }
         }

@@ -2859,6 +2859,13 @@ namespace MapGISPlugin3
                 DrawList(lCount);
             }
         }
+        private void treeList_Ann_CustomNodeCellEdit(object sender, DevExpress.XtraTreeList.GetCustomNodeCellEditEventArgs e)
+        {
+            if (e.Column == contentColumn)
+            {
+                e.RepositoryItem = contentMemoEdit;
+            }
+        }
 
         private void DrawList(int lCount)
         {
@@ -3301,11 +3308,14 @@ namespace MapGISPlugin3
             this.treeList_Ann.Location = new System.Drawing.Point(3, 33);
             this.treeList_Ann.Name = "treeList_Ann";
             this.treeList_Ann.OptionsView.ShowRoot = false;
-            this.treeList_Ann.RepositoryItems.AddRange(new DevExpress.XtraEditors.Repository.RepositoryItem[] {
-            this.contentMemoEdit});
             this.treeList_Ann.Size = new System.Drawing.Size(314, 354);
             this.treeList_Ann.TabIndex = 0;
             this.treeList_Ann.CellValueChanged += new DevExpress.XtraTreeList.CellValueChangedEventHandler(this.treeList_Ann_CellValueChanged);
+            this.treeList_Ann.CustomNodeCellEdit += new DevExpress.XtraTreeList.GetCustomNodeCellEditEventHandler(this.treeList_Ann_CustomNodeCellEdit);
+
+
+            
+        
             // 
             // typeColumn
             // 
@@ -3320,7 +3330,7 @@ namespace MapGISPlugin3
             // contentColumn
             // 
             this.contentColumn.Caption = "内容";
-            this.contentColumn.ColumnEdit = this.contentMemoEdit;
+            //this.contentColumn.ColumnEdit = this.contentMemoEdit;
             this.contentColumn.FieldName = "Content";
             this.contentColumn.Name = "contentColumn";
             this.contentColumn.Visible = true;
@@ -3372,7 +3382,7 @@ namespace MapGISPlugin3
             // 
             // labelControl_Sacle
             // 
-            this.labelControl_Sacle.Location = new System.Drawing.Point(10, 26);
+            this.labelControl_Sacle.Location = new System.Drawing.Point(10, -4);
             this.labelControl_Sacle.Name = "labelControl_Sacle";
             this.labelControl_Sacle.Size = new System.Drawing.Size(60, 22);
             this.labelControl_Sacle.TabIndex = 1;

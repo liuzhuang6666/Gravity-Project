@@ -86,11 +86,11 @@
   <ItemGroup>
     <Reference Include="DevExpress.Data.v17.2, Version=17.2.7.0, Culture=neutral, PublicKeyToken=58eb2150d286b637, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\vs\MapGIS 10\MapGIS 10\Program\DevExpress.Data.v17.2.dll</HintPath>
+      <HintPath>..\..\..\vs\MapGIS 10\MapGIS 10\Program\DevExpress.Data.v17.2.dll</HintPath>
     </Reference>
     <Reference Include="DevExpress.Utils.v17.2, Version=17.2.7.0, Culture=neutral, PublicKeyToken=58eb2150d286b637, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\vs\MapGIS 10\MapGIS 10\Program\DevExpress.Utils.v17.2.dll</HintPath>
+      <HintPath>..\..\..\vs\MapGIS 10\MapGIS 10\Program\DevExpress.Utils.v17.2.dll</HintPath>
     </Reference>
     <Reference Include="DevExpress.XtraBars.v17.2, Version=17.2.7.0, Culture=neutral, PublicKeyToken=58eb2150d286b637, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -98,7 +98,7 @@
     </Reference>
     <Reference Include="DevExpress.XtraEditors.v17.2, Version=17.2.7.0, Culture=neutral, PublicKeyToken=58eb2150d286b637, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\vs\MapGIS 10\MapGIS 10\Program\DevExpress.XtraEditors.v17.2.dll</HintPath>
+      <HintPath>..\..\..\vs\MapGIS 10\MapGIS 10\Program\DevExpress.XtraEditors.v17.2.dll</HintPath>
     </Reference>
     <Reference Include="DevExpress.XtraLayout.v17.2, Version=17.2.7.0, Culture=neutral, PublicKeyToken=58eb2150d286b637, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -106,7 +106,7 @@
     </Reference>
     <Reference Include="DevExpress.XtraTreeList.v17.2, Version=17.2.7.0, Culture=neutral, PublicKeyToken=58eb2150d286b637, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\vs\MapGIS 10\MapGIS 10\Program\DevExpress.XtraTreeList.v17.2.dll</HintPath>
+      <HintPath>..\..\..\vs\MapGIS 10\MapGIS 10\Program\DevExpress.XtraTreeList.v17.2.dll</HintPath>
     </Reference>
     <Reference Include="MapGIS.DemAnalysis.Plugin">
       <HintPath>D:\Program Files\MapGIS 10\Program\MapGIS.DemAnalysis.Plugin.dll</HintPath>
@@ -147,7 +147,7 @@
     </Reference>
     <Reference Include="MapGIS.MapEditor.Plugin, Version=1.0.0.0, Culture=neutral, PublicKeyToken=3c41f9a6f834b774, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>D:\Program Files\MapGIS 10\Program\plugin\MapGIS.MapEditor.Plugin.dll</HintPath>
+      <HintPath>..\..\..\vs\MapGIS 10\MapGIS 10\Program\MapGIS.MapEditor.Plugin.dll</HintPath>
     </Reference>
     <Reference Include="MapGIS.PluginEngine, Version=1.0.0.0, Culture=neutral, PublicKeyToken=3c41f9a6f834b774, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -205,6 +205,7 @@
       <DependentUpon>VisualizationForm.cs</DependentUpon>
     </Compile>
     <Compile Include="可视化窗口\VisualizationHelper.cs" />
+    <Compile Include="命令项\LoadVectorDataCommand.cs" />
     <Compile Include="查看属性\GeophysicalPreviewCommand.cs" />
     <Compile Include="查看属性\GeophysicalPreviewControl.cs">
       <SubType>UserControl</SubType>
@@ -372,6 +373,12 @@
     <Compile Include="重磁处理功能\AddDataForm.Designer.cs">
       <DependentUpon>AddDataForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="重磁处理功能\Form_AddVectorData.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="重磁处理功能\Form_AddVectorData.Designer.cs">
+      <DependentUpon>Form_AddVectorData.cs</DependentUpon>
+    </Compile>
     <Compile Include="重磁处理功能\三维反演\Form_Gravity3DInversion.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -524,6 +531,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="重磁处理功能\Form_SurfaceContin.resx">
       <DependentUpon>Form_SurfaceContin.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="重磁处理功能\Form_AddVectorData.resx">
+      <DependentUpon>Form_AddVectorData.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
