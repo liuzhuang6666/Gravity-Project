@@ -197,6 +197,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="MapGIS\GeoDataBase\DataAccessMode.cs" />
     <Compile Include="可视化窗口\VisualizationCommand.cs" />
     <Compile Include="可视化窗口\VisualizationForm.cs">
       <SubType>Form</SubType>
@@ -206,6 +207,13 @@
     </Compile>
     <Compile Include="可视化窗口\VisualizationHelper.cs" />
     <Compile Include="命令项\LoadVectorDataCommand.cs" />
+    <Compile Include="数据转换\DataConverterCommand.cs" />
+    <Compile Include="数据转换\Form_DataProcess.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="数据转换\Form_DataProcess.Designer.cs">
+      <DependentUpon>Form_DataProcess.cs</DependentUpon>
+    </Compile>
     <Compile Include="查看属性\GeophysicalPreviewCommand.cs" />
     <Compile Include="查看属性\GeophysicalPreviewControl.cs">
       <SubType>UserControl</SubType>
@@ -238,6 +246,14 @@
     <Compile Include="查看属性\Preview_Table.Designer.cs">
       <DependentUpon>Preview_Table.cs</DependentUpon>
     </Compile>
+    <Compile Include="栅格转点入库\GravityRasterToPointCommand.cs" />
+    <Compile Include="栅格转点入库\GravityRasterToPointForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="栅格转点入库\GravityRasterToPointForm.Designer.cs">
+      <DependentUpon>GravityRasterToPointForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="栅格转点入库\GravityRasterToPointService.cs" />
     <Compile Include="添加数据\Form_AddData.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -254,6 +270,13 @@
     <Compile Include="工程相关\Project.cs" />
     <Compile Include="工程相关\ResourceManage.cs" />
     <Compile Include="工程相关\StaticFunctions.cs" />
+    <Compile Include="添加数据\Form_ImportRaster.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="添加数据\Form_ImportRaster.Designer.cs">
+      <DependentUpon>Form_ImportRaster.cs</DependentUpon>
+    </Compile>
+    <Compile Include="添加数据\ImportRasterCommand.cs" />
     <Compile Include="电磁处理功能\Csamt\CSAMT1diCommand.cs" />
     <Compile Include="电磁处理功能\Csamt\CSAMTAddDataCommand.cs" />
     <Compile Include="电磁处理功能\Csamt\Form_CSAMT1di.cs">
@@ -346,6 +369,15 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
     <Compile Include="菜单\PopupMenuBar.cs" />
+    <Compile Include="裁剪功能\Form_RasterClipByCoords.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="裁剪功能\Form_RasterClipByCoords.Designer.cs">
+      <DependentUpon>Form_RasterClipByCoords.cs</DependentUpon>
+    </Compile>
+    <Compile Include="裁剪功能\RasterClipByCoordsCommand.cs" />
+    <Compile Include="裁剪功能\RasterClipCommand.cs" />
+    <Compile Include="裁剪功能\RasterRectClipCommand.cs" />
     <Compile Include="追加数据\CSAMTAppendDataCommand.cs" />
     <Compile Include="追加数据\Form_CSAMTAppendData.cs">
       <SubType>Form</SubType>
@@ -457,6 +489,9 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="数据转换\Form_DataProcess.resx">
+      <DependentUpon>Form_DataProcess.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="查看属性\Preview_TEM.resx">
       <DependentUpon>Preview_TEM.cs</DependentUpon>
     </EmbeddedResource>
@@ -469,12 +504,18 @@
     <EmbeddedResource Include="查看属性\Preview_Table.resx">
       <DependentUpon>Preview_Table.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="栅格转点入库\GravityRasterToPointForm.resx">
+      <DependentUpon>GravityRasterToPointForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="添加数据\Form_AddData.resx">
       <DependentUpon>Form_AddData.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="工程相关\ProjectTreeControl.resx">
       <DependentUpon>ProjectTreeControl.cs</DependentUpon>
       <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="添加数据\Form_ImportRaster.resx">
+      <DependentUpon>Form_ImportRaster.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="电磁处理功能\Csamt\Form_CSAMT1di.resx">
       <DependentUpon>Form_CSAMT1di.cs</DependentUpon>
